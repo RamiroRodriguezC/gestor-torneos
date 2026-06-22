@@ -1,2 +1,4 @@
 node_modules
 packjage-lock.json
+.env
+seeds

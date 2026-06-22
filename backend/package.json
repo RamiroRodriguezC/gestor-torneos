@@ -4,8 +4,11 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon index.js",
-    "start": "node index.js"
+    "dev": "nodemon src/index.js",
+    "start": "node src/index.js",
+    "db:generate": "node src/seeds/generateTestData.js",
+    "db:seed": "node src/seed.js",
+    "db:reset": "node src/seed.js --reset"
   },
   "dependencies": {
     "cors": "^2.8.6",
