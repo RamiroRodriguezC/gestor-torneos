@@ -1,3 +1,4 @@
+import createError from 'http-errors';
 import Team from '../models/TeamsModel.js';
 import { requireDB } from '../config/db.js';
 
@@ -31,7 +32,7 @@ export const create = async (data) => {
   requireDB();
 
   const errors = validate(data);
-  if (errors.length) throw new Error(errors.join('; '));
+  if (errors.length) throw createError(400, errors.join('; '));
 
   return Team.create(data);
 };
@@ -40,9 +41,9 @@ export const update = async (id, data) => {
   requireDB();
 
   const errors = validate(data, true);
-  if (errors.length) throw new Error(errors.join('; '));
+  if (errors.length) throw createError(400, errors.join('; '));
 
   const team = await Team.findByIdAndUpdate(id, data, { new: true, runValidators: true });
-  if (!team) throw new Error('Equipo no encontrado');
+  if (!team) throw createError(404, 'Equipo no encontrado');
   return team;
 };

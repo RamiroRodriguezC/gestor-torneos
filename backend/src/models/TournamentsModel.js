@@ -20,7 +20,7 @@ const ParticipantSnapshotSchema = new Schema({
 }, { _id: false });
 
 const dateSchema = new Schema({
-  roundName: { type: String, required: true }, // Podria ser numeral en caso de una liga (como jornada 1,2,3) pero sirve para nombrar las fechas en caso de torneos eliminatorios (ej: Semifinales, Final, etc)
+  roundName: { type: String, required: true, unique: true }, // Podria ser numeral en caso de una liga (como jornada 1,2,3) pero sirve para nombrar las fechas en caso de torneos eliminatorios (ej: Semifinales, Final, etc)
   roundNumber: { type: Number, required: true }, // Para ordenar las fechas en caso de torneos eliminatorios (ej: Semifinales = 1, Final = 2)
   startDate: { type: Date },
   endDate: { type: Date },
@@ -35,9 +35,9 @@ const TournamentSchema = new Schema({
   sportConfigId: { type: Schema.Types.ObjectId, ref: 'SportsConfig', required: true },
   rules: {
     scoringSystem: {
-        winPoints: { type: Number, default: 3 },
-        drawPoints: { type: Number, default: 1 },
-        lossPoints: { type: Number, default: 0 }
+        winPoints: { type: Number, default: 3, required: true },
+        drawPoints: { type: Number, default: 1, required: true },
+        lossPoints: { type: Number, default: 0, required: true }
     },
     finishingCriteria: {
         type: { type: String, enum: FINISHING_CRITERIA_TYPE, default: 'POINTS' },

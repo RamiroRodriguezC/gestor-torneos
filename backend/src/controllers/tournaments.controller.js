@@ -1,16 +1,5 @@
+import handle from '../utils/handle.js';
 import * as tournamentsService from '../services/tournaments.service.js';
-
-const handle = (fn) => async (req, res) => {
-  try {
-    const data = await fn(req);
-    res.json(data);
-  } catch (error) {
-    const status = error.message.includes('no encontrado') ? 404
-      : error.message.includes('requerido') ? 400
-      : 500;
-    res.status(status).json({ error: error.message });
-  }
-};
 
 export const getAll = handle(async () => {
   const data = await tournamentsService.findAll();

@@ -1,3 +1,4 @@
+import createError from 'http-errors';
 import User from '../models/UsersModels.js';
 import { requireDB } from '../config/db.js';
 import { isValidEmail } from '../utils/validation.js';
@@ -42,10 +43,10 @@ export const create = async (data) => {
   requireDB();
 
   const errors = validate(data);
-  if (errors.length) throw new Error(errors.join('; '));
+  if (errors.length) throw createError(400, errors.join('; '));
 
   const exists = await User.findOne({ email: data.email });
-  if (exists) throw new Error('El email ya está registrado');
+  if (exists) throw createError(409, 'El email ya está registrado');
 
   const user = await User.create(data);
   return User.findById(user._id).select(EXCLUDED);
@@ -55,14 +56,14 @@ export const update = async (id, data) => {
   requireDB();
 
   const errors = validate(data, true);
-  if (errors.length) throw new Error(errors.join('; '));
+  if (errors.length) throw createError(400, errors.join('; '));
 
   if (data.email) {
     const dup = await User.findOne({ email: data.email, _id: { $ne: id } });
-    if (dup) throw new Error('El email ya está registrado por otro usuario');
+    if (dup) throw createError(409, 'El email ya está registrado por otro usuario');
   }
 
   const user = await User.findByIdAndUpdate(id, data, { new: true, runValidators: true }).select(EXCLUDED);
-  if (!user) throw new Error('Usuario no encontrado');
+  if (!user) throw createError(404, 'Usuario no encontrado');
   return user;
 };

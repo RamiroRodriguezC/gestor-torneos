@@ -17,7 +17,7 @@ export const FINISH_CONDITION = ['FIRST_TO_SCORE', 'TIME_LIMIT', 'SET_NUMBER'];
 export const EVENT_TARGET = ['COMPETITOR', 'PLAYER'];
 
 // |----------------------------- TORNEO (Tournament) -----------------------------|
-/** Criterio de desempate o finalización del torneo */
+/** Criterio de finalizacion del partido */
 export const FINISHING_CRITERIA_TYPE = ['POINTS', 'GOAL_DIFFERENCE', 'GOALS_SCORED'];
 /** Unidad de medida del criterio de finalización */
 export const FINISHING_CRITERIA_UNIT = ['POINTS', 'GOALS', 'OTHER'];

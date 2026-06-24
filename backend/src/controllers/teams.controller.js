@@ -1,17 +1,5 @@
+import handle from '../utils/handle.js';
 import * as teamsService from '../services/teams.service.js';
-
-const handle = (fn) => async (req, res) => {
-  try {
-    const data = await fn(req);
-    res.json(data);
-  } catch (error) {
-    // Un poco raro este manejo de escanear asi el mensaje de error
-    const status = error.message.includes('no encontrado') ? 404
-      : error.message.includes('requerido') ? 400
-      : 500;
-    res.status(status).json({ error: error.message });
-  }
-};
 
 export const getAll = handle(async () => {
   const data = await teamsService.findAll();

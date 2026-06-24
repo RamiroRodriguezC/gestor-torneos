@@ -1,3 +1,4 @@
+import createError from 'http-errors';
 import Tournament from '../models/TournamentsModel.js';
 import Application from '../models/ApplicationsModel.js';
 import { requireDB } from '../config/db.js';
@@ -32,7 +33,7 @@ export const create = async (data) => {
   requireDB();
 
   const errors = validate(data);
-  if (errors.length) throw new Error(errors.join('; '));
+  if (errors.length) throw createError(400, errors.join('; '));
 
   return Tournament.create(data);
 };
@@ -41,25 +42,25 @@ export const update = async (id, data) => {
   requireDB();
 
   const errors = validate(data, true);
-  if (errors.length) throw new Error(errors.join('; '));
+  if (errors.length) throw createError(400, errors.join('; '));
 
   const tournament = await Tournament.findByIdAndUpdate(id, data, { new: true, runValidators: true });
-  if (!tournament) throw new Error('Torneo no encontrado');
+  if (!tournament) throw createError(404, 'Torneo no encontrado');
   return tournament;
 };
 
 export const findParticipants = async (id) => {
   requireDB();
   const tournament = await Tournament.findById(id).select('participantes');
-  if (!tournament) throw new Error('Torneo no encontrado');
+  if (!tournament) throw createError(404, 'Torneo no encontrado');
   return tournament.participantes;
 };
 
 export const addParticipant = async (id, data) => {
   requireDB();
 
-  if (!data.id) throw new Error('id del participante es requerido');
-  if (!data.name) throw new Error('name del participante es requerido');
+  if (!data.id) throw createError(400, 'id del participante es requerido');
+  if (!data.name) throw createError(400, 'name del participante es requerido');
 
   const tournament = await Tournament.findByIdAndUpdate(
     id,
@@ -67,22 +68,22 @@ export const addParticipant = async (id, data) => {
     { new: true, runValidators: true }
   ).select('participantes');
 
-  if (!tournament) throw new Error('Torneo no encontrado');
+  if (!tournament) throw createError(404, 'Torneo no encontrado');
   return tournament.participantes;
 };
 
 export const findDates = async (id) => {
   requireDB();
   const tournament = await Tournament.findById(id).select('dates');
-  if (!tournament) throw new Error('Torneo no encontrado');
+  if (!tournament) throw createError(404, 'Torneo no encontrado');
   return tournament.dates;
 };
 
 export const addDate = async (id, data) => {
   requireDB();
 
-  if (!data.roundName) throw new Error('roundName es requerido');
-  if (data.roundNumber === undefined || data.roundNumber === null) throw new Error('roundNumber es requerido');
+  if (!data.roundName) throw createError(400, 'roundName es requerido');
+  if (data.roundNumber === undefined || data.roundNumber === null) throw createError(400, 'roundNumber es requerido');
 
   const tournament = await Tournament.findByIdAndUpdate(
     id,
@@ -90,7 +91,7 @@ export const addDate = async (id, data) => {
     { new: true, runValidators: true }
   ).select('dates');
 
-  if (!tournament) throw new Error('Torneo no encontrado');
+  if (!tournament) throw createError(404, 'Torneo no encontrado');
   return tournament.dates;
 };
 
