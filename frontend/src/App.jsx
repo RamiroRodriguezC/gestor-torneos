@@ -1,66 +1,34 @@
+import { ThemeProvider, createTheme, CssBaseline, Container, Typography } from '@mui/material'
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
 
-export function AddFriendForm({ defaultAge } = { defaultAge: 21 }) {
-  const [name, setName] = useState("")
-  const [age, setAge] = useState(defaultAge)
-  const [status, setStatus] = useState("")
-
-  async function addFriend() {
-    try {
-      // Add the new friend!
-      const id = await db.friends.add({
-        name,
-        age,
-      })
-
-      setStatus(`Friend ${name} successfully added. Got id ${id}`)
-      setName("")
-      setAge(defaultAge)
-    } catch (error) {
-      setStatus(`Failed to add ${name}: ${error}`)
-    }
-  }
-
-  return (
-    <>
-      <p>{status}</p>
-      Name:
-      <input
-        type="text"
-        value={name}
-        onChange={(ev) => setName(ev.target.value)}
-      />
-      Age:
-      <input
-        type="number"
-        value={age}
-        onChange={(ev) => setAge(Number(ev.target.value))}
-      />
-      <button onClick={addFriend}>Add</button>
-    </>
-  )
-}
-
-export function FriendList() {
-  const friends = useLiveQuery(() => db.friends.toArray())
-
-  return (
-    <ul>
-      {friends?.map((friend) => (
-        <li key={friend.id}>
-          {friend.name}, {friend.age}
-        </li>
-      ))}
-    </ul>
-  )
-}
+const theme = createTheme({
+  palette: {
+    mode: 'light',
+    primary: {
+      main: '#7c4dff',
+    },
+    secondary: {
+      main: '#ff6d00',
+    },
+  },
+})
 
 function App() {
-  
+  const [count, setCount] = useState(0)
+
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Typography variant="h3" component="h1" gutterBottom>
+          TourneyFy
+        </Typography>
+        <Typography variant="body1">
+          Welcome to TourneyFy!
+        </Typography>
+      </Container>
+    </ThemeProvider>
+  )
 }
 
 export default App
