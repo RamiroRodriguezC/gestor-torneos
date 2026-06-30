@@ -2,6 +2,7 @@ import Dexie from 'dexie'
 
 export const db = new Dexie('tourneyfy')
 
+// Definimos los indices
 db.version(1).stores({
   users: '_id, email, globalRole',
   teams: '_id, name, discipline, capitanId',
