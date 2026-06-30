@@ -64,6 +64,6 @@ export const update = async (id, data) => {
   }
 
   const user = await User.findByIdAndUpdate(id, data, { new: true, runValidators: true }).select(EXCLUDED);
-  if (!user) throw createError(404, 'Usuario no encontrado');
+  if (!user) throw createError(404, 'User not found');
   return user;
 };

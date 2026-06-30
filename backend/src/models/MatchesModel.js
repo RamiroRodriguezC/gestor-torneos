@@ -7,7 +7,7 @@ const MatchCompetitorSchema = new Schema({
   logoURL: { type: String, default: '' },
   side: { type: String, enum: COMPETITOR_SIDE, default: 'NONE' },
   lineUp: [{
-    userId: { type: Schema.Types.ObjectId, ref: 'Usuario' },
+    userId: { type: Schema.Types.ObjectId, ref: 'User' },
     fullName: { type: String },
     photoURL: { type: String, default: '' },
   }]
@@ -17,7 +17,7 @@ const MatchEventSchema = new Schema({
   eventType: { type: String, required: true },
   // CompetitorId y playerId no se embeben completos por que ya estan en la lista de competidores y lineUp, respectivamente. Se guardan solo los ids para relacionar el evento con el jugador o equipo correspondiente.
   competitorId: { type: Schema.Types.ObjectId, required: true }, // Jugador o equipo relacionado al evento
-  playerId: { type: Schema.Types.ObjectId, ref: 'Usuario' }, // Jugador relacionado al evento, si (si el partido es entre equipos).
+  playerId: { type: Schema.Types.ObjectId, ref: 'User' }, // Jugador relacionado al evento, si (si el partido es entre equipos).
   minute: { type: Number, default: 0 },
   value: { type: Schema.Types.Mixed } // Flexible para distintos tipos de eventos (ej: goles, tarjetas, etc)
   

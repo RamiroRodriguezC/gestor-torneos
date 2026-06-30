@@ -42,9 +42,9 @@ const runSeed = async () => {
 
     if (shouldReset) {
       for (const { model } of seedFolders) {
-        await model.deleteMany({});
+        await model.collection.drop().catch(() => model.deleteMany({}));
       }
-      console.log('🧹 Todas las colecciones limpiadas');
+      console.log('🧹 Todas las colecciones limpiadas (incluyendo índices viejos)');
     }
 
     for (const { dir, model } of seedFolders) {

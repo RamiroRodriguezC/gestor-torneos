@@ -6,7 +6,7 @@ import {
 
 // guarda una snapshot del jugador dentro del equipo al momento de inscribirse en el torneo para mantener un registro histórico inmutable aunque el jugador cambie su nombre, foto u otros datos posteriormente.
 const ParticipantLineUpSchema = new Schema({
-  userId: { type: Schema.Types.ObjectId, ref: 'Usuario', required: true },
+  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   fullName: { type: String, required: true },
   url_profile_photo: { type: String, default: '' }
 }, { _id: false });
@@ -20,7 +20,7 @@ const ParticipantSnapshotSchema = new Schema({
 }, { _id: false });
 
 const dateSchema = new Schema({
-  roundName: { type: String, required: true, unique: true }, // Podria ser numeral en caso de una liga (como jornada 1,2,3) pero sirve para nombrar las fechas en caso de torneos eliminatorios (ej: Semifinales, Final, etc)
+  roundName: { type: String, required: true },
   roundNumber: { type: Number, required: true }, // Para ordenar las fechas en caso de torneos eliminatorios (ej: Semifinales = 1, Final = 2)
   startDate: { type: Date },
   endDate: { type: Date },
@@ -31,7 +31,7 @@ const TournamentSchema = new Schema({
   title: { type: String, required: true },
   url_logo: { type: String, default: '' },
   description: { type: String, default: '' },
-  organizerId: { type: Schema.Types.ObjectId, ref: 'Usuario', required: true },
+  organizerId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   sportConfigId: { type: Schema.Types.ObjectId, ref: 'SportsConfig', required: true },
   rules: {
     scoringSystem: {
@@ -82,8 +82,8 @@ const TournamentSchema = new Schema({
   participantes: [ParticipantSnapshotSchema],
   
   applications: {
-    applicationIds: [{ type: Schema.Types.ObjectId, ref: 'Solicitud' }],
-    applicantIds: [{ type: Schema.Types.ObjectId, ref: 'Usuario' }], // Para facilitar consultas de usuario a sus solicitudes sin necesidad de hacer populate en el arreglo de applications, contiene el usuario que aplico
+    applicationIds: [{ type: Schema.Types.ObjectId, ref: 'Application' }],
+    applicantIds: [{ type: Schema.Types.ObjectId, ref: 'User' }], // Para facilitar consultas de usuario a sus solicitudes sin necesidad de hacer populate en el arreglo de applications, contiene el usuario que aplico
     participantIds: [{ type: Schema.Types.ObjectId }], // Para facilitar consultas de usuario a sus solicitudes sin necesidad de hacer populate en el arreglo de applications. Puede contener UserIds o TeamIds dependiendo del tipo de torneo
     status: [{ type: String, enum: APPLICATION_STATUS }]
 },

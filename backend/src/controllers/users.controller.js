@@ -8,7 +8,7 @@ export const getAll = handle(async () => {
 
 export const getById = handle(async (req) => {
   const data = await usersService.findById(req.params.id);
-  if (!data) throw new Error('Usuario no encontrado');
+  if (!data) throw new Error('User not found');
   return { data };
 });
 

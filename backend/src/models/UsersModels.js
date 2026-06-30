@@ -16,7 +16,7 @@ const UserTeamsSchema = new Schema({
   role: { type: String, enum: TEAM_ROLE, required: true }
 }, { _id: false });
 
-const UsuarioSchema = new Schema({
+const UserSchema = new Schema({
   name: { type: String, required: true },
   lastName: { type: String, required: true },
   email: { type: String, required: true, unique: true },
@@ -28,8 +28,8 @@ const UsuarioSchema = new Schema({
   bio: { type: String, default: '' },
   tournaments: [UserTournamentsSchema],
   teams: [UserTeamsSchema],
-  applications: [{ type: Schema.Types.ObjectId, ref: 'Solicitud' }],
+  applications: [{ type: Schema.Types.ObjectId, ref: 'Application' }],
   isDeleted: { type: Boolean, default: false }
 }, { timestamps: true });
 
-export default model('Usuario', UsuarioSchema);
+export default model('User', UserSchema);

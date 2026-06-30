@@ -9,7 +9,7 @@ const TournamentSchema = new Schema({
 
 // Embebido de los usuarios miembros del equipo para mostrar info básica sin necesidad de hacer populate
 const TeamMemberSchema = new Schema({
-  userId: { type: Schema.Types.ObjectId, ref: 'Usuario', required: true },
+  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   fullName: { type: String, required: true },
   url_profile_photo: { type: String, default: '' }
 }, { _id: false });
@@ -19,7 +19,7 @@ const TeamSchema = new Schema({
   name: { type: String, required: true },
   logoURL: { type: String, default: '' },
   discipline: { type: String, required: true }, // id o string a sportConfig?
-  capitanId: { type: Schema.Types.ObjectId, ref: 'Usuario', required: true },
+  capitanId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   members: [TeamMemberSchema],
   tournaments: [TournamentSchema],
   isDeleted: { type: Boolean, default: false }
