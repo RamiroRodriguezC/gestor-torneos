@@ -1,6 +1,6 @@
 import { db } from '../lib/db.js'
 
-const API = 'http://localhost:3000/api'
+const API = process.env.API_BASE_URL;
 
 async function fetchAndPut(endpoint, table) {
   const res = await fetch(`${API}/${endpoint}`)
