@@ -21,3 +21,13 @@ export const update = handle(async (req) => {
   const data = await usersService.update(req.params.id, req.body);
   return { data };
 });
+
+export const getUserTournaments = handle(async (req) => {
+  const data = await usersService.findUserTournaments(req.params.id);
+  return { data, count: data.length };
+});
+
+export const getUserTeams = handle(async (req) => {
+  const data = await usersService.findUserTeams(req.params.id);
+  return { data, count: data.length };
+});

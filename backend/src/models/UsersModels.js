@@ -3,16 +3,12 @@ import { USER_TOURNAMENT_ROLE, TEAM_ROLE, GLOBAL_ROLE } from '../constants/enums
 
 const UserTournamentsSchema = new Schema({
   tournamentId: { type: Schema.Types.ObjectId, ref: 'Tournament', required: true },
-  title: { type: String, required: true },
-  photoURL: { type: String, default: '' },
-  status: { type: String, default: ''},
-  role: { type: String, enum: USER_TOURNAMENT_ROLE, required: true }
+  role: { type: String, enum: USER_TOURNAMENT_ROLE, required: true },
+  status: { type: String, default: '' },
 }, { _id: false });
 
 const UserTeamsSchema = new Schema({
   teamId: { type: Schema.Types.ObjectId, ref: 'Team', required: true },
-  name: { type: String, required: true },
-  logoURL: { type: String, default: '' },
   role: { type: String, enum: TEAM_ROLE, required: true }
 }, { _id: false });
 

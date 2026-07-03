@@ -1,7 +1,10 @@
 import { Router } from 'express';
-import { getAll, getById, create, update } from '../controllers/users.controller.js';
+import { getAll, getById, create, update, getUserTournaments, getUserTeams } from '../controllers/users.controller.js';
 
 const router = Router();
+
+router.get('/:id/tournaments', getUserTournaments);
+router.get('/:id/teams', getUserTeams);
 
 router.get('/', getAll);
 router.get('/:id', getById);

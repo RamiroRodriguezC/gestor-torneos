@@ -1,5 +1,6 @@
 import createError from 'http-errors';
 import Team from '../models/TeamsModel.js';
+import User from '../models/UsersModels.js';
 import { requireDB } from '../config/db.js';
 
 const validate = (data, isUpdate = false) => {
@@ -20,12 +21,14 @@ const validate = (data, isUpdate = false) => {
 
 export const findAll = async () => {
   requireDB();
-  return Team.find({ isDeleted: false });
+  return Team.find({ isDeleted: false })
+    .populate('capitanId', 'name lastName url_profile_photo');
 };
 
 export const findById = async (id) => {
   requireDB();
-  return Team.findOne({ _id: id, isDeleted: false });
+  return Team.findOne({ _id: id, isDeleted: false })
+    .populate('capitanId', 'name lastName url_profile_photo');
 };
 
 export const create = async (data) => {
@@ -46,4 +49,23 @@ export const update = async (id, data) => {
   const team = await Team.findByIdAndUpdate(id, data, { new: true, runValidators: true });
   if (!team) throw createError(404, 'Equipo no encontrado');
   return team;
+};
+
+export const findTeamMembers = async (teamId) => {
+  requireDB();
+  const team = await Team.findById(teamId).select('members');
+  if (!team) throw createError(404, 'Equipo no encontrado');
+  const ids = team.members.map(m => m.userId);
+  if (ids.length === 0) return [];
+  return User.find({ _id: { $in: ids }, isDeleted: false }).select('-hashedPassword');
+};
+
+export const findTeamTournaments = async (teamId) => {
+  requireDB();
+  const team = await Team.findById(teamId).select('tournaments');
+  if (!team) throw createError(404, 'Equipo no encontrado');
+  const ids = team.tournaments.map(t => t.tournamentId);
+  if (ids.length === 0) return [];
+  const Tournament = (await import('../models/TournamentsModel.js')).default;
+  return Tournament.find({ _id: { $in: ids }, isDeleted: false });
 };

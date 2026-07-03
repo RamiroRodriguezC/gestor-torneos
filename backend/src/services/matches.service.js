@@ -1,7 +1,7 @@
 import createError from 'http-errors';
 import Match from '../models/MatchesModel.js';
 import { requireDB } from '../config/db.js';
-import { MATCH_STATUS, MATCH_EXECUTION } from '../constants/enums.js';
+import { MATCH_STATUS } from '../constants/enums.js';
 
 const validate = (data, isUpdate = false) => {
   const errors = [];
@@ -19,11 +19,9 @@ const validate = (data, isUpdate = false) => {
       errors.push('field con fieldId y name es requerido');
     }
   }
-  if (!isUpdate || data.sport !== undefined) {
-    if (!data.sport || !data.sport.sportId || !data.sport.name || !data.sport.matchExecution) {
-      errors.push('sport con sportId, name y matchExecution es requerido');
-    } else if (!MATCH_EXECUTION.includes(data.sport.matchExecution)) {
-      errors.push(`sport.matchExecution debe ser uno de: ${MATCH_EXECUTION.join(', ')}`);
+  if (!isUpdate || data.sportConfigId !== undefined) {
+    if (!data.sportConfigId) {
+      errors.push('sportConfigId es requerido');
     }
   }
   if (data.status !== undefined && !MATCH_STATUS.includes(data.status)) {
@@ -35,12 +33,14 @@ const validate = (data, isUpdate = false) => {
 
 export const findAll = async () => {
   requireDB();
-  return Match.find({ isDeleted: false });
+  return Match.find({ isDeleted: false })
+    .populate('sportConfigId', 'name sportProps.matchExecution');
 };
 
 export const findById = async (id) => {
   requireDB();
-  return Match.findOne({ _id: id, isDeleted: false });
+  return Match.findOne({ _id: id, isDeleted: false })
+    .populate('sportConfigId', 'name sportProps.matchExecution');
 };
 
 export const create = async (data) => {

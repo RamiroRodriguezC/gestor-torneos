@@ -1,5 +1,7 @@
 import createError from 'http-errors';
 import User from '../models/UsersModels.js';
+import Team from '../models/TeamsModel.js';
+import Tournament from '../models/TournamentsModel.js';
 import { requireDB } from '../config/db.js';
 import { isValidEmail } from '../utils/validation.js';
 
@@ -66,4 +68,22 @@ export const update = async (id, data) => {
   const user = await User.findByIdAndUpdate(id, data, { new: true, runValidators: true }).select(EXCLUDED);
   if (!user) throw createError(404, 'User not found');
   return user;
+};
+
+export const findUserTournaments = async (userId) => {
+  requireDB();
+  const user = await User.findById(userId).select('tournaments');
+  if (!user) throw createError(404, 'Usuario no encontrado');
+  const ids = user.tournaments.map(t => t.tournamentId);
+  if (ids.length === 0) return [];
+  return Tournament.find({ _id: { $in: ids }, isDeleted: false });
+};
+
+export const findUserTeams = async (userId) => {
+  requireDB();
+  const user = await User.findById(userId).select('teams');
+  if (!user) throw createError(404, 'Usuario no encontrado');
+  const ids = user.teams.map(t => t.teamId);
+  if (ids.length === 0) return [];
+  return Team.find({ _id: { $in: ids }, isDeleted: false });
 };

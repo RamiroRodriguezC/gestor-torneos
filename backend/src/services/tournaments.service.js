@@ -59,12 +59,11 @@ export const findParticipants = async (id) => {
 export const addParticipant = async (id, data) => {
   requireDB();
 
-  if (!data.id) throw createError(400, 'id del participante es requerido');
-  if (!data.name) throw createError(400, 'name del participante es requerido');
+  if (!data.teamId) throw createError(400, 'teamId del participante es requerido');
 
   const tournament = await Tournament.findByIdAndUpdate(
     id,
-    { $push: { participantes: data } },
+    { $push: { participantes: { teamId: data.teamId, displayNameSnapshot: data.displayNameSnapshot || '' } } },
     { new: true, runValidators: true }
   ).select('participantes');
 
