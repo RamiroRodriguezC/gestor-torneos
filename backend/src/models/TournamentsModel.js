@@ -4,14 +4,17 @@ import {
   TOURNAMENT_FORMAT, TOURNAMENT_STATUS, APPLICATION_STATUS,
 } from '../constants/enums.js';
 
+// guarda una snapshot del jugador dentro del equipo al momento de inscribirse en el torneo para mantener un registro histórico inmutable aunque el jugador cambie su nombre, foto u otros datos posteriormente.
+
 const ParticipantLineUpSchema = new Schema({
   userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   fullName: { type: String, required: true },
   url_profile_photo: { type: String, default: '' }
 }, { _id: false });
 
+// Guarda una snapshot del participante (equipo o jugador) al momento de inscribirse en el torneo para mantener un registro histórico inmutable aunque el equipo o jugador cambie su nombre, logo u otros datos posteriormente.
 const ParticipantSnapshotSchema = new Schema({
-  id: { type: Schema.Types.ObjectId, required: true },
+  id: { type: Schema.Types.ObjectId, required: true },  // Id del Equipo o Usuario
   name: { type: String, required: true },
   logoURL: { type: String, default: '' },
   lineUp: [ParticipantLineUpSchema]
@@ -19,14 +22,14 @@ const ParticipantSnapshotSchema = new Schema({
 
 const ApplicationSummarySchema = new Schema({
   applicationId: { type: Schema.Types.ObjectId, ref: 'Application', required: true },
-  applicantId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  participantId: { type: Schema.Types.ObjectId, required: true },
+  applicantId: { type: Schema.Types.ObjectId, ref: 'User', required: true }, // Para facilitar consultas de usuario a sus solicitudes sin necesidad de hacer populate en el arreglo de applications, contiene el usuario que aplico
+  participantId: { type: Schema.Types.ObjectId, required: true }, // Para facilitar consultas de usuario a sus solicitudes sin necesidad de hacer populate en el arreglo de applications. Puede contener UserIds o TeamIds dependiendo del tipo de torneo
   status: { type: String, enum: APPLICATION_STATUS, default: 'PENDIENTE' }
 }, { _id: false });
 
 const dateSchema = new Schema({
   roundName: { type: String, required: true },
-  roundNumber: { type: Number, required: true },
+  roundNumber: { type: Number, required: true },  // Para ordenar las fechas en caso de torneos eliminatorios (ej: Semifinales = 1, Final = 2)
   startDate: { type: Date },
   endDate: { type: Date },
   matches: [{ type: Schema.Types.ObjectId, ref: 'Match' }]
@@ -49,16 +52,16 @@ const TournamentSchema = new Schema({
         value: { type: Number, default: 0 },
         unit: { type: String, enum: FINISHING_CRITERIA_UNIT, default: 'POINTS' }
     },
-    subsLimit: { type: Number, default: 0 },
-    tieBreakerRules: { type: [String], default: [] },
+    subsLimit: { type: Number, default: 0 }, // Cantidad de subs permitidos por equipo en cada partido (solo para deportes en equipo)
+    tieBreakerRules: { type: [String], default: [] }, // Reglas para desempates (ej: diferencia de goles, goles a favor, enfrentamiento directo, etc)
     specialRules:[
         {
         ruleName: { type: String },
         description: { type: String },
         }
-    ],
+    ], // Cualquier regla adicional específica del torneo (ej: reglas de desempate, criterios de clasificación, etc)
     format: { type: String, enum: TOURNAMENT_FORMAT, default: 'SINGLE_ELIMINATION' },
-  },
+  }, 
 
   status: { type: String, enum: TOURNAMENT_STATUS, default: 'BORRADOR' },
   isOnline: { type: Boolean, default: false },
@@ -68,7 +71,7 @@ const TournamentSchema = new Schema({
     country: { type: String, default: '' }
   },
 
-  maxRegistrations: { type: Number, default: 0 },
+  maxRegistrations: { type: Number, default: 0 }, // 0 para sin límite
   startDate: { type: Date },
   endDate: { type: Date },
   entryFee: { type: Number, default: 0 },

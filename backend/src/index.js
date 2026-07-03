@@ -19,6 +19,9 @@ import sportsRoutes from './routes/sports.routes.js';
 import usersRoutes from './routes/users.routes.js';
 import teamsRoutes from './routes/teams.routes.js';
 import tournamentsRoutes from './routes/tournaments.routes.js';
+import applicationsRoutes from './routes/applications.routes.js';
+import fieldsRoutes from './routes/fields.routes.js';
+import matchesRoutes from './routes/matches.routes.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -32,6 +35,9 @@ app.use('/api/sports', sportsRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/teams', teamsRoutes);
 app.use('/api/tournaments', tournamentsRoutes);
+app.use('/api/applications', applicationsRoutes);
+app.use('/api/fields', fieldsRoutes);
+app.use('/api/matches', matchesRoutes);
 
 // Conectar a la Base de Datos de forma centralizada
 connectDB();

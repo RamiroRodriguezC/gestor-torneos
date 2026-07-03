@@ -1,6 +1,6 @@
 import { db } from '../lib/db.js'
 
-const API = process.env.API_BASE_URL;
+const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
 
 async function fetchAndPut(endpoint, table) {
   const res = await fetch(`${API}/${endpoint}`)
