@@ -1,4 +1,6 @@
 import createError from 'http-errors';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 import User from '../models/UsersModels.js';
 import Team from '../models/TeamsModel.js';
 import Tournament from '../models/TournamentsModel.js';
@@ -41,6 +43,11 @@ export const findById = async (id) => {
   return User.findOne({ _id: id, isDeleted: false }).select(EXCLUDED);
 };
 
+export const findByEmail = async (email) => {
+  requireDB();
+  return User.findOne({ email, isDeleted: false });
+};
+
 export const create = async (data) => {
   requireDB();
 
@@ -49,6 +56,9 @@ export const create = async (data) => {
 
   const exists = await User.findOne({ email: data.email });
   if (exists) throw createError(409, 'El email ya está registrado');
+
+  const salt = await bcrypt.genSalt(10);
+  data.hashedPassword = await bcrypt.hash(data.hashedPassword, salt);
 
   const user = await User.create(data);
   return User.findById(user._id).select(EXCLUDED);
@@ -63,6 +73,11 @@ export const update = async (id, data) => {
   if (data.email) {
     const dup = await User.findOne({ email: data.email, _id: { $ne: id } });
     if (dup) throw createError(409, 'El email ya está registrado por otro usuario');
+  }
+
+  if (data.hashedPassword) {
+    const salt = await bcrypt.genSalt(10);
+    data.hashedPassword = await bcrypt.hash(data.hashedPassword, salt);
   }
 
   const user = await User.findByIdAndUpdate(id, data, { new: true, runValidators: true }).select(EXCLUDED);
@@ -86,4 +101,23 @@ export const findUserTeams = async (userId) => {
   const ids = user.teams.map(t => t.teamId);
   if (ids.length === 0) return [];
   return Team.find({ _id: { $in: ids }, isDeleted: false });
+};
+
+export const validatePassword = async (password, usuario) => {
+  return bcrypt.compare(password, usuario.hashedPassword);
+};
+
+export const generateToken = (usuario) => {
+  const payload = {
+    id: usuario._id,
+    email: usuario.email,
+    name: usuario.name,
+    globalRole: usuario.globalRole
+  };
+
+  return jwt.sign(
+    payload,
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
+  );
 };
