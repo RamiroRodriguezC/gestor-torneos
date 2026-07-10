@@ -1,7 +1,9 @@
 import { useState, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
+import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
-import { loginUser } from '../services/AuthService';
+import { login } from '../data/auth'
 import Checkbox from '@mui/material/Checkbox'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import Divider from '@mui/material/Divider'
@@ -62,6 +64,10 @@ function Login() {
   const [emailErrorMessage, setEmailErrorMessage] = useState('')
   const [passwordError, setPasswordError] = useState(false)
   const [passwordErrorMessage, setPasswordErrorMessage] = useState('')
+  const [error, setError]     = useState(null);
+  const [loading, setLoading] = useState(false);
+  
+  const navigate = useNavigate()
 
   const emailRef = useRef(null)
   const passwordRef = useRef(null)
@@ -92,14 +98,14 @@ function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateInputs()) return;
     setLoading(true);
     setError(null);
     try {
-      const data = await loginUser(form.mail, form.password);
-      login(data.usuario, data.token);
-      navigate('/');
+      await login(emailRef.current.value, passwordRef.current.value);
+      navigate('/dashboard');
     } catch (err) {
-      setError(err || 'Error al iniciar sesión');
+      setError(err.message || 'Error al iniciar sesión');
     } finally {
       setLoading(false);
     }
@@ -118,6 +124,7 @@ function Login() {
         >
           Iniciar sesión
         </Typography>
+        {error && <Alert severity="error">{error}</Alert>}
         <Box
           component="form"
           onSubmit={handleSubmit}
@@ -173,9 +180,10 @@ function Login() {
             fullWidth
             variant="contained"
             color="primary"
+            disabled={loading}
             sx={{ py: 1.5 }}
           >
-            Ingresar
+            {loading ? 'Ingresando…' : 'Ingresar'}
           </Button>
           <Link
             component="button"

@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material'
 import HomePage from './pages/HomePage'
 import Login from './pages/Login'
+import Dashboard from './pages/Dashboard'
 
 const theme = createTheme({
   palette: {
@@ -30,6 +31,7 @@ function App() {
         <Routes>
           <Route index element={<HomePage />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/dashboard" element={<Dashboard />} />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>
