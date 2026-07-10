@@ -1,6 +1,6 @@
-import Navbar from './Navbar'
-import HeroBanner from './HeroBanner'
-import Footer from './Footer'
+import Navbar from '../components/Navbar'
+import HeroBanner from '../components/HeroBanner'
+import Footer from '../components/Footer'
 import { Box } from '@mui/material'
 
 function HomePage() {

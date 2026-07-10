@@ -1,5 +1,7 @@
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material'
-import HomePage from './components/HomePage'
+import HomePage from './pages/HomePage'
+import Login from './pages/Login'
 
 const theme = createTheme({
   palette: {
@@ -24,7 +26,12 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <HomePage />
+      <BrowserRouter>
+        <Routes>
+          <Route index element={<HomePage />} />
+          <Route path="/login" element={<Login />} />
+        </Routes>
+      </BrowserRouter>
     </ThemeProvider>
   )
 }
