@@ -189,9 +189,9 @@ function Login() {
         <Divider sx={{ color: 'text.secondary' }}>o</Divider>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <Typography sx={{ textAlign: 'center', color: 'text.secondary' }}>
-            {t('login.noAccount')}{' '}
+            ¿No tenés cuenta?{' '}
             <Link href="/registro" variant="body2">
-              {t('login.signUp')}
+              Registrate
             </Link>
           </Typography>
         </Box>
