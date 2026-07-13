@@ -13,9 +13,11 @@ function Footer() {
       <Container maxWidth="lg">
         <Stack
           direction={{ xs: 'column', sm: 'row' }}
-          justifyContent="space-between"
-          alignItems="center"
           spacing={2}
+          sx={{
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
         >
           <Typography variant="body2" color="#00e676" sx={{ fontWeight: 600 }}>
             TourneyFy

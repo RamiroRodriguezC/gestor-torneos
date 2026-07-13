@@ -3,6 +3,10 @@ import { ThemeProvider, createTheme, CssBaseline } from '@mui/material'
 import HomePage from './pages/HomePage'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
+import Tournaments from './pages/Tournaments'
+import Teams from './pages/Teams'
+import Profile from './pages/Profile'
+import Config from './pages/Config'
 
 const theme = createTheme({
   palette: {
@@ -32,6 +36,10 @@ function App() {
           <Route index element={<HomePage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard/tournaments" element={<Tournaments />} />
+          <Route path="/dashboard/teams" element={<Teams />} />
+          <Route path="/dashboard/profile" element={<Profile />} />
+          <Route path="/dashboard/config" element={<Config />} />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>
