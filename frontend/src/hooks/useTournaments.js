@@ -17,6 +17,12 @@ export function useTournamentsByStatus(status) {
   return useLiveQuery(() => db.tournaments.where('[status+isDeleted]').equals([status, false]).toArray(), [status], [])
 }
 
-export function useTournamentsByOrganizer(userId) {
-  return useLiveQuery(() => db.tournaments.where('organizerId').equals(userId).filter((t) => !t.isDeleted).toArray(), [userId], [])
+export function useTournamentsByUser(userId) {
+  return useLiveQuery(async () => {
+    if (!userId) return []
+    const user = await db.users.get(userId)
+    if (!user?.tournaments?.length) return []
+    const tournamentIds = user.tournaments.map(t => t.tournamentId)
+    return db.tournaments.where('_id').anyOf(tournamentIds).filter(t => !t.isDeleted).toArray()
+  }, [userId], [])
 }

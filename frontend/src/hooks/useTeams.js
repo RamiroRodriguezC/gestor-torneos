@@ -13,6 +13,12 @@ export function useTeamsByDiscipline(sportConfigId) {
   return useLiveQuery(() => db.teams.where('discipline').equals(sportConfigId).toArray(), [sportConfigId], [])
 }
 
-export function useTeamsByCaptain(userId) {
-  return useLiveQuery(() => db.teams.where('capitanId').equals(userId).toArray(), [userId], [])
+export function useTeamsByUser(userId) {
+  return useLiveQuery(async () => {
+    if (!userId) return []
+    const user = await db.users.get(userId)
+    if (!user?.teams?.length) return []
+    const teamIds = user.teams.map(t => t.teamId)
+    return db.teams.where('_id').anyOf(teamIds).toArray()
+  }, [userId], [])
 }

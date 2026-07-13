@@ -1,4 +1,5 @@
 import { putUser } from './users.js'
+import { syncUserEnvironment } from './userSync.js'
 
 export async function login(email, password) {
   const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/users/login`, {
@@ -12,6 +13,7 @@ export async function login(email, password) {
   localStorage.setItem('token', token)
   localStorage.setItem('currentUserId', usuario.id)
   await putUser({ _id: usuario.id, ...usuario })
+  await syncUserEnvironment(usuario.id)
   return usuario
 }
 
