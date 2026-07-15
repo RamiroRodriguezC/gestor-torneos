@@ -15,6 +15,7 @@ const UserTeamsSchema = new Schema({
 const UserSchema = new Schema({
   name: { type: String, required: true },
   lastName: { type: String, required: true },
+  username: { type: String, required: true, unique: true },
   email: { type: String, required: true, unique: true },
   hashedPassword: { type: String, required: true },
   globalRole: { type: String, enum: GLOBAL_ROLE, default: 'USER' },
@@ -25,6 +26,7 @@ const UserSchema = new Schema({
   tournaments: [UserTournamentsSchema],
   teams: [UserTeamsSchema],
   applications: [{ type: Schema.Types.ObjectId, ref: 'Application' }],
+  sportsInterests: [{ type: Schema.Types.ObjectId, ref: 'SportsConfig' }],
   isDeleted: { type: Boolean, default: false }
 }, { timestamps: true });
 

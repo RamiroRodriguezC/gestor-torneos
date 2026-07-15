@@ -60,7 +60,8 @@ export const login = handle(async (req) => {
       lastName: usuario.lastName,
       email: usuario.email,
       globalRole: usuario.globalRole,
-      url_profile_photo: usuario.url_profile_photo
+      url_profile_photo: usuario.url_profile_photo,
+      sportsInterests: usuario.sportsInterests || []
     }
   };
 });

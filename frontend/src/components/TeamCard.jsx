@@ -1,18 +1,23 @@
+import { useNavigate } from 'react-router-dom'
 import { Avatar, Card, CardContent, Typography, Box, Chip, Stack } from '@mui/material'
 import GroupsIcon from '@mui/icons-material/Groups'
 import { useSport } from '../hooks/useSportsConfig'
 
 function TeamCard({ team, userId }) {
+  const navigate = useNavigate()
   const sport = useSport(team.discipline)
   const isCaptain = team.capitanId === userId
   const memberCount = team.members?.length ?? 0
 
   return (
     <Card
+      onClick={() => navigate(`/dashboard/teams/${team._id}`)}
       sx={{
+        cursor: 'pointer',
         bgcolor: '#1a1a1a',
         border: '1px solid',
         borderColor: 'divider',
+        transition: 'border-color 0.2s',
         '&:hover': { borderColor: '#00e676' },
       }}
     >

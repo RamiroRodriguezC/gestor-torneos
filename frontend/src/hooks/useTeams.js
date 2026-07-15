@@ -18,7 +18,8 @@ export function useTeamsByUser(userId) {
     if (!userId) return []
     const user = await db.users.get(userId)
     if (!user?.teams?.length) return []
-    const teamIds = user.teams.map(t => t.teamId)
+    const teamIds = user.teams.map(t => t.teamId).filter(Boolean)
+    if (!teamIds.length) return []
     return db.teams.where('_id').anyOf(teamIds).toArray()
   }, [userId], [])
 }

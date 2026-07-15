@@ -6,7 +6,7 @@ export function useSports() {
 }
 
 export function useSport(id) {
-  return useLiveQuery(() => db.sportsConfig.get(id), [id], null)
+  return useLiveQuery(() => (id ? db.sportsConfig.get(id) : null), [id], null)
 }
 
 export function useSportByName(name) {
