@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { ThemeProvider, createTheme, CssBaseline } from '@mui/material'
+import { ThemeProvider, createTheme, CssBaseline, Container } from '@mui/material'
+import ErrorDisplay from './components/ErrorDisplay'
 import HomePage from './pages/HomePage'
 import Login from './pages/Login'
 import Register from './pages/Register'
@@ -48,7 +49,7 @@ function App() {
           <Route path="/dashboard/config" element={<Config />} />
           <Route path="/tournament/:id" element={<TournamentPage />} />
           <Route path="/team/:id" element={<Team />} />
-          <Route path="*" element={<div>404 Not Found</div>} />
+          <Route path="*" element={<Container maxWidth="md"><ErrorDisplay type="PAGE_NOT_FOUND" size="lg" /></Container>} />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>

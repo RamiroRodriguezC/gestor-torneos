@@ -1,6 +1,7 @@
-import createError from 'http-errors';
 import Application from '../models/ApplicationsModel.js';
 import { requireDB } from '../config/db.js';
+import { AppError } from '../utils/AppError.js';
+import { ErrorType } from '../constants/errorTypes.js';
 import { APPLICATION_STATUS } from '../constants/enums.js';
 
 const validate = (data, isUpdate = false) => {
@@ -36,7 +37,7 @@ export const create = async (data) => {
   requireDB();
 
   const errors = validate(data);
-  if (errors.length) throw createError(400, errors.join('; '));
+  if (errors.length) throw new AppError(ErrorType.VALIDATION_ERROR, errors.join('; '));
 
   return Application.create(data);
 };
@@ -45,9 +46,9 @@ export const update = async (id, data) => {
   requireDB();
 
   const errors = validate(data, true);
-  if (errors.length) throw createError(400, errors.join('; '));
+  if (errors.length) throw new AppError(ErrorType.VALIDATION_ERROR, errors.join('; '));
 
   const application = await Application.findByIdAndUpdate(id, data, { new: true, runValidators: true });
-  if (!application) throw createError(404, 'Solicitud no encontrada');
+  if (!application) throw new AppError(ErrorType.APPLICATION_NOT_FOUND);
   return application;
 };

@@ -1,5 +1,7 @@
 import handle from '../utils/handle.js';
 import * as applicationsService from '../services/applications.service.js';
+import { AppError } from '../utils/AppError.js';
+import { ErrorType } from '../constants/errorTypes.js';
 
 export const getAll = handle(async () => {
   const data = await applicationsService.findAll();
@@ -8,7 +10,7 @@ export const getAll = handle(async () => {
 
 export const getById = handle(async (req) => {
   const data = await applicationsService.findById(req.params.id);
-  if (!data) throw new Error('Solicitud no encontrada');
+  if (!data) throw new AppError(ErrorType.APPLICATION_NOT_FOUND);
   return { data };
 });
 

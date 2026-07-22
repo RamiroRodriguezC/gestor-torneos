@@ -10,6 +10,7 @@ import { useSport } from '../hooks/useSportsConfig'
 import { useAuth } from '../hooks/useAuth'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../lib/db'
+import ErrorDisplay from '../components/ErrorDisplay'
 
 function Team() {
   const { id } = useParams()
@@ -32,7 +33,17 @@ function Team() {
     [],
   )
 
-  if (!user || !team) return null
+  if (!user) return null
+  if (!team) {
+    return (
+      <>
+        <Navbar />
+        <Container maxWidth="md">
+          <ErrorDisplay type="TEAM_NOT_FOUND" />
+        </Container>
+      </>
+    )
+  }
 
   return (
     <>

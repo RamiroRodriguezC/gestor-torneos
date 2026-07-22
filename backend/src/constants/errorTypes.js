@@ -1,0 +1,15 @@
+export const ErrorType = Object.freeze({
+  USER_NOT_FOUND:       Object.freeze({ type: 'USER_NOT_FOUND',       code: 404, defaultMessage: 'El usuario no existe o no está disponible.' }),
+  TEAM_NOT_FOUND:       Object.freeze({ type: 'TEAM_NOT_FOUND',       code: 404, defaultMessage: 'El equipo no fue encontrado.' }),
+  TOURNAMENT_NOT_FOUND: Object.freeze({ type: 'TOURNAMENT_NOT_FOUND', code: 404, defaultMessage: 'El torneo no existe.' }),
+  SPORT_NOT_FOUND:      Object.freeze({ type: 'SPORT_NOT_FOUND',      code: 404, defaultMessage: 'El deporte no fue encontrado.' }),
+  MATCH_NOT_FOUND:      Object.freeze({ type: 'MATCH_NOT_FOUND',      code: 404, defaultMessage: 'El partido no existe.' }),
+  APPLICATION_NOT_FOUND: Object.freeze({ type: 'APPLICATION_NOT_FOUND', code: 404, defaultMessage: 'La solicitud no fue encontrada.' }),
+  FIELD_NOT_FOUND:      Object.freeze({ type: 'FIELD_NOT_FOUND',      code: 404, defaultMessage: 'La cancha no fue encontrada.' }),
+  VALIDATION_ERROR:     Object.freeze({ type: 'VALIDATION_ERROR',     code: 400, defaultMessage: 'Datos inválidos.' }),
+  INVALID_CREDENTIALS:  Object.freeze({ type: 'INVALID_CREDENTIALS',  code: 400, defaultMessage: 'Credenciales inválidas.' }),
+  UNAUTHORIZED:         Object.freeze({ type: 'UNAUTHORIZED',         code: 401, defaultMessage: 'Acceso denegado.' }),
+  FORBIDDEN:            Object.freeze({ type: 'FORBIDDEN',            code: 403, defaultMessage: 'No tienes permisos.' }),
+  CONFLICT:             Object.freeze({ type: 'CONFLICT',             code: 409, defaultMessage: 'El recurso ya existe.' }),
+  INTERNAL_ERROR:       Object.freeze({ type: 'INTERNAL_ERROR',       code: 500, defaultMessage: 'Error interno del servidor.' }),
+})

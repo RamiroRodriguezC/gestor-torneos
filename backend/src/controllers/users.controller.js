@@ -1,5 +1,7 @@
 import handle from '../utils/handle.js';
 import * as usersService from '../services/users.service.js';
+import { AppError } from '../utils/AppError.js';
+import { ErrorType } from '../constants/errorTypes.js';
 
 export const getAll = handle(async () => {
   const data = await usersService.findAll();
@@ -8,7 +10,7 @@ export const getAll = handle(async () => {
 
 export const getById = handle(async (req) => {
   const data = await usersService.findById(req.params.id);
-  if (!data) throw new Error('User not found');
+  if (!data) throw new AppError(ErrorType.USER_NOT_FOUND, 'User not found');
   return { data };
 });
 
@@ -36,17 +38,17 @@ export const login = handle(async (req) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    throw Object.assign(new Error('Email y contraseña son requeridos'), { status: 400 });
+    throw new AppError(ErrorType.VALIDATION_ERROR, 'Email y contraseña son requeridos');
   }
 
   const usuario = await usersService.findByEmail(email);
   if (!usuario) {
-    throw Object.assign(new Error('Usuario no encontrado'), { status: 400 });
+    throw new AppError(ErrorType.INVALID_CREDENTIALS, 'Usuario no encontrado');
   }
 
   const isMatch = await usersService.validatePassword(password, usuario);
   if (!isMatch) {
-    throw Object.assign(new Error('Contraseña incorrecta'), { status: 400 });
+    throw new AppError(ErrorType.INVALID_CREDENTIALS, 'Contraseña incorrecta');
   }
 
   const token = usersService.generateToken(usuario);

@@ -1,6 +1,7 @@
-import createError from 'http-errors';
 import Match from '../models/MatchesModel.js';
 import { requireDB } from '../config/db.js';
+import { AppError } from '../utils/AppError.js';
+import { ErrorType } from '../constants/errorTypes.js';
 import { MATCH_STATUS } from '../constants/enums.js';
 
 const validate = (data, isUpdate = false) => {
@@ -47,7 +48,7 @@ export const create = async (data) => {
   requireDB();
 
   const errors = validate(data);
-  if (errors.length) throw createError(400, errors.join('; '));
+  if (errors.length) throw new AppError(ErrorType.VALIDATION_ERROR, errors.join('; '));
 
   return Match.create(data);
 };
@@ -56,9 +57,9 @@ export const update = async (id, data) => {
   requireDB();
 
   const errors = validate(data, true);
-  if (errors.length) throw createError(400, errors.join('; '));
+  if (errors.length) throw new AppError(ErrorType.VALIDATION_ERROR, errors.join('; '));
 
   const match = await Match.findByIdAndUpdate(id, data, { new: true, runValidators: true });
-  if (!match) throw createError(404, 'Partido no encontrado');
+  if (!match) throw new AppError(ErrorType.MATCH_NOT_FOUND);
   return match;
 };

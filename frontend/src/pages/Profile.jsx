@@ -5,6 +5,7 @@ import { UsernameTag, SportsTag } from '../components/Tags'
 import { useAuth } from '../hooks/useAuth'
 import { useSports } from '../hooks/useSportsConfig'
 import { useUser } from '../hooks/useUsers'
+import ErrorDisplay from '../components/ErrorDisplay'
 
 function Profile() {
   const { userId } = useParams()
@@ -12,12 +13,23 @@ function Profile() {
   const profileUser = useUser(userId)
   const sports = useSports()
 
-  if (userId && !profileUser) {
+  if (userId && profileUser === null) {
     return (
       <>
         <Navbar />
-        <Container maxWidth="md" sx={{ mt: 4, textAlign: 'center', py: 8 }}>
-          <Typography variant="h6" color="grey.500">Cargando perfil...</Typography>
+        <Container maxWidth="md">
+          <ErrorDisplay message="Cargando perfil..." />
+        </Container>
+      </>
+    )
+  }
+
+  if (userId && profileUser === undefined) {
+    return (
+      <>
+        <Navbar />
+        <Container maxWidth="md">
+          <ErrorDisplay type="USER_NOT_FOUND" />
         </Container>
       </>
     )
@@ -29,10 +41,8 @@ function Profile() {
     return (
       <>
         <Navbar />
-        <Container maxWidth="md" sx={{ mt: 4, textAlign: 'center', py: 8 }}>
-          <Typography variant="h6" color="grey.500">
-            No se pudo cargar el perfil — el usuario no existe o no está disponible.
-          </Typography>
+        <Container maxWidth="md">
+          <ErrorDisplay type="USER_NOT_FOUND" />
         </Container>
       </>
     )

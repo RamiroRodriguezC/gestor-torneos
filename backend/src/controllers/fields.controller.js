@@ -1,5 +1,7 @@
 import handle from '../utils/handle.js';
 import * as fieldsService from '../services/fields.service.js';
+import { AppError } from '../utils/AppError.js';
+import { ErrorType } from '../constants/errorTypes.js';
 
 export const getAll = handle(async () => {
   const data = await fieldsService.findAll();
@@ -8,7 +10,7 @@ export const getAll = handle(async () => {
 
 export const getById = handle(async (req) => {
   const data = await fieldsService.findById(req.params.id);
-  if (!data) throw new Error('Cancha no encontrada');
+  if (!data) throw new AppError(ErrorType.FIELD_NOT_FOUND);
   return { data };
 });
 

@@ -1,8 +1,9 @@
-import createError from 'http-errors';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import User from '../models/UsersModels.js';
 import Team from '../models/TeamsModel.js';
+import { AppError } from '../utils/AppError.js';
+import { ErrorType } from '../constants/errorTypes.js';
 import Tournament from '../models/TournamentsModel.js';
 import { requireDB } from '../config/db.js';
 import { isValidEmail } from '../utils/validation.js';
@@ -52,10 +53,10 @@ export const create = async (data) => {
   requireDB();
 
   const errors = validate(data);
-  if (errors.length) throw createError(400, errors.join('; '));
+  if (errors.length) throw new AppError(ErrorType.VALIDATION_ERROR, errors.join('; '));
 
   const exists = await User.findOne({ email: data.email });
-  if (exists) throw createError(409, 'El email ya está registrado');
+  if (exists) throw new AppError(ErrorType.CONFLICT, 'El email ya está registrado');
 
   const salt = await bcrypt.genSalt(10);
   data.hashedPassword = await bcrypt.hash(data.hashedPassword, salt);
@@ -68,11 +69,11 @@ export const update = async (id, data) => {
   requireDB();
 
   const errors = validate(data, true);
-  if (errors.length) throw createError(400, errors.join('; '));
+  if (errors.length) throw new AppError(ErrorType.VALIDATION_ERROR, errors.join('; '));
 
   if (data.email) {
     const dup = await User.findOne({ email: data.email, _id: { $ne: id } });
-    if (dup) throw createError(409, 'El email ya está registrado por otro usuario');
+    if (dup) throw new AppError(ErrorType.CONFLICT, 'El email ya está registrado por otro usuario');
   }
 
   if (data.hashedPassword) {
@@ -81,14 +82,14 @@ export const update = async (id, data) => {
   }
 
   const user = await User.findByIdAndUpdate(id, data, { new: true, runValidators: true }).select(EXCLUDED);
-  if (!user) throw createError(404, 'User not found');
+  if (!user) throw new AppError(ErrorType.USER_NOT_FOUND, 'User not found');
   return user;
 };
 
 export const findUserTournaments = async (userId) => {
   requireDB();
   const user = await User.findById(userId).select('tournaments');
-  if (!user) throw createError(404, 'Usuario no encontrado');
+  if (!user) throw new AppError(ErrorType.USER_NOT_FOUND);
   const ids = user.tournaments.map(t => t.tournamentId);
   if (ids.length === 0) return [];
   return Tournament.find({ _id: { $in: ids }, isDeleted: false });
@@ -97,7 +98,7 @@ export const findUserTournaments = async (userId) => {
 export const findUserTeams = async (userId) => {
   requireDB();
   const user = await User.findById(userId).select('teams');
-  if (!user) throw createError(404, 'Usuario no encontrado');
+  if (!user) throw new AppError(ErrorType.USER_NOT_FOUND);
   const ids = user.teams.map(t => t.teamId);
   if (ids.length === 0) return [];
   return Team.find({ _id: { $in: ids }, isDeleted: false });

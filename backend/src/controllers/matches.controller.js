@@ -1,5 +1,7 @@
 import handle from '../utils/handle.js';
 import * as matchesService from '../services/matches.service.js';
+import { AppError } from '../utils/AppError.js';
+import { ErrorType } from '../constants/errorTypes.js';
 
 export const getAll = handle(async () => {
   const data = await matchesService.findAll();
@@ -8,7 +10,7 @@ export const getAll = handle(async () => {
 
 export const getById = handle(async (req) => {
   const data = await matchesService.findById(req.params.id);
-  if (!data) throw new Error('Partido no encontrado');
+  if (!data) throw new AppError(ErrorType.MATCH_NOT_FOUND);
   return { data };
 });
 

@@ -1,6 +1,7 @@
-import createError from 'http-errors';
-import Field from '../models/FieldModel.js';
+import Field from '../models/FieldsModel.js';
 import { requireDB } from '../config/db.js';
+import { AppError } from '../utils/AppError.js';
+import { ErrorType } from '../constants/errorTypes.js';
 
 const validate = (data, isUpdate = false) => {
   const errors = [];
@@ -29,7 +30,7 @@ export const create = async (data) => {
   requireDB();
 
   const errors = validate(data);
-  if (errors.length) throw createError(400, errors.join('; '));
+  if (errors.length) throw new AppError(ErrorType.VALIDATION_ERROR, errors.join('; '));
 
   return Field.create(data);
 };
@@ -38,9 +39,9 @@ export const update = async (id, data) => {
   requireDB();
 
   const errors = validate(data, true);
-  if (errors.length) throw createError(400, errors.join('; '));
+  if (errors.length) throw new AppError(ErrorType.VALIDATION_ERROR, errors.join('; '));
 
   const field = await Field.findByIdAndUpdate(id, data, { new: true, runValidators: true });
-  if (!field) throw createError(404, 'Cancha no encontrada');
+  if (!field) throw new AppError(ErrorType.FIELD_NOT_FOUND);
   return field;
 };

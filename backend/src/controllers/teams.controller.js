@@ -1,5 +1,7 @@
 import handle from '../utils/handle.js';
 import * as teamsService from '../services/teams.service.js';
+import { AppError } from '../utils/AppError.js';
+import { ErrorType } from '../constants/errorTypes.js';
 
 export const getAll = handle(async () => {
   const data = await teamsService.findAll();
@@ -8,7 +10,7 @@ export const getAll = handle(async () => {
 
 export const getById = handle(async (req) => {
   const data = await teamsService.findById(req.params.id);
-  if (!data) throw new Error('Equipo no encontrado');
+  if (!data) throw new AppError(ErrorType.TEAM_NOT_FOUND);
   return { data };
 });
 
