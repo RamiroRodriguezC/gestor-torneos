@@ -9,6 +9,7 @@ import TournamentStandings from '../components/tournament/TournamentStandings'
 import TournamentParticipants from '../components/tournament/TournamentParticipants'
 import TournamentStats from '../components/tournament/TournamentStats'
 import TournamentFixture from '../components/tournament/TournamentFixture'
+import UnderConstruction from '../components/UnderConstruction'
 
 function TournamentPage() {
   const { id } = useParams()
@@ -39,6 +40,9 @@ function TournamentPage() {
         )}
         {activeSection === 'fixture' && (
           <TournamentFixture tournament={tournament} user={user} />
+        )}
+        {activeSection === 'announcements' && (
+          <UnderConstruction feature="Anuncios" status="development" size="lg" />
         )}
       </Container>
     </Box>

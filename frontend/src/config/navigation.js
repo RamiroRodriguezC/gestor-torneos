@@ -3,6 +3,7 @@ import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
 import GroupsIcon from '@mui/icons-material/Groups'
 import BarChartIcon from '@mui/icons-material/BarChart'
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
+import CampaignIcon from '@mui/icons-material/Campaign'
 import PersonIcon from '@mui/icons-material/Person'
 import SettingsIcon from '@mui/icons-material/Settings'
 
@@ -29,4 +30,5 @@ export const tournamentSections = [
   { label: 'Participantes', value: 'teams', icon: GroupsIcon, type: 'navigation' },
   { label: 'Estadísticas', value: 'stats', icon: BarChartIcon, type: 'navigation' },
   { label: 'Fixture', value: 'fixture', icon: CalendarMonthIcon, type: 'navigation' },
+  { label: 'Anuncios', value: 'announcements', icon: CampaignIcon, type: 'navigation' },
 ]
