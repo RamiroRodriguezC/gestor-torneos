@@ -1,6 +1,6 @@
 import { Container, Typography, Stack } from '@mui/material'
-import Navbar from '../components/Navbar'
-import TournamentCard from '../components/TournamentCard'
+import Navbar from '../components/layout/Navbar'
+import TournamentCard from '../components/tournament/TournamentCard'
 import { useAuth } from '../hooks/useAuth'
 import { useTournamentsByUser } from '../hooks/useTournaments'
 

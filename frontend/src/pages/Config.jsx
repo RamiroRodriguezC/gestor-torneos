@@ -1,5 +1,5 @@
 import { Container, Typography } from '@mui/material'
-import Navbar from '../components/Navbar'
+import Navbar from '../components/layout/Navbar'
 
 function Config() {
   return (

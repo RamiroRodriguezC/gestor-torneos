@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { Avatar, Card, CardContent, Typography, Box, Chip, Stack } from '@mui/material'
 import GroupsIcon from '@mui/icons-material/Groups'
-import { useSport } from '../hooks/useSportsConfig'
+import { useSport } from '../../hooks/useSportsConfig'
 
 function TeamCard({ team, userId }) {
   const navigate = useNavigate()

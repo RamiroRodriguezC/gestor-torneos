@@ -16,7 +16,7 @@ import StepLabel from '@mui/material/StepLabel'
 import Stack from '@mui/material/Stack'
 import Grid from '@mui/material/Grid'
 import { styled } from '@mui/material/styles'
-import AppLogo from '../components/AppLogo'
+import AppLogo from '../components/layout/AppLogo'
 import { putUser } from '../data/users'
 import { syncUserEnvironment } from '../data/userSync'
 

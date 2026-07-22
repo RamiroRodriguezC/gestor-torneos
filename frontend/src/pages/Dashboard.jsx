@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { Container, Typography, Button, Box } from '@mui/material'
 import { useAuth } from '../hooks/useAuth'
-import Navbar from '../components/Navbar'
+import Navbar from '../components/layout/Navbar'
 
 function Dashboard() {
   const navigate = useNavigate()

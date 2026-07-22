@@ -1,9 +1,14 @@
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { Container, Typography, Box } from '@mui/material'
+import { Container, Box } from '@mui/material'
 import { useAuth } from '../hooks/useAuth'
 import { useTournament } from '../hooks/useTournaments'
-import TournamentNavbar from '../components/TournamentNavbar'
+import TournamentNavbar from '../components/layout/TournamentNavbar'
+import TournamentGeneral from '../components/tournament/TournamentGeneral'
+import TournamentStandings from '../components/tournament/TournamentStandings'
+import TournamentTeams from '../components/tournament/TournamentTeams'
+import TournamentStats from '../components/tournament/TournamentStats'
+import TournamentFixture from '../components/tournament/TournamentFixture'
 
 function TournamentPage() {
   const { id } = useParams()
@@ -21,11 +26,19 @@ function TournamentPage() {
       />
       <Container>
         {activeSection === 'general' && (
-          <Box sx={{ mt: 8, textAlign: 'center' }}>
-            <Typography variant="h3" sx={{ fontWeight: 700 }}>
-              Bienvenido al torneo {tournament.title}
-            </Typography>
-          </Box>
+          <TournamentGeneral tournament={tournament} user={user} />
+        )}
+        {activeSection === 'standings' && (
+          <TournamentStandings tournament={tournament} />
+        )}
+        {activeSection === 'teams' && (
+          <TournamentTeams tournament={tournament} />
+        )}
+        {activeSection === 'stats' && (
+          <TournamentStats tournament={tournament} />
+        )}
+        {activeSection === 'fixture' && (
+          <TournamentFixture tournament={tournament} user={user} />
         )}
       </Container>
     </Box>

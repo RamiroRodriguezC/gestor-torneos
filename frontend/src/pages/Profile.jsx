@@ -1,5 +1,5 @@
 import { Container, Typography, Avatar, Chip, Box, Paper, Grid, Divider, Stack } from '@mui/material'
-import Navbar from '../components/Navbar'
+import Navbar from '../components/layout/Navbar'
 import { UsernameTag, SportsTag } from '../components/Tags'
 import { useAuth } from '../hooks/useAuth'
 import { useSports } from '../hooks/useSportsConfig'

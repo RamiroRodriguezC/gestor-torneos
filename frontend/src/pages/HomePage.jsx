@@ -1,6 +1,6 @@
-import AuthNavbar from '../components/AuthNavbar'
-import HeroBanner from '../components/HeroBanner'
-import Footer from '../components/Footer'
+import AuthNavbar from '../components/layout/AuthNavbar'
+import HeroBanner from '../components/layout/HeroBanner'
+import Footer from '../components/layout/Footer'
 import { Box } from '@mui/material'
 
 function HomePage() {

@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { Card, CardContent, Typography, Box, Chip, Stack } from '@mui/material'
-import { useSport } from '../hooks/useSportsConfig'
+import { useSport } from '../../hooks/useSportsConfig'
 
 const STATUS_COLORS = {
   PUBLICADO: '#00e676',
