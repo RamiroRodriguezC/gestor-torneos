@@ -2,6 +2,7 @@ import { Schema, model } from 'mongoose';
 import {
   FINISHING_CRITERIA_TYPE, FINISHING_CRITERIA_UNIT,
   TOURNAMENT_FORMAT, TOURNAMENT_STATUS, APPLICATION_STATUS,
+  ROUND_TYPE, ROUND_STATUS,
 } from '../constants/enums.js';
 
 const ParticipantSnapshotSchema = new Schema({
@@ -16,11 +17,13 @@ const ApplicationSummarySchema = new Schema({
   status: { type: String, enum: APPLICATION_STATUS, default: 'PENDIENTE' }
 }, { _id: false });
 
-const dateSchema = new Schema({
+const roundSchema = new Schema({
   roundName: { type: String, required: true },
   roundNumber: { type: Number, required: true },
   startDate: { type: Date },
   endDate: { type: Date },
+  type: { type: String, enum: ROUND_TYPE, default: 'ROUND_ROBIN' },
+  status: { type: String, enum: ROUND_STATUS, default: 'SCHEDULED' },
   matches: [{ type: Schema.Types.ObjectId, ref: 'Match' }]
 }, { _id: false });
 
@@ -78,7 +81,7 @@ const TournamentSchema = new Schema({
 
   participantes: [ParticipantSnapshotSchema],
   applications: [ApplicationSummarySchema],
-  dates: [dateSchema],
+  rounds: [roundSchema],
 
   isDeleted: { type: Boolean, default: false }
 }, { timestamps: true });

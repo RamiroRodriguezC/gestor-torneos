@@ -12,10 +12,10 @@ export async function getMatchesByTournament(tournamentId) {
     .toArray()
 }
 
-export async function getMatchesByTournamentAndRound(tournamentId, dateId) {
+export async function getMatchesByTournamentAndRound(tournamentId, roundId) {
   return db.matches
-    .where('[tournamentId+date.dateId]')
-    .equals([tournamentId, dateId])
+    .where('[tournamentId+round.roundId]')
+    .equals([tournamentId, roundId])
     .filter((m) => !m.isDeleted)
     .toArray()
 }

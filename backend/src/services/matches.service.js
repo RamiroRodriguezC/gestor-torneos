@@ -9,9 +9,9 @@ const validate = (data, isUpdate = false) => {
   if (!isUpdate || data.tournamentId !== undefined) {
     if (!data.tournamentId) errors.push('tournamentId es requerido');
   }
-  if (!isUpdate || data.date !== undefined) {
-    if (!data.date || !data.date.dateId || !data.date.number) {
-      errors.push('date con dateId y number es requerido');
+  if (!isUpdate || data.round !== undefined) {
+    if (!data.round || !data.round.roundId || !data.round.number) {
+      errors.push('round con roundId y number es requerido');
     }
   }
   if (!isUpdate || data.field !== undefined) {

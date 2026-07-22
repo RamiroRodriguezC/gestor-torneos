@@ -26,6 +26,12 @@ export const TOURNAMENT_FORMAT = ['SINGLE_ELIMINATION', 'DOUBLE_ELIMINATION', 'R
 /** Ciclo de vida del torneo */
 export const TOURNAMENT_STATUS = ['BORRADOR', 'PUBLICADO', 'EN_CURSO', 'FINALIZADO'];
 
+// |------------------------------- RONDA (Tournament Round) --------------------------------|
+/** Tipo de ronda dentro del torneo */
+export const ROUND_TYPE = ['ROUND_ROBIN', 'PLAYOFF_BRACKET', 'GROUP_STAGE'];
+/** Estado de la ronda */
+export const ROUND_STATUS = ['SCHEDULED', 'IN_PROCESS', 'COMPLETED'];
+
 // |---------------------------- PARTIDO (Match) ----------------------------|
 /** Lado del competidor en un partido: local (HOME), visitante (AWAY) o neutral (NONE) */
 export const COMPETITOR_SIDE = ['HOME', 'AWAY', 'NONE'];

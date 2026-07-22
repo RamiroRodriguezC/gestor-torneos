@@ -32,13 +32,13 @@ export const postParticipant = handle(async (req) => {
   return { data, count: data.length };
 });
 
-export const getDates = handle(async (req) => {
-  const data = await tournamentsService.findDates(req.params.id);
+export const getRounds = handle(async (req) => {
+  const data = await tournamentsService.findRounds(req.params.id);
   return { data, count: data.length };
 });
 
-export const postDate = handle(async (req) => {
-  const data = await tournamentsService.addDate(req.params.id, req.body);
+export const postRound = handle(async (req) => {
+  const data = await tournamentsService.addRound(req.params.id, req.body);
   return { data, count: data.length };
 });
 

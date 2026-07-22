@@ -22,8 +22,8 @@ const MatchEventSchema = new Schema({
 const MatchSchema = new Schema({
   tournamentId: { type: Schema.Types.ObjectId, ref: 'Tournament', required: true },
   status: { type: String, enum: MATCH_STATUS, default: 'PROGRAMADO' },
-  date: {
-    dateId: { type: Schema.Types.ObjectId, ref: 'Date', required: true },
+  round: {
+    roundId: { type: Schema.Types.ObjectId, ref: 'Round', required: true },
     number: { type: Number, required: true }
   },
   field: {

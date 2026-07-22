@@ -9,6 +9,7 @@ import Teams from './pages/Teams'
 import Team from './pages/Team'
 import Profile from './pages/Profile'
 import Config from './pages/Config'
+import TournamentPage from './pages/TournamentPage'
 
 const theme = createTheme({
   palette: {
@@ -44,6 +45,7 @@ function App() {
           <Route path="/dashboard/teams/:id" element={<Team />} />
           <Route path="/dashboard/profile" element={<Profile />} />
           <Route path="/dashboard/config" element={<Config />} />
+          <Route path="/tournament/:id" element={<TournamentPage />} />
           <Route path="/team/:id" element={<Team />} />
           <Route path="*" element={<div>404 Not Found</div>} />
         </Routes>

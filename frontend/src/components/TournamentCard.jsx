@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom'
 import { Card, CardContent, Typography, Box, Chip, Stack } from '@mui/material'
 import { useSport } from '../hooks/useSportsConfig'
 
@@ -9,6 +10,7 @@ const STATUS_COLORS = {
 }
 
 function TournamentCard({ tournament }) {
+  const navigate = useNavigate()
   const sport = useSport(tournament.sportConfigId)
 
   const formatDate = (dateStr) => {
@@ -22,10 +24,12 @@ function TournamentCard({ tournament }) {
 
   return (
     <Card
+      onClick={() => navigate(`/tournament/${tournament._id}`)}
       sx={{
         bgcolor: '#1a1a1a',
         border: '1px solid',
         borderColor: 'divider',
+        cursor: 'pointer',
         '&:hover': { borderColor: '#00e676' },
       }}
     >

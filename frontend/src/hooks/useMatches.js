@@ -9,8 +9,8 @@ export function useMatchesByTournament(tournamentId) {
   return useLiveQuery(() => db.matches.where('tournamentId').equals(tournamentId).filter((m) => !m.isDeleted).toArray(), [tournamentId], [])
 }
 
-export function useMatchesByTournamentAndRound(tournamentId, dateId) {
-  return useLiveQuery(() => db.matches.where('[tournamentId+date.dateId]').equals([tournamentId, dateId]).filter((m) => !m.isDeleted).toArray(), [tournamentId, dateId], [])
+export function useMatchesByTournamentAndRound(tournamentId, roundId) {
+  return useLiveQuery(() => db.matches.where('[tournamentId+round.roundId]').equals([tournamentId, roundId]).filter((m) => !m.isDeleted).toArray(), [tournamentId, roundId], [])
 }
 
 export function useOfflineMatches() {

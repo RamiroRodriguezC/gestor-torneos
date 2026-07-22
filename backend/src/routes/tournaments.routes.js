@@ -2,7 +2,7 @@ import { Router } from 'express';
 import {
   getAll, getById, create, update,
   getParticipants, postParticipant,
-  getDates, postDate,
+  getRounds, postRound,
   getApplications,
 } from '../controllers/tournaments.controller.js';
 
@@ -12,8 +12,8 @@ const router = Router();
 router.get('/:id/participants', getParticipants);
 router.post('/:id/participants', postParticipant);
 
-router.get('/:id/dates', getDates);
-router.post('/:id/dates', postDate);
+router.get('/:id/rounds', getRounds);
+router.post('/:id/rounds', postRound);
 
 router.get('/:id/applications', getApplications);
 
