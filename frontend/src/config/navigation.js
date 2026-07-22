@@ -26,7 +26,7 @@ export const dashboardNavItems = [
 export const tournamentSections = [
   { label: 'General', value: 'general', icon: DashboardIcon, type: 'navigation' },
   { label: 'Clasificación', value: 'standings', icon: EmojiEventsIcon, type: 'navigation' },
-  { label: 'Equipos', value: 'teams', icon: GroupsIcon, type: 'navigation' },
+  { label: 'Participantes', value: 'teams', icon: GroupsIcon, type: 'navigation' },
   { label: 'Estadísticas', value: 'stats', icon: BarChartIcon, type: 'navigation' },
   { label: 'Fixture', value: 'fixture', icon: CalendarMonthIcon, type: 'navigation' },
 ]

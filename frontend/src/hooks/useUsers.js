@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../lib/db.js'
 
 export function useUser(id) {
-  return useLiveQuery(() => db.users.get(id), [id], null)
+  return useLiveQuery(() => (id ? db.users.get(id) : null), [id], null)
 }
 
 export function useUserByEmail(email) {

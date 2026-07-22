@@ -8,6 +8,7 @@ import {
 const ParticipantSnapshotSchema = new Schema({
   teamId: { type: Schema.Types.ObjectId, required: true, ref: 'Team' },
   displayNameSnapshot: { type: String, default: '' },
+  logoURL: { type: String, default: '' },
 }, { _id: false });
 
 const ApplicationSummarySchema = new Schema({

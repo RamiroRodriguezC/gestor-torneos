@@ -44,6 +44,7 @@ function App() {
           <Route path="/dashboard/teams" element={<Teams />} />
           <Route path="/dashboard/teams/:id" element={<Team />} />
           <Route path="/dashboard/profile" element={<Profile />} />
+          <Route path="/user/:userId" element={<Profile />} />
           <Route path="/dashboard/config" element={<Config />} />
           <Route path="/tournament/:id" element={<TournamentPage />} />
           <Route path="/team/:id" element={<Team />} />

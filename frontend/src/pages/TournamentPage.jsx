@@ -6,7 +6,7 @@ import { useTournament } from '../hooks/useTournaments'
 import TournamentNavbar from '../components/layout/TournamentNavbar'
 import TournamentGeneral from '../components/tournament/TournamentGeneral'
 import TournamentStandings from '../components/tournament/TournamentStandings'
-import TournamentTeams from '../components/tournament/TournamentTeams'
+import TournamentParticipants from '../components/tournament/TournamentParticipants'
 import TournamentStats from '../components/tournament/TournamentStats'
 import TournamentFixture from '../components/tournament/TournamentFixture'
 
@@ -32,7 +32,7 @@ function TournamentPage() {
           <TournamentStandings tournament={tournament} />
         )}
         {activeSection === 'teams' && (
-          <TournamentTeams tournament={tournament} />
+          <TournamentParticipants tournament={tournament} />
         )}
         {activeSection === 'stats' && (
           <TournamentStats tournament={tournament} />

@@ -1,18 +1,48 @@
+import { useParams } from 'react-router-dom'
 import { Container, Typography, Avatar, Chip, Box, Paper, Grid, Divider, Stack } from '@mui/material'
 import Navbar from '../components/layout/Navbar'
 import { UsernameTag, SportsTag } from '../components/Tags'
 import { useAuth } from '../hooks/useAuth'
 import { useSports } from '../hooks/useSportsConfig'
+import { useUser } from '../hooks/useUsers'
 
 function Profile() {
-  const { user } = useAuth()
+  const { userId } = useParams()
+  const { user: currentUser } = useAuth()
+  const profileUser = useUser(userId)
   const sports = useSports()
+
+  if (userId && !profileUser) {
+    return (
+      <>
+        <Navbar />
+        <Container maxWidth="md" sx={{ mt: 4, textAlign: 'center', py: 8 }}>
+          <Typography variant="h6" color="grey.500">Cargando perfil...</Typography>
+        </Container>
+      </>
+    )
+  }
+
+  const user = userId ? profileUser : currentUser
+
+  if (!user) {
+    return (
+      <>
+        <Navbar />
+        <Container maxWidth="md" sx={{ mt: 4, textAlign: 'center', py: 8 }}>
+          <Typography variant="h6" color="grey.500">
+            No se pudo cargar el perfil — el usuario no existe o no está disponible.
+          </Typography>
+        </Container>
+      </>
+    )
+  }
 
   const sportMap = Object.fromEntries(
     (sports || []).map((s) => [s._id, s.name])
   )
 
-  const userSports = (user?.sportsInterests || [])
+  const userSports = (user.sportsInterests || [])
     .map((id) => sportMap[id])
     .filter(Boolean)
 

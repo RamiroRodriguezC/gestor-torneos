@@ -80,10 +80,13 @@ function Team() {
           {members.map(member => (
             <Card
               key={member._id}
+              onClick={() => navigate(`/user/${member._id}`)}
               sx={{
                 bgcolor: '#1a1a1a',
                 border: '1px solid',
                 borderColor: member._id === team.capitanId ? '#ffd700' : 'divider',
+                cursor: 'pointer',
+                '&:hover': { borderColor: '#00e676' },
               }}
             >
               <CardContent>

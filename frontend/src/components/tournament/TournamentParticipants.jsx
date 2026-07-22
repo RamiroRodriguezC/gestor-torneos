@@ -5,29 +5,28 @@ import {
 } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
 import GroupsIcon from '@mui/icons-material/Groups'
-import { useTeams } from '../../hooks/useTeams'
+import PersonIcon from '@mui/icons-material/Person'
+import { useSport } from '../../hooks/useSportsConfig'
+import { useTeamsByDiscipline } from '../../hooks/useTeams'
 
-function TournamentTeams({ tournament }) {
+function TournamentParticipants({ tournament }) {
   const navigate = useNavigate()
-  const allTeams = useTeams()
+  const sport = useSport(tournament.sportConfigId)
   const [search, setSearch] = useState('')
 
-  const participants = useMemo(() => {
-    return (tournament.participantes || []).map((p) => {
-      const team = allTeams.find((t) => String(t._id) === String(p.teamId))
-      return { ...p, team }
-    })
-  }, [tournament, allTeams])
+  const isTeamSport = sport?.sportProps?.participantType === 'TEAM'
+  const allSportTeams = useTeamsByDiscipline(tournament.sportConfigId)
+  const teamMap = useMemo(() => {
+    if (!allSportTeams) return {}
+    return Object.fromEntries(allSportTeams.map((t) => [t._id, t]))
+  }, [allSportTeams])
+  const list = tournament.participantes || []
 
-  const filtered = useMemo(() => {
-    if (!search.trim()) return participants
-    const q = search.toLowerCase()
-    return participants.filter(
-      (p) =>
-        p.displayNameSnapshot?.toLowerCase().includes(q) ||
-        p.team?.name?.toLowerCase().includes(q)
-    )
-  }, [participants, search])
+  const filtered = !search.trim()
+    ? list
+    : list.filter((p) =>
+        p.displayNameSnapshot?.toLowerCase().includes(search.toLowerCase())
+      )
 
   if (!tournament) return null
 
@@ -36,7 +35,7 @@ function TournamentTeams({ tournament }) {
       <TextField
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        placeholder="Buscar equipo..."
+        placeholder={`Buscar ${isTeamSport ? 'equipo' : 'participante'}...`}
         fullWidth
         variant="outlined"
         size="small"
@@ -52,9 +51,15 @@ function TournamentTeams({ tournament }) {
 
       {filtered.length === 0 && (
         <Box sx={{ textAlign: 'center', py: 8 }}>
-          <GroupsIcon sx={{ fontSize: 64, color: 'grey.600', mb: 2 }} />
+          {isTeamSport ? (
+            <GroupsIcon sx={{ fontSize: 64, color: 'grey.600', mb: 2 }} />
+          ) : (
+            <PersonIcon sx={{ fontSize: 64, color: 'grey.600', mb: 2 }} />
+          )}
           <Typography variant="h6" sx={{ color: 'grey.500' }}>
-            {search ? 'No se encontraron equipos' : 'No hay equipos en este torneo'}
+            {search
+              ? `No se encontraron ${isTeamSport ? 'equipos' : 'participantes'}`
+              : `No hay ${isTeamSport ? 'equipos' : 'participantes'} en este torneo`}
           </Typography>
         </Box>
       )}
@@ -63,13 +68,15 @@ function TournamentTeams({ tournament }) {
         {filtered.map((p) => (
           <Card
             key={String(p.teamId)}
-            onClick={() => p.team && navigate(`/team/${p.teamId}`)}
+            onClick={() => {
+              if (isTeamSport) navigate(`/team/${p.teamId}`)
+            }}
             sx={{
               bgcolor: '#1a1a1a',
               border: '1px solid',
               borderColor: 'divider',
-              cursor: p.team ? 'pointer' : 'default',
-              '&:hover': p.team ? { borderColor: '#00e676' } : {},
+              cursor: isTeamSport ? 'pointer' : 'default',
+              '&:hover': isTeamSport ? { borderColor: '#00e676' } : {},
             }}
           >
             <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
@@ -82,21 +89,18 @@ function TournamentTeams({ tournament }) {
                     overflow: 'hidden', flexShrink: 0,
                   }}
                 >
-                  {p.team?.logoURL ? (
-                    <Box component="img" src={p.team.logoURL} sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    p.displayNameSnapshot?.[0] || p.team?.name?.[0] || '?'
-                  )}
+                  {(() => {
+                    const fallbackTeam = teamMap[p.teamId]
+                    const logoUrl = p.logoURL || fallbackTeam?.logoURL || ''
+                    return logoUrl
+                      ? <Box component="img" src={logoUrl} sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      : (p.displayNameSnapshot?.[0] || fallbackTeam?.name?.[0] || '?')
+                  })()}
                 </Box>
                 <Box sx={{ flexGrow: 1 }}>
                   <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                    {p.displayNameSnapshot || p.team?.name || 'Equipo'}
+                    {p.displayNameSnapshot || teamMap[p.teamId]?.name || (isTeamSport ? 'Equipo' : 'Participante')}
                   </Typography>
-                  {p.team?.name && p.displayNameSnapshot && p.team.name !== p.displayNameSnapshot && (
-                    <Typography variant="caption" sx={{ color: 'grey.500' }}>
-                      {p.team.name}
-                    </Typography>
-                  )}
                 </Box>
               </Stack>
             </CardContent>
@@ -107,4 +111,4 @@ function TournamentTeams({ tournament }) {
   )
 }
 
-export default TournamentTeams
+export default TournamentParticipants
