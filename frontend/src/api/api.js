@@ -7,17 +7,10 @@ las peticiones que hagamos con ella
 */
 
 import axios from 'axios';
-
-const mode = import.meta.env.VITE_APP_MODE || 'local_test';
-const baseUrls = {
-  local_test: import.meta.env.VITE_API_BASE_URL_LOCAL_TEST,
-  test: import.meta.env.VITE_API_BASE_URL_TEST,
-  produccion: import.meta.env.VITE_API_BASE_URL_PRODUCCION,
-};
-const baseURL = baseUrls[mode] || baseUrls.local_test;
+import { getApiBaseUrl } from '../utils/env.js';
 
 const api = axios.create({
-  baseURL,
+  baseURL: getApiBaseUrl(),
   headers: {
     'Content-Type': 'application/json'
   }

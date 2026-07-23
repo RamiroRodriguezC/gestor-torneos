@@ -19,8 +19,9 @@ import { styled } from '@mui/material/styles'
 import AppLogo from '../components/layout/AppLogo'
 import { putUser } from '../data/users'
 import { syncUserEnvironment } from '../data/userSync'
+import { getApiBaseUrl } from '../utils/env.js'
 
-const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
+const API = getApiBaseUrl()
 
 const StyledCard = styled(Card)(({ theme }) => ({
   display: 'flex',

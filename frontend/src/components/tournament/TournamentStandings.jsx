@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useMatchesByTournament } from '../../hooks/useMatches'
 import StandingsTable from './standings/StandingsTable'
+import BracketTree from './standings/BracketTree'
 import UnderConstruction from '../UnderConstruction'
 
 function TournamentStandings({ tournament, user }) {
@@ -19,7 +20,7 @@ function TournamentStandings({ tournament, user }) {
 
     case 'SINGLE_ELIMINATION':
     case 'DOUBLE_ELIMINATION':
-      return <UnderConstruction feature="Llaves de eliminatoria" status="development" size="lg" />
+      return <BracketTree tournament={tournament} matches={allMatches} myTeamId={myTeamId} />
 
     case 'SWISS':
       return <UnderConstruction feature="Sistema Suizo" status="development" size="lg" />

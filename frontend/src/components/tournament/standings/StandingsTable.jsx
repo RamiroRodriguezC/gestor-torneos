@@ -1,5 +1,6 @@
 import { Box, Table, TableContainer, TableHead, TableBody, TableRow, TableCell, Typography, Paper } from '@mui/material'
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
+import CompetitorPhoto from '../../shared/CompetitorPhoto'
 import { computeStandings } from '../../../utils/standings'
 
 const TOP_COLORS = ['#FFD700', '#C0C0C0', '#CD7F32']
@@ -61,20 +62,7 @@ function StandingsTable({ tournament, matches, myTeamId }) {
                   </TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                      <Box
-                        sx={{
-                          width: 28, height: 28, borderRadius: '50%',
-                          bgcolor: '#2a2a2a', display: 'flex', alignItems: 'center',
-                          justifyContent: 'center', fontSize: '0.7rem', fontWeight: 700,
-                          color: '#00e676', overflow: 'hidden', flexShrink: 0,
-                        }}
-                      >
-                        {row.logoURL ? (
-                          <Box component="img" src={row.logoURL} sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        ) : (
-                          row.displayName?.[0] || '?'
-                        )}
-                      </Box>
+                      <CompetitorPhoto logoURL={row.logoURL} displayName={row.displayName} />
                       <Typography
                         variant="body2"
                         sx={{

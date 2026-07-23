@@ -1,78 +1,10 @@
 import { useState, useMemo } from 'react'
 import {
-  Box, Typography, Card, CardContent, Stack, Chip, Tabs, Tab,
+  Box, Typography, Card, CardContent, Stack, Tabs, Tab,
 } from '@mui/material'
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
 import { useMatchesByTournament } from '../../hooks/useMatches'
-
-const STATUS_STYLE = {
-  PROGRAMADO: { label: 'PROGRAMADO', color: 'grey.500' },
-  EN_CURSO: { label: 'EN CURSO', color: '#00e676' },
-  FINALIZADO: { label: 'FINALIZADO', color: '#42a5f5' },
-}
-
-function FixtureMatch({ match, myTeamId }) {
-  const home = match.competitors?.[0]
-  const away = match.competitors?.[1]
-  const statusInfo = STATUS_STYLE[match.status] || STATUS_STYLE.PROGRAMADO
-  const isMyMatch = myTeamId && match.competitors?.some((c) => String(c.teamId) === String(myTeamId))
-
-  const homeScore = match.keyEvents
-    ?.filter((e) => String(e.competitorId) === String(home?.teamId) && (e.incrementScore || 0) > 0)
-    ?.reduce((s, e) => s + (e.incrementScore || 0), 0) || 0
-  const awayScore = match.keyEvents
-    ?.filter((e) => String(e.competitorId) === String(away?.teamId) && (e.incrementScore || 0) > 0)
-    ?.reduce((s, e) => s + (e.incrementScore || 0), 0) || 0
-
-  return (
-    <Card sx={{
-      bgcolor: isMyMatch ? '#1a2a1a' : '#1a1a1a',
-      border: '1px solid',
-      borderColor: isMyMatch ? '#00e67644' : 'divider',
-      '&:hover': { borderColor: isMyMatch ? '#00e676' : 'grey.600' },
-    }}>
-      <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
-        <Stack direction="row" alignItems="center" spacing={1}>
-          <Box sx={{ flex: 1, textAlign: 'right' }}>
-            <Typography variant="body2" sx={{
-              fontWeight: String(home?.teamId) === String(myTeamId) ? 700 : 400,
-              color: String(home?.teamId) === String(myTeamId) ? '#00e676' : 'text.primary',
-            }}>
-              {home?.teamId || 'Local'}
-            </Typography>
-          </Box>
-          <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 70, justifyContent: 'center' }}>
-            {match.status === 'FINALIZADO' || match.status === 'EN_CURSO' ? (
-              <Typography variant="body1" sx={{ fontWeight: 700, fontFamily: 'monospace' }}>
-                {homeScore} - {awayScore}
-              </Typography>
-            ) : (
-              <Typography variant="caption" sx={{ color: 'grey.500' }}>vs</Typography>
-            )}
-          </Stack>
-          <Box sx={{ flex: 1 }}>
-            <Typography variant="body2" sx={{
-              fontWeight: String(away?.teamId) === String(myTeamId) ? 700 : 400,
-              color: String(away?.teamId) === String(myTeamId) ? '#00e676' : 'text.primary',
-            }}>
-              {away?.teamId || 'Visitante'}
-            </Typography>
-          </Box>
-          <Box sx={{ minWidth: 80, textAlign: 'right' }}>
-            <Chip label={statusInfo.label} size="small" sx={{
-              bgcolor: statusInfo.color, color: '#000', fontWeight: 600, fontSize: '0.65rem', height: 20,
-            }} />
-          </Box>
-        </Stack>
-        {match.startAt && (
-          <Typography variant="caption" sx={{ color: 'grey.600', display: 'block', textAlign: 'right', mt: 0.5 }}>
-            {new Date(match.startAt).toLocaleString('es-AR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-          </Typography>
-        )}
-      </CardContent>
-    </Card>
-  )
-}
+import MatchCard from './match/MatchCard'
 
 function TournamentFixture({ tournament, user }) {
   const allMatches = useMatchesByTournament(tournament._id)
@@ -117,7 +49,7 @@ function TournamentFixture({ tournament, user }) {
             </Typography>
             <Stack spacing={1}>
               {myUpcoming.slice(0, 3).map((m) => (
-                <FixtureMatch key={m._id} match={m} myTeamId={myTeamId} />
+                <MatchCard key={m._id} match={m} myTeamId={myTeamId} showDate />
               ))}
             </Stack>
           </CardContent>
@@ -152,7 +84,7 @@ function TournamentFixture({ tournament, user }) {
 
       <Stack spacing={1}>
         {roundMatches.map((match) => (
-          <FixtureMatch key={match._id} match={match} myTeamId={myTeamId} />
+          <MatchCard key={match._id} match={match} myTeamId={myTeamId} showDate />
         ))}
       </Stack>
     </Box>

@@ -1,8 +1,11 @@
 import { putUser } from './users.js'
 import { syncUserEnvironment } from './userSync.js'
+import { getApiBaseUrl } from '../utils/env.js'
+
+const API = getApiBaseUrl()
 
 export async function login(email, password) {
-  const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/users/login`, {
+  const res = await fetch(`${API}/users/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),

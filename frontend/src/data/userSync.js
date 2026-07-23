@@ -4,8 +4,9 @@ import { bulkPutTournaments } from './tournaments.js'
 import { bulkPutMatches } from './matches.js'
 import { bulkPutSports } from './sportsConfig.js'
 import { db } from '../lib/db.js'
+import { getApiBaseUrl } from '../utils/env.js'
 
-const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
+const API = getApiBaseUrl()
 
 async function fetchJSON(url) {
   const res = await fetch(url)

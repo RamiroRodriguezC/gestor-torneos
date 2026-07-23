@@ -3,7 +3,7 @@ import api from '../api/api.js';
 export const loginUser = async (mail, password) => {
     try {
         const response = await api.post(`/users/login`, {
-            mail: mail,
+            email: mail,
             password : password // Tiene que ser el nombre que espera el backend, no "password" o "contraseña" o algo asi. Tiene que ser EXACTAMENTE "password" porque el backend lo lee con ese nombre.
         });
         return response.data; // Esto debería traer { user, token }

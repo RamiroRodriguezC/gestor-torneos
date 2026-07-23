@@ -30,7 +30,7 @@ function TournamentPage() {
           <TournamentGeneral tournament={tournament} user={user} />
         )}
         {activeSection === 'standings' && (
-          <TournamentStandings tournament={tournament} />
+          <TournamentStandings tournament={tournament} user={user} />
         )}
         {activeSection === 'teams' && (
           <TournamentParticipants tournament={tournament} />

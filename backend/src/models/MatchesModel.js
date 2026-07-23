@@ -4,6 +4,8 @@ import { COMPETITOR_SIDE, MATCH_STATUS } from '../constants/enums.js';
 const MatchCompetitorSchema = new Schema({
   teamId: { type: Schema.Types.ObjectId, required: true },
   side: { type: String, enum: COMPETITOR_SIDE, default: 'NONE' },
+  displayNameSnapshot: { type: String, default: '' },
+  logoURLSnapshot: { type: String, default: '' },
   lineUp: [{
     userId: { type: Schema.Types.ObjectId, ref: 'User' },
     fullName: { type: String },
@@ -16,6 +18,7 @@ const MatchEventSchema = new Schema({
   competitorId: { type: Schema.Types.ObjectId, required: true },
   playerId: { type: Schema.Types.ObjectId, ref: 'User' },
   minute: { type: Number, default: 0 },
+  incrementScore: { type: Number, default: 0 },
   value: { type: Schema.Types.Mixed }
 }, { _id: false });
 

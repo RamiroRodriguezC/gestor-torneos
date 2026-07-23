@@ -6,6 +6,7 @@ import {
 import SearchIcon from '@mui/icons-material/Search'
 import GroupsIcon from '@mui/icons-material/Groups'
 import PersonIcon from '@mui/icons-material/Person'
+import CompetitorPhoto from '../shared/CompetitorPhoto'
 import { useSport } from '../../hooks/useSportsConfig'
 import { useTeamsByDiscipline } from '../../hooks/useTeams'
 
@@ -81,22 +82,11 @@ function TournamentParticipants({ tournament }) {
           >
             <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
               <Stack direction="row" spacing={2} alignItems="center">
-                <Box
-                  sx={{
-                    width: 44, height: 44, borderRadius: '50%', bgcolor: '#2a2a2a',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '1.2rem', fontWeight: 700, color: '#00e676',
-                    overflow: 'hidden', flexShrink: 0,
-                  }}
-                >
-                  {(() => {
-                    const fallbackTeam = teamMap[p.teamId]
-                    const logoUrl = p.logoURL || fallbackTeam?.logoURL || ''
-                    return logoUrl
-                      ? <Box component="img" src={logoUrl} sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      : (p.displayNameSnapshot?.[0] || fallbackTeam?.name?.[0] || '?')
-                  })()}
-                </Box>
+                <CompetitorPhoto
+                  logoURL={p.logoURL || teamMap[p.teamId]?.logoURL || ''}
+                  displayName={p.displayNameSnapshot || teamMap[p.teamId]?.name || ''}
+                  size={44}
+                />
                 <Box sx={{ flexGrow: 1 }}>
                   <Typography variant="body1" sx={{ fontWeight: 600 }}>
                     {p.displayNameSnapshot || teamMap[p.teamId]?.name || (isTeamSport ? 'Equipo' : 'Participante')}

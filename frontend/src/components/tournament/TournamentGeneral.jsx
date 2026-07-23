@@ -1,32 +1,17 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Box, Typography, Card, CardContent, Stack, IconButton, Chip, Grid,
+  Box, Typography, Card, CardContent, Stack, IconButton, Grid,
 } from '@mui/material'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
+import CompetitorPhoto from '../shared/CompetitorPhoto'
 import { useTeam } from '../../hooks/useTeams'
 import { useMatchesByTournament } from '../../hooks/useMatches'
+import MatchCard from './match/MatchCard'
+import { getTeamScore, getOpponentScore } from './match/matchUtils'
 
-function getTeamScore(match, teamId) {
-  return match.keyEvents
-    ?.filter((e) => String(e.competitorId) === String(teamId) && (e.incrementScore || 0) > 0)
-    ?.reduce((sum, e) => sum + (e.incrementScore || 0), 0) || 0
-}
-
-function getOpponentScore(match, teamId) {
-  const opponentId = match.competitors?.find((c) => String(c.teamId) !== String(teamId))?.teamId
-  if (!opponentId) return 0
-  return getTeamScore(match, opponentId)
-}
-
-const STATUS_STYLE = {
-  PROGRAMADO: { label: 'PROG.', color: 'grey.500' },
-  EN_CURSO: { label: 'EN VIVO', color: '#00e676' },
-  FINALIZADO: { label: 'FINAL', color: '#42a5f5' },
-}
-
-function RoundSelector({ rounds, selected, onChange, myTeamId, allMatches }) {
+function RoundSelector({ rounds, selected, onChange }) {
   const currentIndex = rounds.findIndex((r) => r.roundNumber === selected)
   const prevRounds = rounds.filter((r) => r.roundNumber < selected)
   const nextRounds = rounds.filter((r) => r.roundNumber > selected)
@@ -96,20 +81,7 @@ function TeamCard({ team, myTeamId, allMatches }) {
     >
       <CardContent>
         <Stack direction="row" spacing={2} alignItems="center">
-          <Box
-            sx={{
-              width: 52, height: 52, borderRadius: '50%', bgcolor: '#2a2a2a',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '1.5rem', fontWeight: 700, color: '#00e676',
-              overflow: 'hidden',
-            }}
-          >
-            {team?.logoURL ? (
-              <Box component="img" src={team.logoURL} sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            ) : (
-              team?.name?.[0] || '?'
-            )}
-          </Box>
+          <CompetitorPhoto logoURL={team?.logoURL} displayName={team?.name} size={52} />
           <Box sx={{ flexGrow: 1 }}>
             <Typography variant="h6" sx={{ fontWeight: 600 }}>{team?.name || 'Mi equipo'}</Typography>
             {last5.length > 0 && (
@@ -130,85 +102,9 @@ function TeamCard({ team, myTeamId, allMatches }) {
             )}
             {nextMatch && nextOpponent && (
               <Typography variant="caption" sx={{ color: 'grey.500', mt: 0.5, display: 'block' }}>
-                Próximo: vs {nextOpponent.teamId}
+                Próximo: vs {nextOpponent.displayNameSnapshot || nextOpponent.teamId}
               </Typography>
             )}
-          </Box>
-        </Stack>
-      </CardContent>
-    </Card>
-  )
-}
-
-function MatchCard({ match, myTeamId }) {
-  const home = match.competitors?.[0]
-  const away = match.competitors?.[1]
-  const statusInfo = STATUS_STYLE[match.status] || STATUS_STYLE.PROGRAMADO
-
-  const homeScore = getTeamScore(match, home?.teamId)
-  const awayScore = getTeamScore(match, away?.teamId)
-  const isMyMatch = myTeamId && match.competitors?.some((c) => String(c.teamId) === String(myTeamId))
-
-  return (
-    <Card
-      sx={{
-        bgcolor: isMyMatch ? '#1a2a1a' : '#1a1a1a',
-        border: '1px solid',
-        borderColor: isMyMatch ? '#00e67644' : 'divider',
-        '&:hover': { borderColor: isMyMatch ? '#00e676' : 'grey.600' },
-      }}
-    >
-      <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
-        <Stack direction="row" alignItems="center" spacing={1}>
-          <Box sx={{ flex: 1, textAlign: 'right' }}>
-            <Typography
-              variant="body1"
-              sx={{
-                fontWeight: String(home?.teamId) === String(myTeamId) ? 700 : 400,
-                color: String(home?.teamId) === String(myTeamId) ? '#00e676' : 'text.primary',
-              }}
-            >
-              {home?.teamId || 'Local'}
-            </Typography>
-          </Box>
-          <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 80, justifyContent: 'center' }}>
-            {match.status === 'FINALIZADO' ? (
-              <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'monospace' }}>
-                {homeScore} - {awayScore}
-              </Typography>
-            ) : match.status === 'EN_CURSO' ? (
-              <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'monospace', color: '#00e676' }}>
-                {homeScore} - {awayScore}
-              </Typography>
-            ) : (
-              <Typography variant="body2" sx={{ color: 'grey.500' }}>vs</Typography>
-            )}
-          </Stack>
-          <Box sx={{ flex: 1 }}>
-            <Typography
-              variant="body1"
-              sx={{
-                fontWeight: String(away?.teamId) === String(myTeamId) ? 700 : 400,
-                color: String(away?.teamId) === String(myTeamId) ? '#00e676' : 'text.primary',
-              }}
-            >
-              {away?.teamId || 'Visitante'}
-            </Typography>
-          </Box>
-          <Box sx={{ minWidth: 60, textAlign: 'right' }}>
-            <Chip
-              label={statusInfo.label}
-              size="small"
-              sx={{
-                bgcolor: statusInfo.color,
-                color: '#000',
-                fontWeight: 600,
-                fontSize: '0.65rem',
-                height: 20,
-                animation: match.status === 'EN_CURSO' ? 'pulse 1.5s infinite' : 'none',
-                '@keyframes pulse': { '0%, 100%': { opacity: 1 }, '50%': { opacity: 0.5 } },
-              }}
-            />
           </Box>
         </Stack>
       </CardContent>
@@ -248,8 +144,6 @@ function TournamentGeneral({ tournament, user }) {
         rounds={rounds}
         selected={selectedRound}
         onChange={setSelectedRound}
-        myTeamId={myTeamId}
-        allMatches={allMatches}
       />
 
       <Grid container spacing={3}>
