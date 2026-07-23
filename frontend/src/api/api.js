@@ -8,11 +8,18 @@ las peticiones que hagamos con ella
 
 import axios from 'axios';
 
+const mode = import.meta.env.VITE_APP_MODE || 'local_test';
+const baseUrls = {
+  local_test: import.meta.env.VITE_API_BASE_URL_LOCAL_TEST,
+  test: import.meta.env.VITE_API_BASE_URL_TEST,
+  produccion: import.meta.env.VITE_API_BASE_URL_PRODUCCION,
+};
+const baseURL = baseUrls[mode] || baseUrls.local_test;
+
 const api = axios.create({
-  // Accedemos a la variable de entorno VITE_API_BASE_URL (localhost:4000 si no existe)
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api', // la URL base de tu API (leída de variable de entorno VITE_API_BASE_URL, con fallback a localhost:4000).
+  baseURL,
   headers: {
-    'Content-Type': 'application/json' // le indica al servidor que siempre vas a enviar y esperar datos en formato JSON.
+    'Content-Type': 'application/json'
   }
 });
 
