@@ -1,4 +1,4 @@
-import Field from '../models/FieldsModel.js';
+import Field from '../models/FieldModel.js';
 import { requireDB } from '../config/db.js';
 import { AppError } from '../utils/AppError.js';
 import { ErrorType } from '../constants/errorTypes.js';
