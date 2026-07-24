@@ -1,4 +1,8 @@
 import { db } from '../lib/db.js'
+import { enqueue } from './syncQueue.js'
+import { getApiBaseUrl } from '../utils/env.js'
+
+const API = getApiBaseUrl()
 
 export async function getMatchById(id) {
   return db.matches.get(id)
@@ -60,4 +64,38 @@ export async function bulkPutMatches(matches) {
 
 export async function removeMatch(id) {
   return db.matches.delete(id)
+}
+
+// Guarda la planilla de un partido (resultado, eventos, etc)
+// Si hay conexión: actualiza Dexie + envía al backend y actualiza Dexie con la respuesta
+// Si no hay conexión: actualiza Dexie + encola para enviar después
+export async function updateMatchSheet(id, data) {
+  // 1. Siempre escribimos primero en IndexedDB (actualización local optimista)
+  await putMatch(data)
+
+  // 2. Si estamos online, mandamos directo al backend
+  if (navigator.onLine) {
+    const res = await fetch(`${API}/matches/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      throw new Error(body.error?.message || 'Error al guardar la planilla')
+    }
+    // Actualizamos Dexie con la respuesta del backend (tiene los campos completos)
+    const json = await res.json()
+    await putMatch(json.data)
+    return json.data
+  }
+
+  // 3. Si estamos offline, encolamos para sincronizar después
+  await enqueue({
+    action: 'UPDATE_MATCH',
+    entity: 'matches',
+    entityId: id,
+    payload: data,
+  })
+  return data
 }

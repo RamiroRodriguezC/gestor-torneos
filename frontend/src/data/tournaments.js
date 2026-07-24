@@ -1,4 +1,18 @@
 import { db } from '../lib/db.js'
+import { getApiBaseUrl } from '../utils/env.js'
+
+const API = getApiBaseUrl()
+
+export async function createTournament(data) {
+  const res = await fetch(`${API}/tournaments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.error?.message || 'Error al crear el torneo')
+  return json.data
+}
 
 export async function getTournamentById(id) {
   return db.tournaments.get(id)

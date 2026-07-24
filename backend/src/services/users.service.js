@@ -27,6 +27,10 @@ const validate = (data, isUpdate = false) => {
     if (!data.dateOfBirth) errors.push('dateOfBirth es requerido');
     else if (isNaN(Date.parse(data.dateOfBirth))) errors.push('dateOfBirth no es una fecha válida');
   }
+  if (!isUpdate || data.username !== undefined) {
+    if (!data.username || typeof data.username !== 'string') errors.push('username es requerido');
+    else if (data.username.length < 3) errors.push('username debe tener al menos 3 caracteres');
+  }
   if (!isUpdate || data.hashedPassword !== undefined) {
     if (!data.hashedPassword) errors.push('hashedPassword es requerido');
   }
@@ -58,6 +62,9 @@ export const create = async (data) => {
   const exists = await User.findOne({ email: data.email });
   if (exists) throw new AppError(ErrorType.CONFLICT, 'El email ya está registrado');
 
+  const existingUser = await User.findOne({ username: data.username });
+  if (existingUser) throw new AppError(ErrorType.CONFLICT, 'El nombre de usuario ya está registrado');
+
   const salt = await bcrypt.genSalt(10);
   data.hashedPassword = await bcrypt.hash(data.hashedPassword, salt);
 
@@ -74,6 +81,10 @@ export const update = async (id, data) => {
   if (data.email) {
     const dup = await User.findOne({ email: data.email, _id: { $ne: id } });
     if (dup) throw new AppError(ErrorType.CONFLICT, 'El email ya está registrado por otro usuario');
+  }
+  if (data.username) {
+    const dup = await User.findOne({ username: data.username, _id: { $ne: id } });
+    if (dup) throw new AppError(ErrorType.CONFLICT, 'El nombre de usuario ya está registrado por otro usuario');
   }
 
   if (data.hashedPassword) {
@@ -112,7 +123,7 @@ export const generateToken = (usuario) => {
   const payload = {
     id: usuario._id,
     email: usuario.email,
-    name: usuario.name,
+    username: usuario.username,
     globalRole: usuario.globalRole
   };
 

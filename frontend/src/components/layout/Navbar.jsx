@@ -10,6 +10,7 @@ import BottomNavigation from '@mui/material/BottomNavigation'
 import BottomNavigationAction from '@mui/material/BottomNavigationAction'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import AppLogo from './AppLogo'
+import OfflineBanner from './OfflineBanner'
 import { dashboardNavItems } from '../../config/navigation'
 
 function Navbar({
@@ -53,6 +54,8 @@ function Navbar({
   if (hasBottomNav) {
     return (
       <>
+        {/* Banner de conexión para la vista mobile */}
+        <OfflineBanner />
         {backTo && (
           <AppBar position="sticky" sx={{ bgcolor: '#0a0a0a', boxShadow: '0 2px 20px rgba(0, 230, 118, 0.15)' }}>
             <Toolbar>
@@ -95,7 +98,10 @@ function Navbar({
   }
 
   return (
-    <AppBar position="sticky" sx={{ bgcolor: '#0a0a0a', boxShadow: '0 2px 20px rgba(0, 230, 118, 0.15)' }}>
+    <>
+      {/* Banner de conexión para la vista desktop */}
+      <OfflineBanner />
+      <AppBar position="sticky" sx={{ bgcolor: '#0a0a0a', boxShadow: '0 2px 20px rgba(0, 230, 118, 0.15)' }}>
       <Toolbar>
         {backTo ? (
           <>
@@ -141,6 +147,7 @@ function Navbar({
         </Box>
       </Toolbar>
     </AppBar>
+    </>
   )
 }
 

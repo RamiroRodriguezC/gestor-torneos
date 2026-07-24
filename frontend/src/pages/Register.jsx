@@ -57,6 +57,7 @@ function Register() {
   const [form, setForm] = useState({
     name: '',
     lastName: '',
+    username: '',
     email: '',
     password: '',
     dateOfBirth: '',
@@ -97,6 +98,7 @@ function Register() {
     const errs = {}
     if (!form.name.trim()) errs.name = 'El nombre es requerido'
     if (!form.lastName.trim()) errs.lastName = 'El apellido es requerido'
+    if (!form.username.trim()) errs.username = 'El nombre de usuario es requerido'
     if (!form.email.trim() || !/\S+@\S+\.\S+/.test(form.email))
       errs.email = 'Ingresá un email válido'
     if (!form.password || form.password.length < 6)
@@ -127,6 +129,7 @@ function Register() {
         body: JSON.stringify({
           name: form.name.trim(),
           lastName: form.lastName.trim(),
+          username: form.username.trim(),
           email: form.email.trim(),
           hashedPassword: form.password,
           dateOfBirth: form.dateOfBirth,
@@ -136,7 +139,7 @@ function Register() {
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}))
-        throw new Error(body.error || 'Error al registrarse')
+        throw new Error(body.error?.message || 'Error al registrarse')
       }
 
       const { data } = await res.json()
@@ -215,6 +218,18 @@ function Register() {
                 error={!!fieldErrors.lastName}
                 helperText={fieldErrors.lastName}
                 placeholder="Tu apellido"
+                fullWidth
+                variant="outlined"
+              />
+            </FormControl>
+            <FormControl>
+              <FormLabel>Nombre de usuario</FormLabel>
+              <TextField
+                value={form.username}
+                onChange={handleChange('username')}
+                error={!!fieldErrors.username}
+                helperText={fieldErrors.username}
+                placeholder="Tu nombre de usuario"
                 fullWidth
                 variant="outlined"
               />
