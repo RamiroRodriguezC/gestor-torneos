@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import User from '../models/UsersModels.js';
+import User from '../models/UsersModel.js';
 import Team from '../models/TeamsModel.js';
 import { AppError } from '../utils/AppError.js';
 import { ErrorType } from '../constants/errorTypes.js';

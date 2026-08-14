@@ -7,7 +7,7 @@ import connectDB from './config/db.js'; // Importamos el conector
 dotenv.config();
 
 // 🔌 Importaciones de Modelos (Sintaxis moderna)
-import User from './models/UsersModels.js';
+import User from './models/UsersModel.js';
 import Team from './models/TeamsModel.js';
 import Tournament from './models/TournamentsModel.js';
 import Match from './models/MatchesModel.js';

@@ -5,7 +5,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 import SportsConfig from './models/SportsConfigModel.js';
-import User from './models/UsersModels.js';
+import User from './models/UsersModel.js';
 import Team from './models/TeamsModel.js';
 import Field from './models/FieldModel.js';
 import Tournament from './models/TournamentsModel.js';
