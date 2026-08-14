@@ -1,4 +1,5 @@
 import Team from '../models/TeamsModel.js';
+import User from '../models/UsersModel.js';
 import { requireDB } from '../config/db.js';
 import { AppError } from '../utils/AppError.js';
 import { ErrorType } from '../constants/errorTypes.js';

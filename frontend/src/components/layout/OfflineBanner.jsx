@@ -11,12 +11,14 @@ function OfflineBanner() {
   const [showOffline, setShowOffline] = useState(false)
   const [showReconnected, setShowReconnected] = useState(false)
 
-  // Mostramos el cartel de "sin conexión" mientras estemos offline
+  // Cuando cambia isOnline, mostramos/ocultamos el cartel de "sin conexión"
   useEffect(() => {
     if (!isOnline) {
       setShowOffline(true)
     } else {
-      setShowOffline(false)
+      // Pequeña demora para que la transición de salida sea visible
+      const timer = setTimeout(() => setShowOffline(false), 300)
+      return () => clearTimeout(timer)
     }
   }, [isOnline])
 
@@ -34,6 +36,7 @@ function OfflineBanner() {
       {/* Cartel amarillo cuando no hay conexión */}
       <Snackbar
         open={showOffline}
+        onClose={() => setShowOffline(false)}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
         <Alert severity="warning" icon={<CloudOffIcon />} sx={{ width: '100%' }}>

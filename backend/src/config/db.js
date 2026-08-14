@@ -25,3 +25,4 @@ export const requireDB = () => {
 };
 
 export default connectDB;
+
