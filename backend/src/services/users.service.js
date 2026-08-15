@@ -59,6 +59,9 @@ export const create = async (data) => {
   const errors = validate(data);
   if (errors.length) throw new AppError(ErrorType.VALIDATION_ERROR, errors.join('; '));
 
+  // El alta pública nunca puede asignar roles privilegiados (evita auto-registrarse como ADMIN)
+  data.globalRole = 'USER';
+
   const exists = await User.findOne({ email: data.email });
   if (exists) throw new AppError(ErrorType.CONFLICT, 'El email ya está registrado');
 
@@ -72,11 +75,16 @@ export const create = async (data) => {
   return User.findById(user._id).select(EXCLUDED);
 };
 
-export const update = async (id, data) => {
+export const update = async (id, data, requester) => {
   requireDB();
 
   const errors = validate(data, true);
   if (errors.length) throw new AppError(ErrorType.VALIDATION_ERROR, errors.join('; '));
+
+  // Un usuario no puede cambiar su propio rol: solo un admin puede hacerlo
+  if (data.globalRole !== undefined && requester?.globalRole !== 'ADMIN') {
+    throw new AppError(ErrorType.FORBIDDEN, 'No puedes modificar tu rol de usuario.');
+  }
 
   if (data.email) {
     const dup = await User.findOne({ email: data.email, _id: { $ne: id } });

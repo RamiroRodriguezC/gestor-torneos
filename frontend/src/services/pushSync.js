@@ -1,4 +1,5 @@
 import { getPending, markSyncing, markFailed, markDone, getActionUrl, getActionMethod } from '../data/syncQueue'
+import { apiFetch } from '../utils/apiFetch.js'
 
 // Procesa toda la cola de sincronización: toma los PENDING y los envía al backend
 export async function pushSync() {
@@ -24,25 +25,15 @@ export async function pushSync() {
     await markSyncing(item.id)
 
     try {
-      const res = await fetch(url, {
+      await apiFetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(item.payload),
       })
-
-      if (!res.ok) {
-        // Si el backend devuelve error, extraemos el mensaje y marcamos como fallido
-        const body = await res.json().catch(() => ({}))
-        const msg = body.error?.message || `HTTP ${res.status}`
-        await markFailed(item.id, msg)
-        failed++
-      } else {
-        // Si salió bien, eliminamos la operación de la cola
-        await markDone(item.id)
-        synced++
-      }
+      // Si salió bien, eliminamos la operación de la cola
+      await markDone(item.id)
+      synced++
     } catch (err) {
-      // Error de red o timeout
+      // Error de red, timeout o rechazo del backend
       await markFailed(item.id, err.message)
       failed++
     }

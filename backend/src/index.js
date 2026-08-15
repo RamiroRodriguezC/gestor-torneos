@@ -23,6 +23,9 @@ import applicationsRoutes from './routes/applications.routes.js';
 import fieldsRoutes from './routes/fields.routes.js';
 import matchesRoutes from './routes/matches.routes.js';
 
+import { AppError } from './utils/AppError.js';
+import { ErrorType } from './constants/errorTypes.js';
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -48,6 +51,31 @@ app.get('/api/health', (req, res) => {
     status: 'OK', 
     environment: process.env.NODE_ENV,
     message: 'Servidor operativo y agnóstico' 
+  });
+});
+
+// Error handler global: serializa errores no capturados por los controllers
+// (middlewares como authenticateToken/isAdmin/isSelf, y cualquier error no envuelto)
+app.use((err, req, res, next) => {
+  if (err instanceof AppError) {
+    return res.status(err.code).json({
+      error: { type: err.type, message: err.message, code: err.code },
+    });
+  }
+  // Error de parseo del body (JSON inválido) — el cliente mandó mal el payload
+  if (err.type === 'entity.parse.failed' || err.status === 400) {
+    return res.status(400).json({
+      error: { type: ErrorType.VALIDATION_ERROR.type, message: 'El cuerpo de la petición no es un JSON válido.', code: 400 },
+    });
+  }
+  if (err.name === 'ValidationError' || err.name === 'CastError') {
+    return res.status(400).json({
+      error: { type: ErrorType.VALIDATION_ERROR.type, message: err.message, code: 400 },
+    });
+  }
+  console.error('Error inesperado:', err);
+  return res.status(500).json({
+    error: { type: ErrorType.INTERNAL_ERROR.type, message: ErrorType.INTERNAL_ERROR.defaultMessage, code: 500 },
   });
 });
 

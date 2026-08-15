@@ -1,7 +1,10 @@
 import { Router } from 'express';
 import { getAll, getById, create, update } from '../controllers/applications.controller.js';
+import { authenticateToken } from '../middlewares/authMiddleware.js';
 
 const router = Router();
+
+router.use(authenticateToken);
 
 router.get('/', getAll);
 router.get('/:id', getById);

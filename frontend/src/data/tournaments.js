@@ -1,16 +1,11 @@
 import { db } from '../lib/db.js'
-import { getApiBaseUrl } from '../utils/env.js'
-
-const API = getApiBaseUrl()
+import { apiFetch } from '../utils/apiFetch.js'
 
 export async function createTournament(data) {
-  const res = await fetch(`${API}/tournaments`, {
+  const json = await apiFetch('/tournaments', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   })
-  const json = await res.json()
-  if (!res.ok) throw new Error(json.error?.message || 'Error al crear el torneo')
   return json.data
 }
 

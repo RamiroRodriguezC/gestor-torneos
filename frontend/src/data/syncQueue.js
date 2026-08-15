@@ -1,7 +1,4 @@
 import { db } from '../lib/db.js'
-import { getApiBaseUrl } from '../utils/env.js'
-
-const API = getApiBaseUrl()
 
 // Agrega una operación a la cola de sincronización
 // Se llama cuando estamos offline y queremos guardar un cambio para enviarlo después
@@ -52,17 +49,17 @@ export async function markDone(id) {
   return db.sync_queue.delete(id)
 }
 
-// Devuelve la URL del endpoint según la acción y el ID de la entidad
+// Devuelve la ruta del endpoint según la acción y el ID de la entidad
 export function getActionUrl(action, entityId) {
   switch (action) {
     case 'UPDATE_MATCH':
-      return `${API}/matches/${entityId}`
+      return `/matches/${entityId}`
     case 'CREATE_MATCH':
-      return `${API}/matches`
+      return `/matches`
     case 'UPDATE_TOURNAMENT':
-      return `${API}/tournaments/${entityId}`
+      return `/tournaments/${entityId}`
     case 'CREATE_TOURNAMENT':
-      return `${API}/tournaments`
+      return `/tournaments`
     default:
       return null
   }

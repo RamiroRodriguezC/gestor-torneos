@@ -20,7 +20,7 @@ export const create = handle(async (req) => {
 });
 
 export const update = handle(async (req) => {
-  const data = await usersService.update(req.params.id, req.body);
+  const data = await usersService.update(req.params.id, req.body, req.user);
   return { data };
 });
 

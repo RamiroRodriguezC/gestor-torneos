@@ -4,27 +4,24 @@ import { bulkPutTournaments } from './tournaments.js'
 import { bulkPutMatches } from './matches.js'
 import { bulkPutSports } from './sportsConfig.js'
 import { db } from '../lib/db.js'
-import { getApiBaseUrl } from '../utils/env.js'
-
-const API = getApiBaseUrl()
+import { apiFetch } from '../utils/apiFetch.js'
 
 async function fetchJSON(url) {
-  const res = await fetch(url)
-  if (!res.ok) {
-    console.warn(`  ${url} — ${res.status} ${res.statusText}`)
+  try {
+    const json = await apiFetch(url)
+    return json.data ?? json
+  } catch (err) {
+    console.warn(`  ${url} — ${err.message}`)
     return null
   }
-  const json = await res.json()
-  return json.data ?? json
 }
 
 export async function syncUserEnvironment(userId) {
   if (!userId) throw new Error('userId es requerido')
 
   console.log(`[userSync] Iniciando sync para userId: ${userId}`)
-  console.log(`[userSync] API URL: ${API}`)
 
-  const user = await fetchJSON(`${API}/users/${userId}`)
+  const user = await fetchJSON(`/users/${userId}`)
   if (!user) throw new Error(`No se pudo obtener el usuario ${userId}`)
   console.log(`[userSync] Usuario obtenido: ${user.name} ${user.lastName} (_id: ${user._id})`)
   await putUser(user)
@@ -32,8 +29,8 @@ export async function syncUserEnvironment(userId) {
   const counts = { user: 1, teams: 0, members: 0, tournaments: 0, matches: 0, sportConfigs: 0 }
 
   const [tournaments, teams] = await Promise.all([
-    fetchJSON(`${API}/users/${userId}/tournaments`),
-    fetchJSON(`${API}/users/${userId}/teams`),
+    fetchJSON(`/users/${userId}/tournaments`),
+    fetchJSON(`/users/${userId}/teams`),
   ])
 
   const allTeams = teams?.length ? [...teams] : []
@@ -49,7 +46,7 @@ export async function syncUserEnvironment(userId) {
       if (t.sportConfigId) sportConfigIds.add(t.sportConfigId)
     }
     if (sportConfigIds.size > 0) {
-      const allConfigs = await fetchJSON(`${API}/sports`)
+      const allConfigs = await fetchJSON(`/sports`)
       const validConfigs = (allConfigs || []).filter(
         (s) => s._id && sportConfigIds.has(s._id)
       )
@@ -70,7 +67,7 @@ export async function syncUserEnvironment(userId) {
     const missingIds = tournamentTeamIds.filter((id) => !seenTeamIds.has(id))
     if (missingIds.length > 0) {
       const fetched = await Promise.all(
-        missingIds.map((id) => fetchJSON(`${API}/teams/${id}`))
+        missingIds.map((id) => fetchJSON(`/teams/${id}`))
       )
       for (const t of fetched) {
         if (t) {
@@ -97,7 +94,7 @@ export async function syncUserEnvironment(userId) {
   if (allTeams.length > 0) {
     const allTeamIds = [...new Set(allTeams.map((t) => t._id))]
     const memberArrays = await Promise.all(
-      allTeamIds.map((id) => fetchJSON(`${API}/teams/${id}/members`))
+      allTeamIds.map((id) => fetchJSON(`/teams/${id}/members`))
     )
     const allMembers = memberArrays.flatMap((a) => a ?? [])
     const uniqueMembers = []
@@ -117,7 +114,7 @@ export async function syncUserEnvironment(userId) {
     console.log(`[userSync] El usuario no tiene equipos`)
   }
 
-  const allMatches = await fetchJSON(`${API}/matches`)
+  const allMatches = await fetchJSON(`/matches`)
   if (allMatches?.length && tournaments?.length) {
     const ids = new Set(tournaments.map((t) => t._id))
     const relevant = allMatches.filter(

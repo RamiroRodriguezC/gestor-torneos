@@ -1,8 +1,6 @@
 import { db } from '../lib/db.js'
 import { enqueue } from './syncQueue.js'
-import { getApiBaseUrl } from '../utils/env.js'
-
-const API = getApiBaseUrl()
+import { apiFetch } from '../utils/apiFetch.js'
 
 export async function getMatchById(id) {
   return db.matches.get(id)
@@ -75,17 +73,11 @@ export async function updateMatchSheet(id, data) {
 
   // 2. Si estamos online, mandamos directo al backend
   if (navigator.onLine) {
-    const res = await fetch(`${API}/matches/${id}`, {
+    const json = await apiFetch(`/matches/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     })
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}))
-      throw new Error(body.error?.message || 'Error al guardar la planilla')
-    }
     // Actualizamos Dexie con la respuesta del backend (tiene los campos completos)
-    const json = await res.json()
     await putMatch(json.data)
     return json.data
   }

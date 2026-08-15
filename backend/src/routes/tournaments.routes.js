@@ -5,8 +5,11 @@ import {
   getRounds, postRound,
   getApplications,
 } from '../controllers/tournaments.controller.js';
+import { authenticateToken } from '../middlewares/authMiddleware.js';
 
 const router = Router();
+
+router.use(authenticateToken);
 
 // Sub-rutas específicas primero (evita que /:id capture rutas anidadas)
 router.get('/:id/participants', getParticipants);
