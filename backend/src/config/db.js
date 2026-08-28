@@ -1,4 +1,6 @@
 import mongoose from 'mongoose';
+import { AppError } from '../utils/AppError.js';
+import { ErrorType } from '../constants/errorTypes.js';
 
 const connectDB = async () => {
   try {
@@ -20,7 +22,7 @@ const connectDB = async () => {
 export const requireDB = () => {
   // Si la base de datos no esta disponible, se cayo al momento de la peticion o algo, se devuelve un error previsible en lugar de crashear la App
   if (mongoose.connection.readyState !== 1) {
-    throw new Error('Base de datos no disponible');
+    throw new AppError(ErrorType.INTERNAL_ERROR, 'Base de datos no disponible');
   }
 };
 

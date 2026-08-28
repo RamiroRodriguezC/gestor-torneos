@@ -85,6 +85,10 @@ export const addRound = async (id, data) => {
   if (!data.roundName) throw new AppError(ErrorType.VALIDATION_ERROR, 'roundName es requerido');
   if (data.roundNumber === undefined || data.roundNumber === null) throw new AppError(ErrorType.VALIDATION_ERROR, 'roundNumber es requerido');
 
+  // Verificar que no exista ya una ronda con el mismo roundNumber dentro del torneo
+  const existing = await Tournament.findOne({ _id: id, 'rounds.roundNumber': data.roundNumber }).select('_id');
+  if (existing) throw new AppError(ErrorType.VALIDATION_ERROR, `Ya existe una ronda con roundNumber ${data.roundNumber} en este torneo`);
+
   const tournament = await Tournament.findByIdAndUpdate(
     id,
     { $push: { rounds: data } },

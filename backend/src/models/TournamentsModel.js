@@ -26,7 +26,7 @@ const roundSchema = new Schema({
   type: { type: String, enum: ROUND_TYPE, default: 'ROUND_ROBIN' },
   status: { type: String, enum: ROUND_STATUS, default: 'SCHEDULED' },
   matches: [{ type: Schema.Types.ObjectId, ref: 'Match' }]
-}, { _id: false });
+});
 
 const TournamentSchema = new Schema({
   title: { type: String, required: true },

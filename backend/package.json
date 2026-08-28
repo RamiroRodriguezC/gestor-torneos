@@ -9,7 +9,7 @@
     "db:generate": "node src/seeds/generateTestData.js",
     "db:seed": "node src/seed.js",
     "db:reset": "node src/seed.js --reset",
-"db:test-user": "node scripts/seed-test-user.js"
+    "db:test-user": "node scripts/seed-test-user.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

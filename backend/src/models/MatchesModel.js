@@ -26,7 +26,8 @@ const MatchSchema = new Schema({
   tournamentId: { type: Schema.Types.ObjectId, ref: 'Tournament', required: true },
   status: { type: String, enum: MATCH_STATUS, default: 'PROGRAMADO' },
   round: {
-    roundId: { type: Schema.Types.ObjectId, ref: 'Round', required: true },
+    // roundId referencia a Tournament.rounds[]._id (subdocumento embebido, PK compuesta lógica tournamentId+roundId — ver ADR-008 opción 1)
+    roundId: { type: Schema.Types.ObjectId, required: true },
     number: { type: Number, required: true }
   },
   field: {
