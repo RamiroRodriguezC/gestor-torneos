@@ -3,7 +3,7 @@ import {
   getAll, getById, create, update,
   getParticipants, postParticipant,
   getRounds, postRound,
-  getApplications,
+  getApplications, generateFixture,
 } from '../controllers/tournaments.controller.js';
 import { authenticateToken } from '../middlewares/authMiddleware.js';
 
@@ -17,6 +17,8 @@ router.post('/:id/participants', postParticipant);
 
 router.get('/:id/rounds', getRounds);
 router.post('/:id/rounds', postRound);
+
+router.post('/:id/fixture', generateFixture);
 
 router.get('/:id/applications', getApplications);
 

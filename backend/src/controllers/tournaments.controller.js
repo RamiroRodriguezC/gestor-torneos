@@ -1,5 +1,6 @@
 import handle from '../utils/handle.js';
 import * as tournamentsService from '../services/tournaments.service.js';
+import * as fixtureService from '../services/fixture.service.js';
 import { AppError } from '../utils/AppError.js';
 import { ErrorType } from '../constants/errorTypes.js';
 
@@ -47,4 +48,9 @@ export const postRound = handle(async (req) => {
 export const getApplications = handle(async (req) => {
   const data = await tournamentsService.findApplications(req.params.id);
   return { data, count: data.length };
+});
+
+export const generateFixture = handle(async (req) => {
+  const data = await fixtureService.generateFixture(req.params.id, req.body);
+  return { data };
 });
