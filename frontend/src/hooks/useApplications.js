@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../lib/db.js'
 
 export function useApplication(id) {
-  return useLiveQuery(() => db.applications.get(id), [id], null)
+  return useLiveQuery(() => (id ? db.applications.get(id) : null), [id], null)
 }
 
 export function useApplicationsByTournament(tournamentId) {

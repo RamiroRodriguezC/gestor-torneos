@@ -6,7 +6,7 @@ export function useTeams() {
 }
 
 export function useTeam(id) {
-  return useLiveQuery(() => db.teams.get(id), [id], null)
+  return useLiveQuery(() => (id ? db.teams.get(id) : null), [id], null)
 }
 
 export function useTeamsByDiscipline(sportConfigId) {
