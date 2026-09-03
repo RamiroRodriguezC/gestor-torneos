@@ -1,8 +1,10 @@
+import { useNavigate } from 'react-router-dom'
 import { Box, Typography, Card, CardContent, Stack, Chip } from '@mui/material'
 import CompetitorPhoto from '../../shared/CompetitorPhoto'
 import { getTeamScore, STATUS_STYLE } from './matchUtils'
 
-function MatchCardVersus({ match, myTeamId, showDate }) {
+function MatchCardVersus({ match, myTeamId, showDate, onMatchClick }) {
+  const navigate = useNavigate()
   const home = match.competitors?.[0]
   const away = match.competitors?.[1]
   const statusInfo = STATUS_STYLE[match.status] || STATUS_STYLE.PROGRAMADO
@@ -11,13 +13,37 @@ function MatchCardVersus({ match, myTeamId, showDate }) {
   const homeScore = getTeamScore(match, home?.teamId)
   const awayScore = getTeamScore(match, away?.teamId)
 
+  const goToMatch = () => {
+    if (onMatchClick) {
+      onMatchClick(match)
+    } else {
+      navigate(`/match/${match._id}`)
+    }
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      goToMatch()
+    }
+  }
+
   return (
-    <Card sx={{
-      bgcolor: isMyMatch ? '#1a2a1a' : '#1a1a1a',
-      border: '1px solid',
-      borderColor: isMyMatch ? '#00e67644' : 'divider',
-      '&:hover': { borderColor: isMyMatch ? '#00e676' : 'grey.600' },
-    }}>
+    <Card
+      onClick={goToMatch}
+      onKeyDown={handleKeyDown}
+      role="button"
+      tabIndex={0}
+      aria-label={`Ver detalle del partido ${home?.displayNameSnapshot || ''} vs ${away?.displayNameSnapshot || ''}`}
+      sx={{
+        bgcolor: isMyMatch ? '#1a2a1a' : '#1a1a1a',
+        border: '1px solid',
+        borderColor: isMyMatch ? '#00e67644' : 'divider',
+        cursor: 'pointer',
+        '&:hover': { borderColor: isMyMatch ? '#00e676' : '#00e676' },
+        '&:focus-visible': { outline: '2px solid #00e676' },
+      }}
+    >
       <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
         <Stack direction="row" alignItems="center" spacing={1}>
           <Box sx={{ flex: 1, textAlign: 'right' }}>
