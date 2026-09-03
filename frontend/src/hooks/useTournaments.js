@@ -6,7 +6,7 @@ export function useTournaments() {
 }
 
 export function useTournament(id) {
-  return useLiveQuery(() => db.tournaments.get(id), [id], null)
+  return useLiveQuery(() => (id ? db.tournaments.get(id) : null), [id], null)
 }
 
 export function useActiveTournaments() {
