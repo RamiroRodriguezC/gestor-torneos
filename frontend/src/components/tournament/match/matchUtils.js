@@ -1,3 +1,7 @@
+// Identidad de un competidor en Match.competitors[]. Hoy el modelo escribe teamId
+// (los partidos corren con equipos); toleramos participantId por compatibilidad futura.
+const getCompetitorId = (c) => c?.participantId ?? c?.teamId
+
 export function getTeamScore(match, teamId) {
   return match.keyEvents
     ?.filter((e) => String(e.competitorId) === String(teamId) && (e.incrementScore || 0) > 0)
@@ -5,13 +9,13 @@ export function getTeamScore(match, teamId) {
 }
 
 export function getOpponentScore(match, teamId) {
-  const opponentId = match.competitors?.find((c) => String(c.teamId) !== String(teamId))?.teamId
+  const opponentId = match.competitors?.find((c) => String(getCompetitorId(c)) !== String(teamId))?.teamId
   if (!opponentId) return 0
   return getTeamScore(match, opponentId)
 }
 
 export function getCompetitorSide(match, teamId) {
-  return match.competitors?.find((c) => String(c.teamId) === String(teamId))?.side || null
+  return match.competitors?.find((c) => String(getCompetitorId(c)) === String(teamId))?.side || null
 }
 
 export const STATUS_STYLE = {
@@ -47,7 +51,7 @@ export function buildSheetFromMatch(match, sportConfig) {
   // Inicializar contadores en 0 para que el form muestre todos los eventos del deporte
   for (const event of competitorEvents) {
     for (const comp of match.competitors || []) {
-      const key = `${event.code}__${comp.teamId}`
+      const key = `${event.code}__${getCompetitorId(comp)}`
       byEvent[key] = 0
     }
   }
@@ -82,12 +86,12 @@ export function buildKeyEventsFromSheet(sheet, match, sportConfig) {
   for (const event of validEvents) {
     if (event.targetField === 'COMPETITOR') {
       for (const comp of match.competitors || []) {
-        const key = `${event.code}__${comp.teamId}`
+        const key = `${event.code}__${getCompetitorId(comp)}`
         const count = byEvent[key] || 0
         for (let i = 0; i < count; i++) {
           events.push({
             eventType: event.code,
-            competitorId: comp.teamId,
+            competitorId: getCompetitorId(comp),
             incrementScore: event.incrementScore || 0,
           })
         }

@@ -12,6 +12,8 @@ import { useSport } from '../../../hooks/useSportsConfig'
 import { getTeamScore, STATUS_STYLE, MATCH_STATUS_LABEL } from './matchUtils'
 import MatchSheetDialog from './MatchSheetDialog'
 
+const getCompetitorId = (c) => c?.participantId ?? c?.teamId
+
 // Muestra el detalle de un partido (equipos, marcador, estado, fecha, cancha, eventos)
 // y, si el usuario es el organizador del torneo, el botón para abrir la planilla.
 function MatchDetail({ match, tournament, user }) {
@@ -28,8 +30,8 @@ function MatchDetail({ match, tournament, user }) {
 
   const home = match.competitors?.[0]
   const away = match.competitors?.[1]
-  const homeScore = getTeamScore(match, home?.teamId)
-  const awayScore = getTeamScore(match, away?.teamId)
+  const homeScore = getTeamScore(match, getCompetitorId(home))
+  const awayScore = getTeamScore(match, getCompetitorId(away))
   const statusInfo = STATUS_STYLE[match.status] || STATUS_STYLE.PROGRAMADO
 
   const eventLabelMap = useMemo(() => {
@@ -41,7 +43,7 @@ function MatchDetail({ match, tournament, user }) {
   const eventsByCompetitor = useMemo(() => {
     const groups = {}
     for (const comp of match.competitors || []) {
-      groups[String(comp.teamId)] = []
+      groups[String(getCompetitorId(comp))] = []
     }
     const global = []
     for (const ev of match.keyEvents || []) {
@@ -169,9 +171,10 @@ function MatchDetail({ match, tournament, user }) {
           ) : (
             <Stack spacing={2}>
               {match.competitors?.map((comp) => {
-                const events = eventsByCompetitor.byCompetitor[String(comp.teamId)] || []
+                const compId = getCompetitorId(comp)
+                const events = eventsByCompetitor.byCompetitor[String(compId)] || []
                 return (
-                  <Box key={String(comp.teamId)}>
+                  <Box key={String(compId)}>
                     <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5 }}>
                       <CompetitorPhoto
                         logoURL={comp.logoURLSnapshot}
@@ -179,7 +182,7 @@ function MatchDetail({ match, tournament, user }) {
                         size={24}
                       />
                       <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                        {comp.displayNameSnapshot || comp.teamId}
+                        {comp.displayNameSnapshot || compId}
                       </Typography>
                     </Stack>
                     {events.length === 0 ? (

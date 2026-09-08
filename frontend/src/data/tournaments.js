@@ -9,6 +9,35 @@ export async function createTournament(data) {
   return json.data
 }
 
+// Trae el catálogo público (PUBLICADO) y lo cachea en Dexie. El endpoint es público.
+export async function fetchPublicTournaments() {
+  const json = await apiFetch('/tournaments?status=PUBLICADO')
+  const list = json.data || []
+  if (list.length) await bulkPutTournaments(list)
+  return list
+}
+
+// Refresca el detalle de un torneo desde el server y actualiza la copia local.
+export async function fetchTournament(id) {
+  const json = await apiFetch(`/tournaments/${id}`)
+  if (json.data) await putTournament(json.data)
+  return json.data
+}
+
+// Publica (BORRADOR → PUBLICADO) o despublica (→ BORRADOR) un torneo.
+// Acción de organizador: exige estar online (el PATCH no se encola offline).
+export async function publishTournament(id, status) {
+  if (!navigator.onLine) {
+    throw new Error('Necesitás conexión para publicar el torneo.')
+  }
+  const json = await apiFetch(`/tournaments/${id}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+  })
+  if (json.data) await putTournament(json.data)
+  return json.data
+}
+
 export async function getTournamentById(id) {
   return db.tournaments.get(id)
 }

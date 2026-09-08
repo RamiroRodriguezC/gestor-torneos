@@ -9,6 +9,7 @@ import PersonIcon from '@mui/icons-material/Person'
 import CompetitorPhoto from '../shared/CompetitorPhoto'
 import { useSport } from '../../hooks/useSportsConfig'
 import { useTeamsByDiscipline } from '../../hooks/useTeams'
+import { getParticipantId, getParticipantName } from '../../utils/participant'
 
 function TournamentParticipants({ tournament }) {
   const navigate = useNavigate()
@@ -26,10 +27,17 @@ function TournamentParticipants({ tournament }) {
   const filtered = !search.trim()
     ? list
     : list.filter((p) =>
-        p.displayNameSnapshot?.toLowerCase().includes(search.toLowerCase())
+        getParticipantName(p)?.toLowerCase().includes(search.toLowerCase())
       )
 
   if (!tournament) return null
+
+  const handleOpen = (p) => {
+    const pid = getParticipantId(p)
+    if (!pid) return
+    if (isTeamSport) navigate(`/team/${pid}`)
+    else navigate(`/user/${pid}`)
+  }
 
   return (
     <Box sx={{ mt: 4 }}>
@@ -66,36 +74,42 @@ function TournamentParticipants({ tournament }) {
       )}
 
       <Stack spacing={1.5}>
-        {filtered.map((p) => (
-          <Card
-            key={String(p.teamId)}
-            onClick={() => {
-              if (isTeamSport) navigate(`/team/${p.teamId}`)
-            }}
-            sx={{
-              bgcolor: '#1a1a1a',
-              border: '1px solid',
-              borderColor: 'divider',
-              cursor: isTeamSport ? 'pointer' : 'default',
-              '&:hover': isTeamSport ? { borderColor: '#00e676' } : {},
-            }}
-          >
-            <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
-              <Stack direction="row" spacing={2} alignItems="center">
-                <CompetitorPhoto
-                  logoURL={p.logoURL || teamMap[p.teamId]?.logoURL || ''}
-                  displayName={p.displayNameSnapshot || teamMap[p.teamId]?.name || ''}
-                  size={44}
-                />
-                <Box sx={{ flexGrow: 1 }}>
-                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                    {p.displayNameSnapshot || teamMap[p.teamId]?.name || (isTeamSport ? 'Equipo' : 'Participante')}
-                  </Typography>
-                </Box>
-              </Stack>
-            </CardContent>
-          </Card>
-        ))}
+        {filtered.map((p) => {
+          const pid = getParticipantId(p)
+          const fallbackName = isTeamSport
+            ? (pid && teamMap[pid]?.name) || 'Equipo'
+            : 'Participante'
+          const displayName = getParticipantName(p) || fallbackName
+          const logoURL = p.logoURL || (pid && teamMap[pid]?.logoURL) || ''
+          return (
+            <Card
+              key={String(pid)}
+              onClick={() => handleOpen(p)}
+              sx={{
+                bgcolor: '#1a1a1a',
+                border: '1px solid',
+                borderColor: 'divider',
+                cursor: 'pointer',
+                '&:hover': { borderColor: '#00e676' },
+              }}
+            >
+              <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
+                <Stack direction="row" spacing={2} alignItems="center">
+                  <CompetitorPhoto
+                    logoURL={logoURL}
+                    displayName={displayName}
+                    size={44}
+                  />
+                  <Box sx={{ flexGrow: 1 }}>
+                    <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                      {displayName}
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          )
+        })}
       </Stack>
     </Box>
   )

@@ -3,6 +3,7 @@ import Application from '../models/ApplicationsModel.js';
 import { requireDB } from '../config/db.js';
 import { AppError } from '../utils/AppError.js';
 import { ErrorType } from '../constants/errorTypes.js';
+import { TOURNAMENT_STATUS } from '../constants/enums.js';
 
 const validate = (data, isUpdate = false) => {
   const errors = [];
@@ -20,9 +21,11 @@ const validate = (data, isUpdate = false) => {
   return errors;
 };
 
-export const findAll = async () => {
+export const findAll = async ({ status } = {}) => {
   requireDB();
-  return Tournament.find({ isDeleted: false });
+  const filter = { isDeleted: false };
+  if (status) filter.status = status;
+  return Tournament.find(filter);
 };
 
 export const findById = async (id) => {
@@ -57,19 +60,55 @@ export const findParticipants = async (id) => {
   return tournament.participantes;
 };
 
-export const addParticipant = async (id, data) => {
+export const addParticipant = async (id, data, { actorId } = {}) => {
   requireDB();
 
-  if (!data.teamId) throw new AppError(ErrorType.VALIDATION_ERROR, 'teamId del participante es requerido');
+  const participantId = data.participantId || data.teamId; // tolera payload legacy con teamId
+  if (!participantId) throw new AppError(ErrorType.VALIDATION_ERROR, 'participantId del participante es requerido');
 
-  const tournament = await Tournament.findByIdAndUpdate(
+  const tournament = await Tournament.findOne({ _id: id, isDeleted: false });
+  if (!tournament) throw new AppError(ErrorType.TOURNAMENT_NOT_FOUND);
+
+  // Alta directa sin pasar por el flujo de solicitudes: solo el organizador,
+  // o una inscripción con Application APROBADA previa (cierra el bypass documentado).
+  const isOrganizer = actorId && String(tournament.organizerId) === String(actorId);
+  const approvedApp = await Application.findOne({
+    tournamentId: id,
+    participantId,
+    status: 'APROBADA',
+    isDeleted: false,
+  });
+  if (!isOrganizer && !approvedApp) {
+    throw new AppError(ErrorType.FORBIDDEN, 'Solo el organizador puede agregar participantes directamente, o debe existir una solicitud aprobada.');
+  }
+
+  // Duplicados y cupo.
+  const alreadyIn = (tournament.participantes || []).some(
+    (p) => String(p.participantId ?? p.teamId) === String(participantId)
+  );
+  if (alreadyIn) throw new AppError(ErrorType.CONFLICT, 'El participante ya está inscripto en el torneo.');
+
+  if (tournament.maxRegistrations > 0 && (tournament.participantes?.length || 0) >= tournament.maxRegistrations) {
+    throw new AppError(ErrorType.CONFLICT, 'El torneo alcanzó su cupo máximo de participantes.');
+  }
+
+  const participantType = data.participantType || 'TEAM';
+  const updated = await Tournament.findByIdAndUpdate(
     id,
-    { $push: { participantes: { teamId: data.teamId, displayNameSnapshot: data.displayNameSnapshot || '' } } },
+    {
+      $push: {
+        participantes: {
+          participantId,
+          participantType,
+          displayNameSnapshot: data.displayNameSnapshot || '',
+          logoURL: data.logoURL || '',
+        },
+      },
+    },
     { new: true, runValidators: true }
   ).select('participantes');
 
-  if (!tournament) throw new AppError(ErrorType.TOURNAMENT_NOT_FOUND);
-  return tournament.participantes;
+  return updated.participantes;
 };
 
 export const findRounds = async (id) => {
@@ -97,6 +136,29 @@ export const addRound = async (id, data) => {
 
   if (!tournament) throw new AppError(ErrorType.TOURNAMENT_NOT_FOUND);
   return tournament.rounds;
+};
+
+export const updateStatus = async (id, status, { actorId } = {}) => {
+  requireDB();
+
+  if (!TOURNAMENT_STATUS.includes(status)) {
+    throw new AppError(ErrorType.VALIDATION_ERROR, `status debe ser uno de: ${TOURNAMENT_STATUS.join(', ')}`);
+  }
+
+  const tournament = await Tournament.findOne({ _id: id, isDeleted: false });
+  if (!tournament) throw new AppError(ErrorType.TOURNAMENT_NOT_FOUND);
+
+  if (!actorId || String(tournament.organizerId) !== String(actorId)) {
+    throw new AppError(ErrorType.FORBIDDEN, 'Solo el organizador del torneo puede publicarlo o cambiar su estado.');
+  }
+
+  // El ciclo de competencia (EN_CURSO/FINALIZADO) no se maneja desde acá: solo BORRADOR ↔ PUBLICADO.
+  if (!['BORRADOR', 'PUBLICADO'].includes(status)) {
+    throw new AppError(ErrorType.VALIDATION_ERROR, 'Este endpoint solo permite pasar el torneo a BORRADOR o PUBLICADO.');
+  }
+
+  const updated = await Tournament.findByIdAndUpdate(id, { status }, { new: true, runValidators: true });
+  return updated;
 };
 
 export const findApplications = async (tournamentId) => {

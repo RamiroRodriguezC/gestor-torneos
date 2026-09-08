@@ -12,6 +12,7 @@ const STATUS_COLORS = {
 function TournamentCard({ tournament }) {
   const navigate = useNavigate()
   const sport = useSport(tournament.sportConfigId)
+  const isTeamSport = sport?.sportProps?.participantType === 'TEAM'
 
   const formatDate = (dateStr) => {
     if (!dateStr) return ''
@@ -60,7 +61,7 @@ function TournamentCard({ tournament }) {
                 </Typography>
               )}
               <Typography variant="body2" color="grey.400">
-                👥 {tournament.participantes?.length ?? 0} equipos
+                👥 {tournament.participantes?.length ?? 0} {isTeamSport ? 'equipos' : 'participantes'}
               </Typography>
             </Stack>
           </Box>

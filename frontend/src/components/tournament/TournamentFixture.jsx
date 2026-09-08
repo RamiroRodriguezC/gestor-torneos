@@ -5,16 +5,13 @@ import {
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
 import { useMatchesByTournament } from '../../hooks/useMatches'
 import MatchCard from './match/MatchCard'
+import { findMyParticipation } from '../../utils/participant'
 
 function TournamentFixture({ tournament, user }) {
   const allMatches = useMatchesByTournament(tournament._id)
   const rounds = tournament.rounds || []
 
-  const myTeamId = useMemo(() => {
-    const userTeamIds = user?.teams?.map((t) => t.teamId) || []
-    const participantIds = tournament.participantes?.map((p) => p.teamId) || []
-    return userTeamIds.find((id) => participantIds.some((pid) => String(pid) === String(id)))
-  }, [user, tournament])
+  const myTeamId = useMemo(() => findMyParticipation(tournament, user), [user, tournament])
 
   const [tabIndex, setTabIndex] = useState(0)
 
@@ -32,7 +29,7 @@ function TournamentFixture({ tournament, user }) {
   const myUpcoming = useMemo(() => {
     return allMatches.filter(
       (m) =>
-        m.competitors?.some((c) => String(c.teamId) === String(myTeamId)) &&
+        m.competitors?.some((c) => String(c.teamId) === String(myTeamId) || String(c.participantId) === String(myTeamId)) &&
         m.status === 'PROGRAMADO'
     ).sort((a, b) => new Date(a.startAt || 0) - new Date(b.startAt || 0))
   }, [allMatches, myTeamId])

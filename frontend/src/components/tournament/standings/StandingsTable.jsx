@@ -47,10 +47,10 @@ function StandingsTable({ tournament, matches, myTeamId }) {
           </TableHead>
           <TableBody>
             {standings.map((row, i) => {
-              const isMyTeam = String(row.teamId) === String(myTeamId)
+              const isMyTeam = String(row.teamId ?? row.participantId) === String(myTeamId)
               return (
                 <TableRow
-                  key={row.teamId}
+                  key={row.teamId ?? row.participantId}
                   sx={{
                     bgcolor: isMyTeam ? '#1a2a1a' : 'transparent',
                     '&:hover': { bgcolor: isMyTeam ? '#1a2a1a' : '#242424' },

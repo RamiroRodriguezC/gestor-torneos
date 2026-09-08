@@ -7,11 +7,13 @@ function MatchCardVersus({ match, myTeamId, showDate, onMatchClick }) {
   const navigate = useNavigate()
   const home = match.competitors?.[0]
   const away = match.competitors?.[1]
+  const homeId = home?.participantId ?? home?.teamId
+  const awayId = away?.participantId ?? away?.teamId
   const statusInfo = STATUS_STYLE[match.status] || STATUS_STYLE.PROGRAMADO
-  const isMyMatch = myTeamId && match.competitors?.some((c) => String(c.teamId) === String(myTeamId))
+  const isMyMatch = myTeamId && match.competitors?.some((c) => String(c.participantId ?? c.teamId) === String(myTeamId))
 
-  const homeScore = getTeamScore(match, home?.teamId)
-  const awayScore = getTeamScore(match, away?.teamId)
+  const homeScore = getTeamScore(match, homeId)
+  const awayScore = getTeamScore(match, awayId)
 
   const goToMatch = () => {
     if (onMatchClick) {
@@ -49,11 +51,11 @@ function MatchCardVersus({ match, myTeamId, showDate, onMatchClick }) {
           <Box sx={{ flex: 1, textAlign: 'right' }}>
             <Stack direction="row" alignItems="center" spacing={1} sx={{ justifyContent: 'flex-end' }}>
               <Typography variant="body1" sx={{
-                fontWeight: String(home?.teamId) === String(myTeamId) ? 700 : 400,
-                color: String(home?.teamId) === String(myTeamId) ? '#00e676' : 'text.primary',
+                fontWeight: String(homeId) === String(myTeamId) ? 700 : 400,
+                color: String(homeId) === String(myTeamId) ? '#00e676' : 'text.primary',
                 fontSize: '0.9rem',
               }}>
-                {home?.displayNameSnapshot || home?.teamId || 'Local'}
+                {home?.displayNameSnapshot || homeId || 'Local'}
               </Typography>
               <CompetitorPhoto
                 logoURL={home?.logoURLSnapshot}
@@ -83,11 +85,11 @@ function MatchCardVersus({ match, myTeamId, showDate, onMatchClick }) {
                 size={24}
               />
               <Typography variant="body1" sx={{
-                fontWeight: String(away?.teamId) === String(myTeamId) ? 700 : 400,
-                color: String(away?.teamId) === String(myTeamId) ? '#00e676' : 'text.primary',
+                fontWeight: String(awayId) === String(myTeamId) ? 700 : 400,
+                color: String(awayId) === String(myTeamId) ? '#00e676' : 'text.primary',
                 fontSize: '0.9rem',
               }}>
-                {away?.displayNameSnapshot || away?.teamId || 'Visitante'}
+                {away?.displayNameSnapshot || awayId || 'Visitante'}
               </Typography>
             </Stack>
           </Box>

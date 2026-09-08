@@ -14,6 +14,9 @@ import Profile from './pages/Profile'
 import Config from './pages/Config'
 import TournamentPage from './pages/TournamentPage'
 import MatchDetailPage from './pages/MatchDetailPage'
+import ExploreTournaments from './pages/ExploreTournaments'
+import InscriptionPage from './pages/InscriptionPage'
+import TournamentApplicationsPage from './pages/TournamentApplicationsPage'
 
 const theme = createTheme({
   palette: {
@@ -54,6 +57,9 @@ function App() {
           <Route path="/user/:userId" element={<Profile />} />
           <Route path="/dashboard/config" element={<Config />} />
           <Route path="/tournament/:id" element={<TournamentPage />} />
+          <Route path="/torneos" element={<ExploreTournaments />} />
+          <Route path="/torneos/:id/inscripcion" element={<InscriptionPage />} />
+          <Route path="/torneos/:id/solicitudes" element={<TournamentApplicationsPage />} />
           <Route path="/match/:id" element={<MatchDetailPage />} />
           <Route path="/team/:id" element={<Team />} />
           <Route path="*" element={<Container maxWidth="md"><ErrorDisplay type="PAGE_NOT_FOUND" size="lg" /></Container>} />

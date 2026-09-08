@@ -60,6 +60,10 @@ export function getActionUrl(action, entityId) {
       return `/tournaments/${entityId}`
     case 'CREATE_TOURNAMENT':
       return `/tournaments`
+    case 'CREATE_APPLICATION':
+      return `/applications`
+    case 'UPDATE_APPLICATION':
+      return `/applications/${entityId}`
     default:
       return null
   }
@@ -70,9 +74,11 @@ export function getActionMethod(action) {
   switch (action) {
     case 'UPDATE_MATCH':
     case 'UPDATE_TOURNAMENT':
+    case 'UPDATE_APPLICATION':
       return 'PUT'
     case 'CREATE_MATCH':
     case 'CREATE_TOURNAMENT':
+    case 'CREATE_APPLICATION':
       return 'POST'
     default:
       return 'POST'

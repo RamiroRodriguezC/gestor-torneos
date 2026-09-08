@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Container, Typography, Box, TextField, Button,
-  FormControl, FormLabel, Select, MenuItem, Alert,
+  FormControl, FormLabel, FormControlLabel, Checkbox, Select, MenuItem, Alert,
   Card, Stack, Grid,
 } from '@mui/material'
 import { styled } from '@mui/material/styles'
@@ -53,6 +53,9 @@ function CreateTournament() {
     contactMail: '',
     contactPhone: '',
     registrationCloseAt: '',
+    manifestInstructions: '',
+    manifestDigitalDoc: false,
+    manifestPhysicalDoc: false,
   })
 
   const [fieldErrors, setFieldErrors] = useState({})
@@ -97,6 +100,11 @@ function CreateTournament() {
         contactPhone: form.contactPhone.trim(),
         maxRegistrations: form.maxRegistrations ? Number(form.maxRegistrations) : 0,
         registrationCloseAt: form.registrationCloseAt || undefined,
+        manifestInscripcion: {
+          instructions: form.manifestInstructions.trim(),
+          requiresDigitalDoc: form.manifestDigitalDoc,
+          requiresPhysicalDoc: form.manifestPhysicalDoc,
+        },
       }
 
       const tournament = await createTournament(payload)
@@ -298,6 +306,37 @@ function CreateTournament() {
                     onChange={handleChange('contactPhone')}
                     placeholder="Teléfono"
                     fullWidth
+                    variant="outlined"
+                  />
+                </FormControl>
+              </Grid>
+            </Grid>
+
+            <Typography variant="h6" sx={{ mt: 2 }}>Requisitos de inscripción</Typography>
+
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <FormControlLabel
+                  control={<Checkbox checked={form.manifestDigitalDoc} onChange={handleChange('manifestDigitalDoc')} />}
+                  label="Requiere documentación digital"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControlLabel
+                  control={<Checkbox checked={form.manifestPhysicalDoc} onChange={handleChange('manifestPhysicalDoc')} />}
+                  label="Requiere documentación física"
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <FormControl fullWidth>
+                  <FormLabel>Instrucciones para quienes se inscriban</FormLabel>
+                  <TextField
+                    value={form.manifestInstructions}
+                    onChange={handleChange('manifestInstructions')}
+                    placeholder="Ej: completar ficha médica, llevar DNI, etc."
+                    fullWidth
+                    multiline
+                    rows={3}
                     variant="outlined"
                   />
                 </FormControl>

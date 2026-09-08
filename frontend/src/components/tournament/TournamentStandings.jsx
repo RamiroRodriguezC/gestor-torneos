@@ -3,16 +3,13 @@ import { useMatchesByTournament } from '../../hooks/useMatches'
 import StandingsTable from './standings/StandingsTable'
 import BracketTree from './standings/BracketTree'
 import UnderConstruction from '../UnderConstruction'
+import { findMyParticipation } from '../../utils/participant'
 
 function TournamentStandings({ tournament, user }) {
   const allMatches = useMatchesByTournament(tournament._id)
   const format = tournament.rules?.format
 
-  const myTeamId = useMemo(() => {
-    const userTeamIds = user?.teams?.map((t) => t.teamId) || []
-    const participantIds = tournament.participantes?.map((p) => p.teamId) || []
-    return userTeamIds.find((id) => participantIds.some((pid) => String(pid) === String(id)))
-  }, [user, tournament])
+  const myTeamId = useMemo(() => findMyParticipation(tournament, user), [user, tournament])
 
   switch (format) {
     case 'ROUND_ROBIN':
