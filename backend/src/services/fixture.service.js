@@ -173,44 +173,84 @@ export const generateFixture = async (tournamentId, { rounds = 'single' } = {}) 
         isDeleted: false,
       });
     });
-  });
+  // 4) Persistir partidos y rondas atómicamente con Mongoose Session / Transaction
+  const session = await mongoose.startSession();
+  let createdMatches = [];
+  let savedTournament = null;
 
-  const createdMatches = await Match.insertMany(matchDocs);
-
-  // 5) Persistir las rondas en el torneo, referenciando los partidos creados.
-  const roundDocs = [];
-  let matchCursor = 0;
-  fixture.forEach((round, roundIndex) => {
-    const matchIds = createdMatches.slice(matchCursor, matchCursor + round.matches.length).map((m) => m._id);
-    matchCursor += round.matches.length;
-    roundDocs.push({
-      _id: roundIds[roundIndex],
-      roundName: round.roundName,
-      roundNumber: round.roundNumber,
-      startDate: round.startDate,
-      endDate: round.endDate,
-      type: 'ROUND_ROBIN',
-      status: 'SCHEDULED',
-      matches: matchIds,
-    });
-  });
-
-  let savedTournament;
   try {
-    savedTournament = await Tournament.findByIdAndUpdate(
-      tournamentId,
-      { $set: { rounds: roundDocs } },
-      { new: true, runValidators: true }
-    );
-  } catch (error) {
-    // Rollback manual: si falla la persistencia de las rondas, no quedan partidos huérfanos.
-    await Match.deleteMany({ _id: { $in: createdMatches.map((m) => m._id) } });
-    throw error;
-  }
+    await session.withTransaction(async () => {
+      createdMatches = await Match.insertMany(matchDocs, { session });
 
-  if (!savedTournament) {
-    await Match.deleteMany({ _id: { $in: createdMatches.map((m) => m._id) } });
-    throw new AppError(ErrorType.TOURNAMENT_NOT_FOUND);
+      const roundDocs = [];
+      let matchCursor = 0;
+      fixture.forEach((round, roundIndex) => {
+        const matchIds = createdMatches.slice(matchCursor, matchCursor + round.matches.length).map((m) => m._id);
+        matchCursor += round.matches.length;
+        roundDocs.push({
+          _id: roundIds[roundIndex],
+          roundName: round.roundName,
+          roundNumber: round.roundNumber,
+          startDate: round.startDate,
+          endDate: round.endDate,
+          type: 'ROUND_ROBIN',
+          status: 'SCHEDULED',
+          matches: matchIds,
+        });
+      });
+
+      savedTournament = await Tournament.findByIdAndUpdate(
+        tournamentId,
+        { $set: { rounds: roundDocs } },
+        { new: true, runValidators: true, session }
+      );
+
+      if (!savedTournament) {
+        throw new AppError(ErrorType.TOURNAMENT_NOT_FOUND);
+      }
+    });
+  } catch (error) {
+    // Si la base de datos es standalone sin ReplicaSet (común en entornos dev locales),
+    // el driver lanza un error indicando que las transacciones requieren Replica Set.
+    if (error.message && error.message.includes('replica set')) {
+      createdMatches = await Match.insertMany(matchDocs);
+      const roundDocs = [];
+      let matchCursor = 0;
+      fixture.forEach((round, roundIndex) => {
+        const matchIds = createdMatches.slice(matchCursor, matchCursor + round.matches.length).map((m) => m._id);
+        matchCursor += round.matches.length;
+        roundDocs.push({
+          _id: roundIds[roundIndex],
+          roundName: round.roundName,
+          roundNumber: round.roundNumber,
+          startDate: round.startDate,
+          endDate: round.endDate,
+          type: 'ROUND_ROBIN',
+          status: 'SCHEDULED',
+          matches: matchIds,
+        });
+      });
+
+      try {
+        savedTournament = await Tournament.findByIdAndUpdate(
+          tournamentId,
+          { $set: { rounds: roundDocs } },
+          { new: true, runValidators: true }
+        );
+      } catch (innerErr) {
+        await Match.deleteMany({ _id: { $in: createdMatches.map((m) => m._id) } });
+        throw innerErr;
+      }
+
+      if (!savedTournament) {
+        await Match.deleteMany({ _id: { $in: createdMatches.map((m) => m._id) } });
+        throw new AppError(ErrorType.TOURNAMENT_NOT_FOUND);
+      }
+    } else {
+      throw error;
+    }
+  } finally {
+    await session.endSession();
   }
 
   return { rounds: savedTournament.rounds, matches: createdMatches };
