@@ -6,7 +6,11 @@ export function useMatch(id) {
 }
 
 export function useMatchesByTournament(tournamentId) {
-  return useLiveQuery(() => db.matches.where('tournamentId').equals(tournamentId).filter((m) => !m.isDeleted).toArray(), [tournamentId], [])
+  return useLiveQuery(() => (
+    tournamentId
+      ? db.matches.where('tournamentId').equals(tournamentId).filter((m) => !m.isDeleted).toArray()
+      : []
+  ), [tournamentId], [])
 }
 
 export function useMatchesByTournamentAndRound(tournamentId, roundId) {

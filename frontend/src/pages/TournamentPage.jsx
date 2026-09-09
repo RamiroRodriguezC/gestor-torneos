@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Container, Box, Stack, Button, Chip, Alert } from '@mui/material'
+import { Container, Box, Stack, Button, Chip, Alert, CircularProgress } from '@mui/material'
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn'
 import PublishIcon from '@mui/icons-material/Publish'
 import UnpublishedIcon from '@mui/icons-material/Unpublished'
@@ -9,7 +9,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import { useAuth } from '../hooks/useAuth'
 import { useTournament } from '../hooks/useTournaments'
 import { useApplicationsByApplicant } from '../hooks/useApplications'
-import { publishTournament } from '../data/tournaments'
+import { publishTournament, fetchTournament } from '../data/tournaments'
 import TournamentNavbar from '../components/layout/TournamentNavbar'
 import TournamentGeneral from '../components/tournament/TournamentGeneral'
 import TournamentStandings from '../components/tournament/TournamentStandings'
@@ -17,6 +17,7 @@ import TournamentParticipants from '../components/tournament/TournamentParticipa
 import TournamentStats from '../components/tournament/TournamentStats'
 import TournamentFixture from '../components/tournament/TournamentFixture'
 import UnderConstruction from '../components/UnderConstruction'
+import ErrorDisplay from '../components/ErrorDisplay'
 import { findMyParticipation } from '../utils/participant'
 
 function TournamentPage() {
@@ -28,6 +29,21 @@ function TournamentPage() {
   const [activeSection, setActiveSection] = useState('general')
   const [publishError, setPublishError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [loadingBackend, setLoadingBackend] = useState(false)
+
+  // Si no está en Dexie, intentamos traerlo del backend por si acabamos de navegar directamente
+  useEffect(() => {
+    if (tournament === undefined || !tournament) {
+      let isMounted = true
+      setLoadingBackend(true)
+      fetchTournament(id)
+        .catch(() => {})
+        .finally(() => {
+          if (isMounted) setLoadingBackend(false)
+        })
+      return () => { isMounted = false }
+    }
+  }, [id, tournament])
 
   const isOrganizer = tournament && user && String(tournament.organizerId) === String(user._id)
 
@@ -48,7 +64,21 @@ function TournamentPage() {
     tournament?.status === 'PUBLICADO' &&
     (!tournament.registrationCloseAt || new Date(tournament.registrationCloseAt) > new Date())
 
-  if (!user || !tournament) return null
+  if (tournament === undefined || loadingBackend) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+        <CircularProgress color="primary" />
+      </Box>
+    )
+  }
+
+  if (!tournament) {
+    return (
+      <Container maxWidth="md" sx={{ mt: 8 }}>
+        <ErrorDisplay type="PAGE_NOT_FOUND" message="El torneo no existe o fue eliminado." size="lg" />
+      </Container>
+    )
+  }
 
   const canPublish = isOrganizer && tournament.status === 'BORRADOR'
   const canUnpublish = isOrganizer && tournament.status === 'PUBLICADO'

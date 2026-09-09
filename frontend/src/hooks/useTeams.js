@@ -10,7 +10,9 @@ export function useTeam(id) {
 }
 
 export function useTeamsByDiscipline(sportConfigId) {
-  return useLiveQuery(() => db.teams.where('discipline').equals(sportConfigId).toArray(), [sportConfigId], [])
+  return useLiveQuery(() => (
+    sportConfigId ? db.teams.where('discipline').equals(sportConfigId).toArray() : []
+  ), [sportConfigId], [])
 }
 
 export function useTeamsByUser(userId) {

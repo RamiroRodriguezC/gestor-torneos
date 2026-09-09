@@ -6,13 +6,19 @@ export function useApplication(id) {
 }
 
 export function useApplicationsByTournament(tournamentId) {
-  return useLiveQuery(() => db.applications.where('tournamentId').equals(tournamentId).toArray(), [tournamentId], [])
+  return useLiveQuery(() => (
+    tournamentId ? db.applications.where('tournamentId').equals(tournamentId).toArray() : []
+  ), [tournamentId], [])
 }
 
 export function useApplicationsByApplicant(userId) {
-  return useLiveQuery(() => db.applications.where('applicantId').equals(userId).toArray(), [userId], [])
+  return useLiveQuery(() => (
+    userId ? db.applications.where('applicantId').equals(userId).toArray() : []
+  ), [userId], [])
 }
 
 export function useApplicationsByStatus(status) {
-  return useLiveQuery(() => db.applications.where('status').equals(status).toArray(), [status], [])
+  return useLiveQuery(() => (
+    status ? db.applications.where('status').equals(status).toArray() : []
+  ), [status], [])
 }
