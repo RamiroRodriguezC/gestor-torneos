@@ -6,7 +6,15 @@ export function useTournaments() {
 }
 
 export function useTournament(id) {
-  return useLiveQuery(() => (id ? db.tournaments.get(id) : null), [id], null)
+  return useLiveQuery(
+    async () => {
+      if (!id) return null
+      const t = await db.tournaments.get(id)
+      return t ?? null
+    },
+    [id],
+    undefined
+  )
 }
 
 export function useActiveTournaments() {

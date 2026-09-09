@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Container, Box, Stack, Button, Chip, Alert, CircularProgress } from '@mui/material'
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn'
@@ -30,14 +30,19 @@ function TournamentPage() {
   const [publishError, setPublishError] = useState('')
   const [busy, setBusy] = useState(false)
   const [loadingBackend, setLoadingBackend] = useState(false)
+  const fetchedRef = useRef(false)
 
-  // Si no está en Dexie, intentamos traerlo del backend por si acabamos de navegar directamente
+  // Si Dexie ya terminó de consultar (tournament === null) y confirmó que NO está localmente,
+  // intentamos traerlo del backend una única vez por si navegó directamente por URL en un dispositivo nuevo.
   useEffect(() => {
-    if (tournament === undefined || !tournament) {
+    if (tournament === null && !fetchedRef.current && id) {
+      fetchedRef.current = true
       let isMounted = true
       setLoadingBackend(true)
       fetchTournament(id)
-        .catch(() => {})
+        .catch((err) => {
+          console.warn('No se pudo obtener el torneo del backend:', err)
+        })
         .finally(() => {
           if (isMounted) setLoadingBackend(false)
         })
@@ -64,7 +69,8 @@ function TournamentPage() {
     tournament?.status === 'PUBLICADO' &&
     (!tournament.registrationCloseAt || new Date(tournament.registrationCloseAt) > new Date())
 
-  if (tournament === undefined || loadingBackend) {
+  // Mostrar spinner si Dexie aún está consultando (undefined) o si Dexie terminó en null pero el backend está en vuelo.
+  if (tournament === undefined || (tournament === null && loadingBackend)) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
         <CircularProgress color="primary" />
