@@ -24,17 +24,30 @@ export async function fetchTournament(id) {
   return json.data
 }
 
-// Publica (BORRADOR → PUBLICADO) o despublica (→ BORRADOR) un torneo.
-// Acción de organizador: exige estar online (el PATCH no se encola offline).
 export async function publishTournament(id, status) {
   if (!navigator.onLine) {
-    throw new Error('Necesitás conexión para publicar el torneo.')
+    throw new Error('Necesitás conexión para cambiar el estado del torneo.')
   }
   const json = await apiFetch(`/tournaments/${id}/status`, {
     method: 'PATCH',
     body: JSON.stringify({ status }),
   })
   if (json.data) await putTournament(json.data)
+  return json.data
+}
+
+// Genera el fixture del torneo (Round Robin). Acción de organizador.
+export async function generateFixture(id, options = { rounds: 'single' }) {
+  if (!navigator.onLine) {
+    throw new Error('Necesitás conexión para generar el fixture.')
+  }
+  const json = await apiFetch(`/tournaments/${id}/fixture`, {
+    method: 'POST',
+    body: JSON.stringify(options),
+  })
+  if (json.data) {
+    await fetchTournament(id)
+  }
   return json.data
 }
 

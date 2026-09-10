@@ -71,7 +71,7 @@ function TournamentApplicationsPage() {
   const liveApps = useApplicationsByTournament(id)
 
   const displayed = useMemo(() => {
-    const source = apps.length ? apps : (liveApps || [])
+    const source = (apps.length ? apps : (liveApps || [])).filter(Boolean)
     return (tab ? source.filter((a) => a.status === tab) : source)
       .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
   }, [apps, liveApps, tab])
@@ -89,8 +89,9 @@ function TournamentApplicationsPage() {
   }
 
   const participantLabel = (a) => {
+    if (!a) return ''
     const team = teamMap[a.participantId]
-    return team?.name || a.displayNameSnapshot || a.participantId
+    return team?.name || a.displayNameSnapshot || a.participantId || ''
   }
 
   const openDecision = (a, status) => {
@@ -107,7 +108,7 @@ function TournamentApplicationsPage() {
         status: decision,
         ...(organizerNote ? { notesOrganizador: organizerNote } : {}),
       })
-      setApps((prev) => prev.map((a) => (a._id === updated._id ? updated : a)))
+      setApps((prev) => prev.map((a) => (a && a._id === updated._id ? updated : a)))
       setSnack(decision === 'APROBADA' ? 'Inscripción aprobada: el participante ya forma parte del torneo.' : 'Solicitud rechazada.')
       setDecisionApp(null)
       // Refrescar el torneo para que participantes/useLiveQuery reflejen el alta.
@@ -119,7 +120,7 @@ function TournamentApplicationsPage() {
     }
   }
 
-  const pendingCount = (liveApps || []).filter((a) => a.status === 'PENDIENTE').length
+  const pendingCount = (liveApps || []).filter((a) => a && a.status === 'PENDIENTE').length
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>

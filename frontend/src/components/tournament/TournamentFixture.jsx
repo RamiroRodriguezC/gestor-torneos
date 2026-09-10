@@ -168,38 +168,54 @@ function TournamentFixture({ tournament, user }) {
         </Grid>
       )}
 
-      {/* Selector de Rondas */}
-      <Tabs
-        value={tabIndex < roundTabs.length ? tabIndex : 0}
-        onChange={(_, i) => setTabIndex(i)}
-        variant="scrollable"
-        scrollButtons="auto"
-        sx={{
-          mb: 2,
-          '& .MuiTab-root': { color: 'grey.500', textTransform: 'none', fontWeight: 500 },
-          '& .Mui-selected': { color: '#00e676 !important' },
-          '& .MuiTabs-indicator': { bgcolor: '#00e676' },
-        }}
-      >
-        {roundTabs.map((rt) => (
-          <Tab key={rt.value} label={rt.label} />
-        ))}
-      </Tabs>
-
-      {roundMatches.length === 0 && (
-        <Box sx={{ textAlign: 'center', py: 6 }}>
-          <CalendarMonthIcon sx={{ fontSize: 56, color: 'grey.600', mb: 1.5 }} />
-          <Typography variant="h6" sx={{ color: 'grey.500' }}>
-            No hay partidos en esta ronda
+      {rounds.length === 0 ? (
+        <Box sx={{ textAlign: 'center', py: 8 }}>
+          <CalendarMonthIcon sx={{ fontSize: 64, color: 'grey.600', mb: 2 }} />
+          <Typography variant="h6" sx={{ color: 'grey.400', fontWeight: 600 }}>
+            Este torneo no tiene un fixture generado todavía.
+          </Typography>
+          <Typography variant="body2" sx={{ color: 'grey.500', mt: 1, maxWidth: 480, mx: 'auto' }}>
+            {tournament && user && String(tournament.organizerId) === String(user._id)
+              ? 'Como organizador, podés hacer clic en "Generar Fixture" arriba para armar automáticamente los emparejamientos y fechas de la competencia.'
+              : 'El organizador aún no ha publicado el fixture del torneo. Regresá pronto para consultar las fechas.'}
           </Typography>
         </Box>
-      )}
+      ) : (
+        <>
+          {/* Selector de Rondas */}
+          <Tabs
+            value={tabIndex < roundTabs.length ? tabIndex : 0}
+            onChange={(_, i) => setTabIndex(i)}
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{
+              mb: 2,
+              '& .MuiTab-root': { color: 'grey.500', textTransform: 'none', fontWeight: 500 },
+              '& .Mui-selected': { color: '#00e676 !important' },
+              '& .MuiTabs-indicator': { bgcolor: '#00e676' },
+            }}
+          >
+            {roundTabs.map((rt) => (
+              <Tab key={rt.value} label={rt.label} />
+            ))}
+          </Tabs>
 
-      <Stack spacing={1}>
-        {roundMatches.map((match) => (
-          <MatchCard key={match._id} match={match} myTeamId={myTeamId} showDate />
-        ))}
-      </Stack>
+          {roundMatches.length === 0 && (
+            <Box sx={{ textAlign: 'center', py: 6 }}>
+              <CalendarMonthIcon sx={{ fontSize: 56, color: 'grey.600', mb: 1.5 }} />
+              <Typography variant="h6" sx={{ color: 'grey.500' }}>
+                No hay partidos en esta ronda
+              </Typography>
+            </Box>
+          )}
+
+          <Stack spacing={1}>
+            {roundMatches.map((match) => (
+              <MatchCard key={match._id} match={match} myTeamId={myTeamId} showDate />
+            ))}
+          </Stack>
+        </>
+      )}
     </Box>
   )
 }

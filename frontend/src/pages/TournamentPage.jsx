@@ -6,10 +6,13 @@ import PublishIcon from '@mui/icons-material/Publish'
 import UnpublishedIcon from '@mui/icons-material/Unpublished'
 import PendingActionsIcon from '@mui/icons-material/PendingActions'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
+import PlayArrowIcon from '@mui/icons-material/PlayArrow'
+import FlagIcon from '@mui/icons-material/Flag'
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
 import { useAuth } from '../hooks/useAuth'
 import { useTournament } from '../hooks/useTournaments'
 import { useApplicationsByApplicant } from '../hooks/useApplications'
-import { publishTournament, fetchTournament } from '../data/tournaments'
+import { publishTournament, generateFixture, fetchTournament } from '../data/tournaments'
 import TournamentNavbar from '../components/layout/TournamentNavbar'
 import TournamentStandings from '../components/tournament/TournamentStandings'
 import TournamentParticipants from '../components/tournament/TournamentParticipants'
@@ -86,13 +89,27 @@ function TournamentPage() {
   }
 
   const canPublish = isOrganizer && tournament.status === 'BORRADOR'
-  const canUnpublish = isOrganizer && tournament.status === 'PUBLICADO'
+  const canStart = isOrganizer && tournament.status === 'PUBLICADO'
+  const canFinish = isOrganizer && tournament.status === 'EN_CURSO'
+  const canGenerateFixture = isOrganizer && (!tournament.rounds || tournament.rounds.length === 0)
 
   const handlePublish = async (status) => {
     setBusy(true)
     setPublishError('')
     try {
       await publishTournament(tournament._id, status)
+    } catch (err) {
+      setPublishError(err.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleGenerateFixture = async () => {
+    setBusy(true)
+    setPublishError('')
+    try {
+      await generateFixture(tournament._id)
     } catch (err) {
       setPublishError(err.message)
     } finally {
@@ -108,15 +125,41 @@ function TournamentPage() {
       />
       <Container sx={{ pb: 8 }}>
         <Stack direction="row" spacing={1} sx={{ mt: 2, flexWrap: 'wrap', alignItems: 'center', gap: 0.5 }}>
-          {/* Organizador: publicar/despublicar + acceso a solicitudes */}
+          {/* Chip de estado actual */}
+          <Chip
+            label={tournament.status || 'BORRADOR'}
+            color={
+              tournament.status === 'EN_CURSO'
+                ? 'success'
+                : tournament.status === 'PUBLICADO'
+                ? 'info'
+                : tournament.status === 'FINALIZADO'
+                ? 'default'
+                : 'warning'
+            }
+            size="small"
+            sx={{ fontWeight: 700 }}
+          />
+
+          {/* Acciones de Organizador */}
           {canPublish && (
             <Button size="small" variant="contained" color="primary" startIcon={<PublishIcon />} disabled={busy} onClick={() => handlePublish('PUBLICADO')}>
               Publicar torneo
             </Button>
           )}
-          {canUnpublish && (
-            <Button size="small" variant="outlined" color="warning" startIcon={<UnpublishedIcon />} disabled={busy} onClick={() => handlePublish('BORRADOR')}>
-              Despublicar
+          {canStart && (
+            <Button size="small" variant="contained" color="success" startIcon={<PlayArrowIcon />} disabled={busy} onClick={() => handlePublish('EN_CURSO')}>
+              Iniciar torneo
+            </Button>
+          )}
+          {canFinish && (
+            <Button size="small" variant="contained" color="error" startIcon={<FlagIcon />} disabled={busy} onClick={() => handlePublish('FINALIZADO')}>
+              Finalizar torneo
+            </Button>
+          )}
+          {canGenerateFixture && (
+            <Button size="small" variant="contained" color="secondary" startIcon={<AutoAwesomeIcon />} disabled={busy} onClick={handleGenerateFixture}>
+              Generar Fixture
             </Button>
           )}
           {isOrganizer && (

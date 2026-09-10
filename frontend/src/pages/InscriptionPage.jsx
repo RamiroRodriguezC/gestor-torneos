@@ -44,11 +44,12 @@ function InscriptionPage() {
       .map((p) => String(getParticipantId(p)))
       .filter(Boolean)
     const activeParticipantIds = (myApplications || [])
-      .filter((a) => String(a.tournamentId) === String(tournament._id) && ['PENDIENTE', 'APROBADA'].includes(a.status))
+      .filter((a) => a && String(a.tournamentId) === String(tournament._id) && ['PENDIENTE', 'APROBADA'].includes(a.status))
       .map((a) => String(a.participantId))
       .filter(Boolean)
     return (myTeams || []).filter(
       (t) =>
+        t &&
         String(t.capitanId) === String(user._id) &&
         !participantIds.includes(String(t._id)) &&
         !activeParticipantIds.includes(String(t._id))
@@ -58,6 +59,7 @@ function InscriptionPage() {
   const myParticipation = useMemo(() => findMyParticipation(tournament, user), [tournament, user])
   const myPending = (myApplications || []).some(
     (a) =>
+      a &&
       String(a.tournamentId) === String(tournament?._id) &&
       a.status === 'PENDIENTE' &&
       (isTeamSport ? String(a.participantId) !== String(user?._id) : true)
