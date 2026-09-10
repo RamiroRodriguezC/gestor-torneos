@@ -11,7 +11,6 @@ import { useTournament } from '../hooks/useTournaments'
 import { useApplicationsByApplicant } from '../hooks/useApplications'
 import { publishTournament, fetchTournament } from '../data/tournaments'
 import TournamentNavbar from '../components/layout/TournamentNavbar'
-import TournamentGeneral from '../components/tournament/TournamentGeneral'
 import TournamentStandings from '../components/tournament/TournamentStandings'
 import TournamentParticipants from '../components/tournament/TournamentParticipants'
 import TournamentStats from '../components/tournament/TournamentStats'
@@ -26,7 +25,7 @@ function TournamentPage() {
   const { user } = useAuth()
   const tournament = useTournament(id)
   const myApplications = useApplicationsByApplicant(user?._id)
-  const [activeSection, setActiveSection] = useState('general')
+  const [activeSection, setActiveSection] = useState('fixture')
   const [publishError, setPublishError] = useState('')
   const [busy, setBusy] = useState(false)
   const [loadingBackend, setLoadingBackend] = useState(false)
@@ -107,50 +106,48 @@ function TournamentPage() {
         activeSection={activeSection}
         onSectionChange={setActiveSection}
       />
-      <Container>
-        {activeSection === 'general' && (
-          <>
-            <Stack direction="row" spacing={1} sx={{ mt: 2, flexWrap: 'wrap', alignItems: 'center', gap: 0.5 }}>
-              {/* Organizador: publicar/despublicar + acceso a solicitudes */}
-              {canPublish && (
-                <Button size="small" variant="contained" color="primary" startIcon={<PublishIcon />} disabled={busy} onClick={() => handlePublish('PUBLICADO')}>
-                  Publicar torneo
-                </Button>
-              )}
-              {canUnpublish && (
-                <Button size="small" variant="outlined" color="warning" startIcon={<UnpublishedIcon />} disabled={busy} onClick={() => handlePublish('BORRADOR')}>
-                  Despublicar
-                </Button>
-              )}
-              {isOrganizer && (
-                <Button size="small" variant="outlined" startIcon={<PendingActionsIcon />} onClick={() => navigate(`/torneos/${tournament._id}/solicitudes`)}>
-                  Solicitudes
-                </Button>
-              )}
+      <Container sx={{ pb: 8 }}>
+        <Stack direction="row" spacing={1} sx={{ mt: 2, flexWrap: 'wrap', alignItems: 'center', gap: 0.5 }}>
+          {/* Organizador: publicar/despublicar + acceso a solicitudes */}
+          {canPublish && (
+            <Button size="small" variant="contained" color="primary" startIcon={<PublishIcon />} disabled={busy} onClick={() => handlePublish('PUBLICADO')}>
+              Publicar torneo
+            </Button>
+          )}
+          {canUnpublish && (
+            <Button size="small" variant="outlined" color="warning" startIcon={<UnpublishedIcon />} disabled={busy} onClick={() => handlePublish('BORRADOR')}>
+              Despublicar
+            </Button>
+          )}
+          {isOrganizer && (
+            <Button size="small" variant="outlined" startIcon={<PendingActionsIcon />} onClick={() => navigate(`/torneos/${tournament._id}/solicitudes`)}>
+              Solicitudes
+            </Button>
+          )}
 
-              {/* Jugador no inscripto: CTA a la página de inscripción */}
-              {!isOrganizer && inscription.state === 'none' && registrationOpen && (
-                <Button size="small" variant="contained" color="primary" startIcon={<AssignmentTurnedInIcon />} onClick={() => navigate(`/torneos/${tournament._id}/inscripcion`)}>
-                  Inscribirme
-                </Button>
-              )}
-              {!isOrganizer && inscription.state === 'pendiente' && (
-                <Chip icon={<PendingActionsIcon />} label="Solicitud pendiente de aprobación" color="warning" size="small" variant="outlined" />
-              )}
-              {!isOrganizer && inscription.state === 'inscripto' && (
-                <Chip icon={<CheckCircleIcon />} label="Ya inscripto" color="primary" size="small" variant="outlined" />
-              )}
-            </Stack>
+          {/* Jugador no inscripto: CTA a la página de inscripción */}
+          {!isOrganizer && inscription.state === 'none' && registrationOpen && (
+            <Button size="small" variant="contained" color="primary" startIcon={<AssignmentTurnedInIcon />} onClick={() => navigate(`/torneos/${tournament._id}/inscripcion`)}>
+              Inscribirme
+            </Button>
+          )}
+          {!isOrganizer && inscription.state === 'pendiente' && (
+            <Chip icon={<PendingActionsIcon />} label="Solicitud pendiente de aprobación" color="warning" size="small" variant="outlined" />
+          )}
+          {!isOrganizer && inscription.state === 'inscripto' && (
+            <Chip icon={<CheckCircleIcon />} label="Ya inscripto" color="primary" size="small" variant="outlined" />
+          )}
+        </Stack>
 
-            {publishError && <Alert severity="error" sx={{ mt: 1 }}>{publishError}</Alert>}
-            {isOrganizer && tournament.status === 'BORRADOR' && (
-              <Alert severity="info" sx={{ mt: 2 }}>
-                Este torneo está en borrador. Publicalo para que la gente pueda verlo e inscribirse.
-              </Alert>
-            )}
+        {publishError && <Alert severity="error" sx={{ mt: 1 }}>{publishError}</Alert>}
+        {isOrganizer && tournament.status === 'BORRADOR' && (
+          <Alert severity="info" sx={{ mt: 2 }}>
+            Este torneo está en borrador. Publicalo para que la gente pueda verlo e inscribirse.
+          </Alert>
+        )}
 
-            <TournamentGeneral tournament={tournament} user={user} />
-          </>
+        {activeSection === 'fixture' && (
+          <TournamentFixture tournament={tournament} user={user} />
         )}
         {activeSection === 'standings' && (
           <TournamentStandings tournament={tournament} user={user} />
@@ -160,9 +157,6 @@ function TournamentPage() {
         )}
         {activeSection === 'stats' && (
           <TournamentStats tournament={tournament} />
-        )}
-        {activeSection === 'fixture' && (
-          <TournamentFixture tournament={tournament} user={user} />
         )}
         {activeSection === 'announcements' && (
           <UnderConstruction feature="Anuncios" status="development" size="lg" />

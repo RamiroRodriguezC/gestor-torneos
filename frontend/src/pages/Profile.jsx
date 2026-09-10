@@ -134,7 +134,7 @@ function Profile() {
   return (
     <>
       <Navbar />
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 6 }}>
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 6, pb: 8 }}>
         <Grid container spacing={3}>
 
           {/* ── COLUMNA IZQUIERDA: identidad + contacto + deportes ── */}

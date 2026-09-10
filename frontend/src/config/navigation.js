@@ -21,18 +21,17 @@ export const authNavItemsLoggedIn = [
 ]
 
 export const dashboardNavItems = [
-  { label: 'Mis Torneos', path: '/dashboard/tournaments', icon: EmojiEventsIcon, type: 'navigation' },
   { label: 'Explorar', path: '/torneos', icon: ExploreIcon, type: 'navigation' },
-  { label: 'Mis Equipos', path: '/dashboard/teams', icon: GroupsIcon, type: 'navigation' },
-  { label: 'Mi Perfil', path: '/dashboard/profile', icon: PersonIcon, type: 'navigation' },
-  { label: 'Configuración', path: '/dashboard/config', icon: SettingsIcon, type: 'navigation' },
+  { label: 'Equipos', path: '/dashboard/teams', icon: GroupsIcon, type: 'navigation' },
+  { label: 'Torneos', path: '/dashboard/tournaments', icon: EmojiEventsIcon, type: 'navigation', isCenter: true },
+  { label: 'Perfil', path: '/dashboard/profile', icon: PersonIcon, type: 'navigation' },
+  { label: 'Ajustes', path: '/dashboard/config', icon: SettingsIcon, type: 'navigation' },
 ]
 
 export const tournamentSections = [
-  { label: 'General', value: 'general', icon: DashboardIcon, type: 'navigation' },
-  { label: 'Clasificación', value: 'standings', icon: EmojiEventsIcon, type: 'navigation' },
-  { label: 'Participantes', value: 'teams', icon: GroupsIcon, type: 'navigation' },
+  { label: 'Posiciones', value: 'standings', icon: EmojiEventsIcon, type: 'navigation' },
+  { label: 'Equipos', value: 'teams', icon: GroupsIcon, type: 'navigation' },
+  { label: 'Fixture', value: 'fixture', icon: CalendarMonthIcon, type: 'navigation', isCenter: true },
   { label: 'Estadísticas', value: 'stats', icon: BarChartIcon, type: 'navigation' },
-  { label: 'Fixture', value: 'fixture', icon: CalendarMonthIcon, type: 'navigation' },
   { label: 'Anuncios', value: 'announcements', icon: CampaignIcon, type: 'navigation' },
 ]

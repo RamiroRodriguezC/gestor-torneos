@@ -16,7 +16,7 @@ function Dashboard() {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <Navbar />
-      <Container>
+      <Container sx={{ pb: 8 }}>
         <Box sx={{ mt: 8, textAlign: 'center' }}>
           <Typography variant="h3">
             Hola {user?.nombre || user?.email || 'Usuario'}

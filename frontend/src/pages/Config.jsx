@@ -5,7 +5,7 @@ function Config() {
   return (
     <>
       <Navbar />
-      <Container>
+      <Container sx={{ pb: 8 }}>
         <Typography variant="h3" sx={{ mt: 8, textAlign: 'center' }}>
           Mis Configuraciones
         </Typography>

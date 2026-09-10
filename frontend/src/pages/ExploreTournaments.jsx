@@ -46,7 +46,7 @@ function ExploreTournaments() {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <Navbar />
-      <Container>
+      <Container sx={{ pb: 8 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ sm: 'center' }} sx={{ mt: 8, mb: 4, gap: 2 }}>
           <Box>
             <Typography variant="h3">Torneos</Typography>
