@@ -170,10 +170,11 @@ export const generateFixture = async (tournamentId, { rounds = 'single' } = {}) 
         startAt: match.startAt,
         isOffline: false,
         result: {},
-        isDeleted: false,
       });
     });
-  // 4) Persistir partidos y rondas atómicamente con Mongoose Session / Transaction
+  });
+
+  // 5) Persistir partidos y rondas atómicamente con Mongoose Session / Transaction
   const session = await mongoose.startSession();
   let createdMatches = [];
   let savedTournament = null;
