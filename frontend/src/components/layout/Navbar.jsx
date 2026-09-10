@@ -72,7 +72,7 @@ function Navbar({
                 </Typography>
               </>
             ) : (
-              <Box sx={{ cursor: 'pointer' }} onClick={() => navigate(logoTo ?? '/dashboard')}>
+              <Box sx={{ cursor: 'pointer' }} onClick={() => navigate(logoTo ?? '/dashboard/tournaments')}>
                 <AppLogo />
               </Box>
             )}

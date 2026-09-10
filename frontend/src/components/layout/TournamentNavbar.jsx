@@ -5,7 +5,7 @@ function TournamentNavbar({ activeSection, onSectionChange }) {
   return (
     <Navbar
       items={tournamentSections}
-      backTo="/dashboard"
+      backTo="/dashboard/tournaments"
       activeItem={activeSection}
       onItemClick={onSectionChange}
       mobileVariant="bottom"

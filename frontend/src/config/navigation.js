@@ -16,7 +16,7 @@ export const authNavItems = [
 
 export const authNavItemsLoggedIn = [
   { label: 'Torneos', path: '/torneos', type: 'navigation' },
-  { label: 'Ir al Dashboard', path: '/dashboard', variant: 'contained', type: 'navigation' },
+  { label: 'Ir al Dashboard', path: '/dashboard/tournaments', variant: 'contained', type: 'navigation' },
   { label: 'Cerrar sesión', variant: 'outlined', action: 'logout', type: 'action' },
 ]
 

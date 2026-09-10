@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ThemeProvider, createTheme, CssBaseline, Container } from '@mui/material'
 import ErrorDisplay from './components/ErrorDisplay'
 import { OnlineProvider } from './contexts/OnlineContext'
@@ -48,7 +48,7 @@ function App() {
           <Route index element={<HomePage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard" element={<Navigate to="/dashboard/tournaments" replace />} />
           <Route path="/dashboard/tournaments" element={<Tournaments />} />
           <Route path="/dashboard/tournaments/create" element={<CreateTournament />} />
           <Route path="/dashboard/teams" element={<Teams />} />

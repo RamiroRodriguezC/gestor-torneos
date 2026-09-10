@@ -164,7 +164,7 @@ function Register() {
       localStorage.setItem('currentUserId', usuario.id)
       await putUser({ _id: usuario.id, ...usuario })
       await syncUserEnvironment(usuario.id)
-      navigate('/dashboard')
+      navigate('/dashboard/tournaments')
     } catch (err) {
       setError(err.message)
     } finally {
