@@ -2,22 +2,18 @@ import { useState, useMemo, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Container, Box, Stack, Button, Chip, Alert, CircularProgress } from '@mui/material'
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn'
-import PublishIcon from '@mui/icons-material/Publish'
-import UnpublishedIcon from '@mui/icons-material/Unpublished'
 import PendingActionsIcon from '@mui/icons-material/PendingActions'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
-import PlayArrowIcon from '@mui/icons-material/PlayArrow'
-import FlagIcon from '@mui/icons-material/Flag'
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
 import { useAuth } from '../hooks/useAuth'
 import { useTournament } from '../hooks/useTournaments'
 import { useApplicationsByApplicant } from '../hooks/useApplications'
-import { publishTournament, generateFixture, fetchTournament } from '../data/tournaments'
+import { fetchTournament } from '../data/tournaments'
 import TournamentNavbar from '../components/layout/TournamentNavbar'
 import TournamentStandings from '../components/tournament/TournamentStandings'
 import TournamentParticipants from '../components/tournament/TournamentParticipants'
 import TournamentStats from '../components/tournament/TournamentStats'
 import TournamentFixture from '../components/tournament/TournamentFixture'
+import TournamentAdminSettings from '../components/tournament/TournamentAdminSettings'
 import UnderConstruction from '../components/UnderConstruction'
 import ErrorDisplay from '../components/ErrorDisplay'
 import { findMyParticipation } from '../utils/participant'
@@ -29,8 +25,6 @@ function TournamentPage() {
   const tournament = useTournament(id)
   const myApplications = useApplicationsByApplicant(user?._id)
   const [activeSection, setActiveSection] = useState('fixture')
-  const [publishError, setPublishError] = useState('')
-  const [busy, setBusy] = useState(false)
   const [loadingBackend, setLoadingBackend] = useState(false)
   const fetchedRef = useRef(false)
 
@@ -88,40 +82,12 @@ function TournamentPage() {
     )
   }
 
-  const canPublish = isOrganizer && tournament.status === 'BORRADOR'
-  const canStart = isOrganizer && tournament.status === 'PUBLICADO'
-  const canFinish = isOrganizer && tournament.status === 'EN_CURSO'
-  const canGenerateFixture = isOrganizer && (!tournament.rounds || tournament.rounds.length === 0)
-
-  const handlePublish = async (status) => {
-    setBusy(true)
-    setPublishError('')
-    try {
-      await publishTournament(tournament._id, status)
-    } catch (err) {
-      setPublishError(err.message)
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const handleGenerateFixture = async () => {
-    setBusy(true)
-    setPublishError('')
-    try {
-      await generateFixture(tournament._id)
-    } catch (err) {
-      setPublishError(err.message)
-    } finally {
-      setBusy(false)
-    }
-  }
-
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <TournamentNavbar
         activeSection={activeSection}
         onSectionChange={setActiveSection}
+        isOrganizer={isOrganizer}
       />
       <Container sx={{ pb: 8 }}>
         <Stack direction="row" spacing={1} sx={{ mt: 2, flexWrap: 'wrap', alignItems: 'center', gap: 0.5 }}>
@@ -141,33 +107,6 @@ function TournamentPage() {
             sx={{ fontWeight: 700 }}
           />
 
-          {/* Acciones de Organizador */}
-          {canPublish && (
-            <Button size="small" variant="contained" color="primary" startIcon={<PublishIcon />} disabled={busy} onClick={() => handlePublish('PUBLICADO')}>
-              Publicar torneo
-            </Button>
-          )}
-          {canStart && (
-            <Button size="small" variant="contained" color="success" startIcon={<PlayArrowIcon />} disabled={busy} onClick={() => handlePublish('EN_CURSO')}>
-              Iniciar torneo
-            </Button>
-          )}
-          {canFinish && (
-            <Button size="small" variant="contained" color="error" startIcon={<FlagIcon />} disabled={busy} onClick={() => handlePublish('FINALIZADO')}>
-              Finalizar torneo
-            </Button>
-          )}
-          {canGenerateFixture && (
-            <Button size="small" variant="contained" color="secondary" startIcon={<AutoAwesomeIcon />} disabled={busy} onClick={handleGenerateFixture}>
-              Generar Fixture
-            </Button>
-          )}
-          {isOrganizer && (
-            <Button size="small" variant="outlined" startIcon={<PendingActionsIcon />} onClick={() => navigate(`/torneos/${tournament._id}/solicitudes`)}>
-              Solicitudes
-            </Button>
-          )}
-
           {/* Jugador no inscripto: CTA a la página de inscripción */}
           {!isOrganizer && inscription.state === 'none' && registrationOpen && (
             <Button size="small" variant="contained" color="primary" startIcon={<AssignmentTurnedInIcon />} onClick={() => navigate(`/torneos/${tournament._id}/inscripcion`)}>
@@ -182,15 +121,12 @@ function TournamentPage() {
           )}
         </Stack>
 
-        {publishError && <Alert severity="error" sx={{ mt: 1 }}>{publishError}</Alert>}
-        {isOrganizer && tournament.status === 'BORRADOR' && (
-          <Alert severity="info" sx={{ mt: 2 }}>
-            Este torneo está en borrador. Publicalo para que la gente pueda verlo e inscribirse.
-          </Alert>
-        )}
-
         {activeSection === 'fixture' && (
-          <TournamentFixture tournament={tournament} user={user} />
+          <TournamentFixture
+            tournament={tournament}
+            user={user}
+            onGoToAdmin={() => setActiveSection('admin')}
+          />
         )}
         {activeSection === 'standings' && (
           <TournamentStandings tournament={tournament} user={user} />
@@ -203,6 +139,14 @@ function TournamentPage() {
         )}
         {activeSection === 'announcements' && (
           <UnderConstruction feature="Anuncios" status="development" size="lg" />
+        )}
+        {activeSection === 'admin' && isOrganizer && (
+          <TournamentAdminSettings
+            tournament={tournament}
+            user={user}
+            onSectionChange={setActiveSection}
+            onTournamentUpdated={fetchTournament}
+          />
         )}
       </Container>
     </Box>

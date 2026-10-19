@@ -1,5 +1,6 @@
 import { db } from '../lib/db.js'
 import { apiFetch } from '../utils/apiFetch.js'
+import { bulkPutMatches } from './matches.js'
 
 export async function createTournament(data) {
   const json = await apiFetch('/tournaments', {
@@ -46,6 +47,9 @@ export async function generateFixture(id, options = { rounds: 'single' }) {
     body: JSON.stringify(options),
   })
   if (json.data) {
+    if (json.data.matches && json.data.matches.length) {
+      await bulkPutMatches(json.data.matches)
+    }
     await fetchTournament(id)
   }
   return json.data

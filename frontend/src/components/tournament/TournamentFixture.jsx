@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Box, Typography, Card, CardContent, Stack, Tabs, Tab, Grid,
+  Box, Typography, Card, CardContent, Stack, Tabs, Tab, Grid, Button,
 } from '@mui/material'
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
 import CompetitorPhoto from '../shared/CompetitorPhoto'
 import { useTeam } from '../../hooks/useTeams'
 import { useMatchesByTournament } from '../../hooks/useMatches'
@@ -102,7 +103,7 @@ function TeamCard({ team, myTeamId, allMatches }) {
   )
 }
 
-function TournamentFixture({ tournament, user }) {
+function TournamentFixture({ tournament, user, onGoToAdmin }) {
   const allMatches = useMatchesByTournament(tournament?._id)
   const rounds = tournament?.rounds || []
 
@@ -176,9 +177,20 @@ function TournamentFixture({ tournament, user }) {
           </Typography>
           <Typography variant="body2" sx={{ color: 'grey.500', mt: 1, maxWidth: 480, mx: 'auto' }}>
             {tournament && user && String(tournament.organizerId) === String(user._id)
-              ? 'Como organizador, podés hacer clic en "Generar Fixture" arriba para armar automáticamente los emparejamientos y fechas de la competencia.'
+              ? 'Como organizador, podés configurar y generar el fixture desde el panel de Ajustes.'
               : 'El organizador aún no ha publicado el fixture del torneo. Regresá pronto para consultar las fechas.'}
           </Typography>
+          {tournament && user && String(tournament.organizerId) === String(user._id) && onGoToAdmin && (
+            <Button
+              variant="contained"
+              color="secondary"
+              startIcon={<AutoAwesomeIcon />}
+              onClick={onGoToAdmin}
+              sx={{ mt: 2.5, fontWeight: 700, textTransform: 'none' }}
+            >
+              Ir a Ajustes y Generar Fixture
+            </Button>
+          )}
         </Box>
       ) : (
         <>

@@ -19,6 +19,7 @@ function Navbar({
   onAction,
   mobileVariant = 'bottom',
   logoTo,
+  rightAction,
 }) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -74,6 +75,11 @@ function Navbar({
             ) : (
               <Box sx={{ cursor: 'pointer' }} onClick={() => navigate(logoTo ?? '/dashboard/tournaments')}>
                 <AppLogo />
+              </Box>
+            )}
+            {rightAction && (
+              <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center' }}>
+                {rightAction}
               </Box>
             )}
           </Toolbar>
@@ -240,6 +246,11 @@ function Navbar({
               {item.label}
             </Button>
           ))}
+          {rightAction && (
+            <Box sx={{ ml: 1, display: 'flex', alignItems: 'center' }}>
+              {rightAction}
+            </Box>
+          )}
         </Box>
       </Toolbar>
     </AppBar>
