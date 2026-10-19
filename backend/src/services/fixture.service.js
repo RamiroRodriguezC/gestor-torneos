@@ -157,6 +157,16 @@ export const generateFixture = async (tournamentId, { rounds = 'single' } = {}) 
   const matchDocs = [];
   fixture.forEach((round, roundIndex) => {
     round.matches.forEach((match) => {
+      const homeId = match.home?.participantId ?? match.home?.teamId ?? match.home?._id;
+      const awayId = match.away?.participantId ?? match.away?.teamId ?? match.away?._id;
+
+      if (!homeId || !awayId) {
+        throw new AppError(
+          ErrorType.VALIDATION_ERROR,
+          'Uno o más participantes no tienen un identificador válido (participantId o teamId).'
+        );
+      }
+
       matchDocs.push({
         tournamentId,
         status: 'PROGRAMADO',
@@ -164,8 +174,20 @@ export const generateFixture = async (tournamentId, { rounds = 'single' } = {}) 
         field: match.field,
         sportConfigId: tournament.sportConfigId,
         competitors: [
-          { teamId: match.home.teamId, side: 'HOME', displayNameSnapshot: match.home.displayNameSnapshot, logoURLSnapshot: match.home.logoURL },
-          { teamId: match.away.teamId, side: 'AWAY', displayNameSnapshot: match.away.displayNameSnapshot, logoURLSnapshot: match.away.logoURL },
+          {
+            participantId: homeId,
+            teamId: homeId,
+            side: 'HOME',
+            displayNameSnapshot: match.home.displayNameSnapshot || '',
+            logoURLSnapshot: match.home.logoURLSnapshot || match.home.logoURL || '',
+          },
+          {
+            participantId: awayId,
+            teamId: awayId,
+            side: 'AWAY',
+            displayNameSnapshot: match.away.displayNameSnapshot || '',
+            logoURLSnapshot: match.away.logoURLSnapshot || match.away.logoURL || '',
+          },
         ],
         startAt: match.startAt,
         isOffline: false,

@@ -2,6 +2,7 @@ import { Schema, model } from 'mongoose';
 import { COMPETITOR_SIDE, MATCH_STATUS } from '../constants/enums.js';
 
 const MatchCompetitorSchema = new Schema({
+  participantId: { type: Schema.Types.ObjectId },
   teamId: { type: Schema.Types.ObjectId, required: true },
   side: { type: String, enum: COMPETITOR_SIDE, default: 'NONE' },
   displayNameSnapshot: { type: String, default: '' },

@@ -10,7 +10,8 @@ import {
 // Legado: docs creados antes de ADR-012 pueden tener teamId en lugar de participantId —
 // los lectores deben usar participantId ?? teamId (ver frontend/src/utils/participant.js).
 const ParticipantSnapshotSchema = new Schema({
-  participantId: { type: Schema.Types.ObjectId, required: true },
+  participantId: { type: Schema.Types.ObjectId },
+  teamId: { type: Schema.Types.ObjectId },
   participantType: { type: String, enum: PARTICIPANT_TYPE, default: 'TEAM' },
   displayNameSnapshot: { type: String, default: '' },
   logoURL: { type: String, default: '' },
