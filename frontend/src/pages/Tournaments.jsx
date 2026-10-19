@@ -16,7 +16,7 @@ function Tournaments() {
   return (
     <>
       <Navbar />
-      <Container>
+      <Container sx={{ pb: 8 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 8, mb: 4 }}>
           <Typography variant="h3">
             Mis Torneos

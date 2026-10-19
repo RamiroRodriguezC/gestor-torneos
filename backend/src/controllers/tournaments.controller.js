@@ -1,10 +1,12 @@
 import handle from '../utils/handle.js';
 import * as tournamentsService from '../services/tournaments.service.js';
+import * as fixtureService from '../services/fixture.service.js';
 import { AppError } from '../utils/AppError.js';
 import { ErrorType } from '../constants/errorTypes.js';
 
-export const getAll = handle(async () => {
-  const data = await tournamentsService.findAll();
+export const getAll = handle(async (req) => {
+  const { status } = req.query;
+  const data = await tournamentsService.findAll({ status });
   return { data, count: data.length };
 });
 
@@ -15,12 +17,17 @@ export const getById = handle(async (req) => {
 });
 
 export const create = handle(async (req) => {
-  const data = await tournamentsService.create(req.body);
+  const data = await tournamentsService.create({ ...req.body, organizerId: req.user.id });
   return { data };
 });
 
 export const update = handle(async (req) => {
   const data = await tournamentsService.update(req.params.id, req.body);
+  return { data };
+});
+
+export const updateStatus = handle(async (req) => {
+  const data = await tournamentsService.updateStatus(req.params.id, req.body.status, { actorId: req.user.id });
   return { data };
 });
 
@@ -30,7 +37,7 @@ export const getParticipants = handle(async (req) => {
 });
 
 export const postParticipant = handle(async (req) => {
-  const data = await tournamentsService.addParticipant(req.params.id, req.body);
+  const data = await tournamentsService.addParticipant(req.params.id, req.body, { actorId: req.user.id });
   return { data, count: data.length };
 });
 
@@ -47,4 +54,9 @@ export const postRound = handle(async (req) => {
 export const getApplications = handle(async (req) => {
   const data = await tournamentsService.findApplications(req.params.id);
   return { data, count: data.length };
+});
+
+export const generateFixture = handle(async (req) => {
+  const data = await fixtureService.generateFixture(req.params.id, req.body);
+  return { data };
 });

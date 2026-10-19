@@ -19,6 +19,7 @@ function AuthNavbar() {
     <Navbar
       items={isLoggedIn ? authNavItemsLoggedIn : authNavItems}
       onAction={handleAction}
+      mobileVariant="top"
     />
   )
 }

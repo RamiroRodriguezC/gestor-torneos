@@ -103,7 +103,7 @@ function Login() {
     setError(null);
     try {
       await login(emailRef.current.value, passwordRef.current.value);
-      navigate('/dashboard');
+      navigate('/dashboard/tournaments');
     } catch (err) {
       setError(err.message || 'Error al iniciar sesión');
     } finally {

@@ -64,6 +64,18 @@ export async function removeMatch(id) {
   return db.matches.delete(id)
 }
 
+// Arma el payload "limpio" para PUT /matches/:id.
+// Los matches bajados por GET /matches vienen con sportConfigId poblado como objeto
+// ({ _id, name, sportProps }), pero el schema espera el id string. Tampoco hay que
+// reenviar campos de control (updatedAt, isDeleted, isOffline) que el backend regenera.
+function buildMatchUpdatePayload(data) {
+  const { sportConfigId, updatedAt: _updatedAt, isDeleted: _isDeleted, isOffline: _isOffline, ...rest } = data
+  return {
+    ...rest,
+    sportConfigId: typeof sportConfigId === 'string' ? sportConfigId : sportConfigId?._id,
+  }
+}
+
 // Guarda la planilla de un partido (resultado, eventos, etc)
 // Si hay conexión: actualiza Dexie + envía al backend y actualiza Dexie con la respuesta
 // Si no hay conexión: actualiza Dexie + encola para enviar después
@@ -71,11 +83,13 @@ export async function updateMatchSheet(id, data) {
   // 1. Siempre escribimos primero en IndexedDB (actualización local optimista)
   await putMatch(data)
 
+  const payload = buildMatchUpdatePayload(data)
+
   // 2. Si estamos online, mandamos directo al backend
   if (navigator.onLine) {
     const json = await apiFetch(`/matches/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     })
     // Actualizamos Dexie con la respuesta del backend (tiene los campos completos)
     await putMatch(json.data)
@@ -87,7 +101,7 @@ export async function updateMatchSheet(id, data) {
     action: 'UPDATE_MATCH',
     entity: 'matches',
     entityId: id,
-    payload: data,
+    payload,
   })
   return data
 }

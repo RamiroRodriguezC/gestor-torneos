@@ -1,33 +1,61 @@
+import { useNavigate } from 'react-router-dom'
 import { Box, Typography, Card, CardContent, Stack, Chip } from '@mui/material'
 import CompetitorPhoto from '../../shared/CompetitorPhoto'
 import { getTeamScore, STATUS_STYLE } from './matchUtils'
 
-function MatchCardVersus({ match, myTeamId, showDate }) {
+function MatchCardVersus({ match, myTeamId, showDate, onMatchClick }) {
+  const navigate = useNavigate()
   const home = match.competitors?.[0]
   const away = match.competitors?.[1]
+  const homeId = home?.participantId ?? home?.teamId
+  const awayId = away?.participantId ?? away?.teamId
   const statusInfo = STATUS_STYLE[match.status] || STATUS_STYLE.PROGRAMADO
-  const isMyMatch = myTeamId && match.competitors?.some((c) => String(c.teamId) === String(myTeamId))
+  const isMyMatch = myTeamId && match.competitors?.some((c) => String(c.participantId ?? c.teamId) === String(myTeamId))
 
-  const homeScore = getTeamScore(match, home?.teamId)
-  const awayScore = getTeamScore(match, away?.teamId)
+  const homeScore = getTeamScore(match, homeId)
+  const awayScore = getTeamScore(match, awayId)
+
+  const goToMatch = () => {
+    if (onMatchClick) {
+      onMatchClick(match)
+    } else {
+      navigate(`/match/${match._id}`)
+    }
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      goToMatch()
+    }
+  }
 
   return (
-    <Card sx={{
-      bgcolor: isMyMatch ? '#1a2a1a' : '#1a1a1a',
-      border: '1px solid',
-      borderColor: isMyMatch ? '#00e67644' : 'divider',
-      '&:hover': { borderColor: isMyMatch ? '#00e676' : 'grey.600' },
-    }}>
+    <Card
+      onClick={goToMatch}
+      onKeyDown={handleKeyDown}
+      role="button"
+      tabIndex={0}
+      aria-label={`Ver detalle del partido ${home?.displayNameSnapshot || ''} vs ${away?.displayNameSnapshot || ''}`}
+      sx={{
+        bgcolor: isMyMatch ? '#1a2a1a' : '#1a1a1a',
+        border: '1px solid',
+        borderColor: isMyMatch ? '#00e67644' : 'divider',
+        cursor: 'pointer',
+        '&:hover': { borderColor: isMyMatch ? '#00e676' : '#00e676' },
+        '&:focus-visible': { outline: '2px solid #00e676' },
+      }}
+    >
       <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
         <Stack direction="row" alignItems="center" spacing={1}>
           <Box sx={{ flex: 1, textAlign: 'right' }}>
             <Stack direction="row" alignItems="center" spacing={1} sx={{ justifyContent: 'flex-end' }}>
               <Typography variant="body1" sx={{
-                fontWeight: String(home?.teamId) === String(myTeamId) ? 700 : 400,
-                color: String(home?.teamId) === String(myTeamId) ? '#00e676' : 'text.primary',
+                fontWeight: String(homeId) === String(myTeamId) ? 700 : 400,
+                color: String(homeId) === String(myTeamId) ? '#00e676' : 'text.primary',
                 fontSize: '0.9rem',
               }}>
-                {home?.displayNameSnapshot || home?.teamId || 'Local'}
+                {home?.displayNameSnapshot || homeId || 'Local'}
               </Typography>
               <CompetitorPhoto
                 logoURL={home?.logoURLSnapshot}
@@ -57,11 +85,11 @@ function MatchCardVersus({ match, myTeamId, showDate }) {
                 size={24}
               />
               <Typography variant="body1" sx={{
-                fontWeight: String(away?.teamId) === String(myTeamId) ? 700 : 400,
-                color: String(away?.teamId) === String(myTeamId) ? '#00e676' : 'text.primary',
+                fontWeight: String(awayId) === String(myTeamId) ? 700 : 400,
+                color: String(awayId) === String(myTeamId) ? '#00e676' : 'text.primary',
                 fontSize: '0.9rem',
               }}>
-                {away?.displayNameSnapshot || away?.teamId || 'Visitante'}
+                {away?.displayNameSnapshot || awayId || 'Visitante'}
               </Typography>
             </Stack>
           </Box>

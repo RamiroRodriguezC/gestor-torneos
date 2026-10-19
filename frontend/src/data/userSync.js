@@ -1,6 +1,7 @@
 import { putUser, bulkPutUsers } from './users.js'
 import { bulkPutTeams } from './teams.js'
 import { bulkPutTournaments } from './tournaments.js'
+import { bulkPutApplications } from './applications.js'
 import { bulkPutMatches } from './matches.js'
 import { bulkPutSports } from './sportsConfig.js'
 import { db } from '../lib/db.js'
@@ -26,7 +27,7 @@ export async function syncUserEnvironment(userId) {
   console.log(`[userSync] Usuario obtenido: ${user.name} ${user.lastName} (_id: ${user._id})`)
   await putUser(user)
 
-  const counts = { user: 1, teams: 0, members: 0, tournaments: 0, matches: 0, sportConfigs: 0 }
+  const counts = { user: 1, teams: 0, members: 0, tournaments: 0, matches: 0, sportConfigs: 0, applications: 0 }
 
   const [tournaments, teams] = await Promise.all([
     fetchJSON(`/users/${userId}/tournaments`),
@@ -59,7 +60,9 @@ export async function syncUserEnvironment(userId) {
     const tournamentTeamIds = [
       ...new Set(
         tournaments.flatMap((t) =>
-          (t.participantes || []).map((p) => p.teamId).filter(Boolean)
+          (t.participantes || [])
+            .map((p) => p.participantId ?? p.teamId)
+            .filter(Boolean)
         )
       ),
     ]
@@ -127,6 +130,39 @@ export async function syncUserEnvironment(userId) {
     }
   } else {
     console.log(`[userSync] Partidos saltados (sin torneos del usuario)`)
+  }
+
+  // Solicitudes de inscripción: las del usuario como solicitante + las de los
+  // torneos que organiza (para la pantalla de gestión del organizador).
+  const appSets = []
+  const orgTournaments = (tournaments || []).filter(
+    (t) => String(t.organizerId) === String(userId)
+  )
+  if (orgTournaments.length > 0) {
+    const perTournament = await Promise.all(
+      orgTournaments.map((t) => fetchJSON(`/tournaments/${t._id}/applications`))
+    )
+    perTournament.forEach((list) => {
+      if (list?.length) appSets.push(list)
+    })
+  }
+  const mine = await fetchJSON(`/applications`)
+  if (mine?.length) {
+    appSets.push(mine.filter((a) => String(a.applicantId) === String(userId)))
+  }
+  const uniqueApps = []
+  const seenAppIds = new Set()
+  for (const list of appSets) {
+    for (const a of list) {
+      if (a._id && !seenAppIds.has(a._id)) {
+        seenAppIds.add(a._id)
+        uniqueApps.push(a)
+      }
+    }
+  }
+  if (uniqueApps.length > 0) {
+    await bulkPutApplications(uniqueApps)
+    counts.applications = uniqueApps.length
   }
 
   console.log(`[userSync] Sync completado. Resumen:`, counts)

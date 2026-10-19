@@ -10,6 +10,7 @@ import { useTeam } from '../../hooks/useTeams'
 import { useMatchesByTournament } from '../../hooks/useMatches'
 import MatchCard from './match/MatchCard'
 import { getTeamScore, getOpponentScore } from './match/matchUtils'
+import { findMyParticipation } from '../../utils/participant'
 
 function RoundSelector({ rounds, selected, onChange }) {
   const currentIndex = rounds.findIndex((r) => r.roundNumber === selected)
@@ -44,7 +45,7 @@ function TeamCard({ team, myTeamId, allMatches }) {
 
   const last5 = useMemo(() => {
     const myCompleted = allMatches
-      .filter((m) => m.competitors?.some((c) => String(c.teamId) === String(myTeamId)) && m.status === 'FINALIZADO')
+      .filter((m) => m.competitors?.some((c) => String(c.teamId) === String(myTeamId) || String(c.participantId) === String(myTeamId)) && m.status === 'FINALIZADO')
       .sort((a, b) => (b.round?.number || 0) - (a.round?.number || 0))
       .slice(0, 5)
       .reverse()
@@ -61,13 +62,13 @@ function TeamCard({ team, myTeamId, allMatches }) {
   const nextMatch = useMemo(() => {
     return allMatches.find(
       (m) =>
-        m.competitors?.some((c) => String(c.teamId) === String(myTeamId)) &&
+        m.competitors?.some((c) => String(c.teamId) === String(myTeamId) || String(c.participantId) === String(myTeamId)) &&
         m.status === 'PROGRAMADO'
     )
   }, [allMatches, myTeamId])
 
   const nextOpponent = nextMatch?.competitors?.find(
-    (c) => String(c.teamId) !== String(myTeamId)
+    (c) => String(c.teamId) !== String(myTeamId) && String(c.participantId) !== String(myTeamId)
   )
 
   if (!myTeamId) return null
@@ -116,11 +117,7 @@ function TournamentGeneral({ tournament, user }) {
   const allMatches = useMatchesByTournament(tournament._id)
   const rounds = tournament.rounds || []
 
-  const myTeamId = useMemo(() => {
-    const userTeamIds = user?.teams?.map((t) => t.teamId) || []
-    const participantIds = tournament.participantes?.map((p) => p.teamId) || []
-    return userTeamIds.find((id) => participantIds.some((pid) => String(pid) === String(id)))
-  }, [user, tournament])
+  const myTeamId = useMemo(() => findMyParticipation(tournament, user), [user, tournament])
 
   const myTeam = useTeam(myTeamId)
 

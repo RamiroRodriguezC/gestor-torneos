@@ -1,11 +1,57 @@
 import { db } from '../lib/db.js'
 import { apiFetch } from '../utils/apiFetch.js'
+import { bulkPutMatches } from './matches.js'
 
 export async function createTournament(data) {
   const json = await apiFetch('/tournaments', {
     method: 'POST',
     body: JSON.stringify(data),
   })
+  return json.data
+}
+
+// Trae el catálogo público (PUBLICADO) y lo cachea en Dexie. El endpoint es público.
+export async function fetchPublicTournaments() {
+  const json = await apiFetch('/tournaments?status=PUBLICADO')
+  const list = json.data || []
+  if (list.length) await bulkPutTournaments(list)
+  return list
+}
+
+// Refresca el detalle de un torneo desde el server y actualiza la copia local.
+export async function fetchTournament(id) {
+  const json = await apiFetch(`/tournaments/${id}`)
+  if (json.data) await putTournament(json.data)
+  return json.data
+}
+
+export async function publishTournament(id, status) {
+  if (!navigator.onLine) {
+    throw new Error('Necesitás conexión para cambiar el estado del torneo.')
+  }
+  const json = await apiFetch(`/tournaments/${id}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+  })
+  if (json.data) await putTournament(json.data)
+  return json.data
+}
+
+// Genera el fixture del torneo (Round Robin). Acción de organizador.
+export async function generateFixture(id, options = { rounds: 'single' }) {
+  if (!navigator.onLine) {
+    throw new Error('Necesitás conexión para generar el fixture.')
+  }
+  const json = await apiFetch(`/tournaments/${id}/fixture`, {
+    method: 'POST',
+    body: JSON.stringify(options),
+  })
+  if (json.data) {
+    if (json.data.matches && json.data.matches.length) {
+      await bulkPutMatches(json.data.matches)
+    }
+    await fetchTournament(id)
+  }
   return json.data
 }
 

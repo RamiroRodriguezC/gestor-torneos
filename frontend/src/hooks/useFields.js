@@ -6,5 +6,5 @@ export function useFields() {
 }
 
 export function useField(id) {
-  return useLiveQuery(() => db.fields.get(id), [id], null)
+  return useLiveQuery(() => (id ? db.fields.get(id) : null), [id], null)
 }

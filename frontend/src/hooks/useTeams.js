@@ -6,11 +6,13 @@ export function useTeams() {
 }
 
 export function useTeam(id) {
-  return useLiveQuery(() => db.teams.get(id), [id], null)
+  return useLiveQuery(() => (id ? db.teams.get(id) : null), [id], null)
 }
 
 export function useTeamsByDiscipline(sportConfigId) {
-  return useLiveQuery(() => db.teams.where('discipline').equals(sportConfigId).toArray(), [sportConfigId], [])
+  return useLiveQuery(() => (
+    sportConfigId ? db.teams.where('discipline').equals(sportConfigId).toArray() : []
+  ), [sportConfigId], [])
 }
 
 export function useTeamsByUser(userId) {

@@ -3,13 +3,15 @@ import { Box, Typography } from '@mui/material'
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
 import MatchCard from '../match/MatchCard'
 
+const getCompetitorId = (c) => c?.participantId ?? c?.teamId
+
 function getWinnerTeamId(match) {
   if (match.status !== 'FINALIZADO') return null
   const scores = (match.competitors || []).map((c) => {
     const score = (match.keyEvents || [])
-      .filter((e) => String(e.competitorId) === String(c.teamId) && (e.incrementScore || 0) > 0)
+      .filter((e) => String(e.competitorId) === String(getCompetitorId(c)) && (e.incrementScore || 0) > 0)
       .reduce((s, e) => s + (e.incrementScore || 0), 0)
-    return { teamId: c.teamId, score }
+    return { teamId: getCompetitorId(c), score }
   })
   if (scores.length < 2) return null
   return scores[0].score > scores[1].score ? scores[0].teamId : scores[1].score > scores[0].score ? scores[1].teamId : null
@@ -53,7 +55,7 @@ function BracketMatch({ match, winnerTeams, myTeamId }) {
       {winnerTeams && winnerTeams.length > 0 && (
         <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mt: 0.5 }}>
           {winnerTeams.map((tid) => {
-            const comp = match.competitors?.find((c) => String(c.teamId) === String(tid))
+            const comp = match.competitors?.find((c) => String(getCompetitorId(c)) === String(tid))
             return (
               <Typography key={tid} variant="caption" sx={{ color: '#00e676', fontWeight: 600, fontSize: '0.65rem' }}>
                 Avanza: {comp?.displayNameSnapshot || tid}

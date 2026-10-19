@@ -13,7 +13,7 @@ function Teams() {
   return (
     <>
       <Navbar />
-      <Container>
+      <Container sx={{ pb: 8 }}>
         <Typography variant="h3" sx={{ mt: 8, mb: 4, textAlign: 'center' }}>
           Mis Equipos
         </Typography>

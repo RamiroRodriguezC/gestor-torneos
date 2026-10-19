@@ -1,7 +1,15 @@
+import { useState } from 'react'
 import { Box } from '@mui/material'
 
+function isValidHttpUrl(string) {
+  if (!string || typeof string !== 'string') return false
+  return string.startsWith('http://') || string.startsWith('https://') || string.startsWith('data:')
+}
+
 function CompetitorPhoto({ logoURL, displayName, size = 28 }) {
+  const [imageError, setImageError] = useState(false)
   const letter = (displayName || '?')[0].toUpperCase()
+  const showImage = Boolean(logoURL) && isValidHttpUrl(logoURL) && !imageError
 
   return (
     <Box
@@ -20,10 +28,11 @@ function CompetitorPhoto({ logoURL, displayName, size = 28 }) {
         flexShrink: 0,
       }}
     >
-      {logoURL ? (
+      {showImage ? (
         <Box
           component="img"
           src={logoURL}
+          onError={() => setImageError(true)}
           sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
       ) : (

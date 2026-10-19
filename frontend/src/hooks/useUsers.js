@@ -6,7 +6,9 @@ export function useUser(id) {
 }
 
 export function useUserByEmail(email) {
-  return useLiveQuery(() => db.users.where('email').equals(email).first(), [email], null)
+  return useLiveQuery(() => (
+    email ? db.users.where('email').equals(email).first() : null
+  ), [email], null)
 }
 
 export function useUsersByIds(ids) {

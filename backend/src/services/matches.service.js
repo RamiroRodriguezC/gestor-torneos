@@ -50,6 +50,16 @@ export const create = async (data) => {
   const errors = validate(data);
   if (errors.length) throw new AppError(ErrorType.VALIDATION_ERROR, errors.join('; '));
 
+  // Verificar que roundId pertenezca al torneo (PK compuesta lógica tournamentId+roundId — ADR-008 opción 1)
+  const Tournament = (await import('../models/TournamentsModel.js')).default;
+  const tournament = await Tournament.findOne({ _id: data.tournamentId, 'rounds._id': data.round.roundId }).select('rounds');
+  if (!tournament) throw new AppError(ErrorType.VALIDATION_ERROR, 'roundId no pertenece al torneo indicado o torneo inexistente');
+  // Sincronizar round.number con el round real para evitar divergencia
+  const realRound = tournament.rounds.id(data.round.roundId);
+  if (realRound && realRound.roundNumber !== data.round.number) {
+    throw new AppError(ErrorType.VALIDATION_ERROR, `round.number (${data.round.number}) no coincide con roundNumber del torneo (${realRound.roundNumber})`);
+  }
+
   return Match.create(data);
 };
 
@@ -58,6 +68,19 @@ export const update = async (id, data) => {
 
   const errors = validate(data, true);
   if (errors.length) throw new AppError(ErrorType.VALIDATION_ERROR, errors.join('; '));
+
+  // Si se actualiza round, validar pertenencia al torneo
+  if (data.round?.roundId || data.tournamentId) {
+    const current = await Match.findById(id).select('tournamentId round');
+    if (!current) throw new AppError(ErrorType.MATCH_NOT_FOUND);
+    const tournamentId = data.tournamentId || current.tournamentId;
+    const roundId = data.round?.roundId || current.round?.roundId;
+    if (roundId) {
+      const Tournament = (await import('../models/TournamentsModel.js')).default;
+      const tournament = await Tournament.findOne({ _id: tournamentId, 'rounds._id': roundId }).select('rounds');
+      if (!tournament) throw new AppError(ErrorType.VALIDATION_ERROR, 'roundId no pertenece al torneo indicado');
+    }
+  }
 
   const match = await Match.findByIdAndUpdate(id, data, { new: true, runValidators: true });
   if (!match) throw new AppError(ErrorType.MATCH_NOT_FOUND);

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ThemeProvider, createTheme, CssBaseline, Container } from '@mui/material'
 import ErrorDisplay from './components/ErrorDisplay'
 import { OnlineProvider } from './contexts/OnlineContext'
@@ -13,6 +13,10 @@ import Team from './pages/Team'
 import Profile from './pages/Profile'
 import Config from './pages/Config'
 import TournamentPage from './pages/TournamentPage'
+import MatchDetailPage from './pages/MatchDetailPage'
+import ExploreTournaments from './pages/ExploreTournaments'
+import InscriptionPage from './pages/InscriptionPage'
+import TournamentApplicationsPage from './pages/TournamentApplicationsPage'
 
 const theme = createTheme({
   palette: {
@@ -44,7 +48,7 @@ function App() {
           <Route index element={<HomePage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard" element={<Navigate to="/dashboard/tournaments" replace />} />
           <Route path="/dashboard/tournaments" element={<Tournaments />} />
           <Route path="/dashboard/tournaments/create" element={<CreateTournament />} />
           <Route path="/dashboard/teams" element={<Teams />} />
@@ -53,6 +57,10 @@ function App() {
           <Route path="/user/:userId" element={<Profile />} />
           <Route path="/dashboard/config" element={<Config />} />
           <Route path="/tournament/:id" element={<TournamentPage />} />
+          <Route path="/torneos" element={<ExploreTournaments />} />
+          <Route path="/torneos/:id/inscripcion" element={<InscriptionPage />} />
+          <Route path="/torneos/:id/solicitudes" element={<TournamentApplicationsPage />} />
+          <Route path="/match/:id" element={<MatchDetailPage />} />
           <Route path="/team/:id" element={<Team />} />
           <Route path="*" element={<Container maxWidth="md"><ErrorDisplay type="PAGE_NOT_FOUND" size="lg" /></Container>} />
         </Routes>

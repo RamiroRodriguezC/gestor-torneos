@@ -10,5 +10,7 @@ export function useSport(id) {
 }
 
 export function useSportByName(name) {
-  return useLiveQuery(() => db.sportsConfig.where('name').equals(name).first(), [name], null)
+  return useLiveQuery(() => (
+    name ? db.sportsConfig.where('name').equals(name).first() : null
+  ), [name], null)
 }

@@ -2,11 +2,17 @@ import { Schema, model } from 'mongoose';
 import {
   FINISHING_CRITERIA_TYPE, FINISHING_CRITERIA_UNIT,
   TOURNAMENT_FORMAT, TOURNAMENT_STATUS, APPLICATION_STATUS,
-  ROUND_TYPE, ROUND_STATUS,
+  ROUND_TYPE, ROUND_STATUS, PARTICIPANT_TYPE,
 } from '../constants/enums.js';
 
+// Snapshot del participante dentro del torneo (ADR-006 + ADR-012).
+// participantId es polimórfico: apunta a un Team (deporte TEAM) o a un User (deporte INDIVIDUAL).
+// Legado: docs creados antes de ADR-012 pueden tener teamId en lugar de participantId —
+// los lectores deben usar participantId ?? teamId (ver frontend/src/utils/participant.js).
 const ParticipantSnapshotSchema = new Schema({
-  teamId: { type: Schema.Types.ObjectId, required: true, ref: 'Team' },
+  participantId: { type: Schema.Types.ObjectId },
+  teamId: { type: Schema.Types.ObjectId },
+  participantType: { type: String, enum: PARTICIPANT_TYPE, default: 'TEAM' },
   displayNameSnapshot: { type: String, default: '' },
   logoURL: { type: String, default: '' },
 }, { _id: false });
@@ -26,7 +32,7 @@ const roundSchema = new Schema({
   type: { type: String, enum: ROUND_TYPE, default: 'ROUND_ROBIN' },
   status: { type: String, enum: ROUND_STATUS, default: 'SCHEDULED' },
   matches: [{ type: Schema.Types.ObjectId, ref: 'Match' }]
-}, { _id: false });
+});
 
 const TournamentSchema = new Schema({
   title: { type: String, required: true },
