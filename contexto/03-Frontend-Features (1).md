@@ -40,8 +40,10 @@ Todas las variables de entorno relevantes deben llamarse `VITE_API_BASE_URL_LOCA
 1. `Login.jsx` valida el formulario (regex de email, contraseña ≥6) y llama a `data/auth.js#login(email, password)`.
 2. `login()` hace `POST /users/login`, guarda `token` y `currentUserId` en `localStorage`, escribe el usuario en Dexie (`putUser`, que le saca `hashedPassword` si vino) y dispara `syncUserEnvironment(usuario.id)` — el pull inicial completo.
 3. `Register.jsx` repite básicamente el mismo flujo pero además hace primero `POST /users` para crear la cuenta, y trae `GET /sports` para armar el paso 2 del wizard (selección de deportes de interés).
-4. `useAuth()` (hook) lee `currentUserId` de `localStorage` y hace `useLiveQuery` sobre `db.users.get(userId)` — el "usuario logueado" en toda la app es, en rigor, **lo que hay en Dexie**, no una verificación contra el backend.
-5. `logout()` solo limpia `localStorage` (no invalida el token en servidor, porque no existe tal mecanismo).
+4. `useAuth()` (hook) lee `token` y `currentUserId` de `localStorage`. Realiza una verificación proactiva de expiración del JWT (comparando `exp` contra `Date.now()`): si expiró, purga las claves y desloguea inmediatamente. Si está activo, hace `useLiveQuery` sobre `db.users.get(userId)` y expone `{ user, isLoggedIn }`.
+5. `ProtectedRoute.jsx` envuelve las rutas privadas en `App.jsx` y redirige a `/login` preservando la ruta de origen en `location.state` si no hay sesión activa.
+6. `Navbar.jsx` evalúa `isLoggedIn` para renderizar condicionalmente los ítems: cuando no hay sesión, la barra solo ofrece `Explorar` (`/torneos`), `Login` y `Registrarse`, protegiendo la UI contra pantallas negras.
+7. `apiFetch.js` intercepta respuestas `401` o `403` por token vencido/inválido y redirige a `/login` ejecutando `logout()`.
 
 **Lo que falta para que esto sea autenticación real (ver ADR-009/011 y el informe de errores):** ningún `fetch` de `data/*.js` adjunta `Authorization: Bearer <token>`, y el backend no exige ese header en ninguna ruta. El JWT hoy solo sirve para que el cliente sepa "el login fue válido en ese instante"; no protege nada después.
 
