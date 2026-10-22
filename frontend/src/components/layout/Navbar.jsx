@@ -9,10 +9,11 @@ import Typography from '@mui/material/Typography'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import AppLogo from './AppLogo'
 import OfflineBanner from './OfflineBanner'
-import { dashboardNavItems } from '../../config/navigation'
+import { dashboardNavItems, publicDashboardNavItems } from '../../config/navigation'
+import { useAuth } from '../../hooks/useAuth'
 
 function Navbar({
-  items = dashboardNavItems,
+  items,
   backTo,
   activeItem,
   onItemClick,
@@ -25,8 +26,10 @@ function Navbar({
   const location = useLocation()
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
+  const { isLoggedIn } = useAuth()
 
-  const hasBottomNav = mobileVariant === 'bottom' && isMobile && items.some((i) => i.icon)
+  const navItems = items || (isLoggedIn ? dashboardNavItems : publicDashboardNavItems)
+  const hasBottomNav = mobileVariant === 'bottom' && isMobile && navItems.some((i) => i.icon)
 
   const handleItemClick = (item) => {
     if (item.type === 'action') {
@@ -73,7 +76,7 @@ function Navbar({
                 </Typography>
               </>
             ) : (
-              <Box sx={{ cursor: 'pointer' }} onClick={() => navigate(logoTo ?? '/dashboard/tournaments')}>
+              <Box sx={{ cursor: 'pointer' }} onClick={() => navigate(logoTo ?? (isLoggedIn ? '/dashboard/tournaments' : '/torneos'))}>
                 <AppLogo />
               </Box>
             )}
@@ -103,8 +106,8 @@ function Navbar({
             px: 0.5,
           }}
         >
-          {items.map((item, index) => {
-            const isCenter = item.isCenter || (items.length === 5 && index === 2)
+          {navItems.map((item, index) => {
+            const isCenter = item.isCenter || (navItems.length === 5 && index === 2)
             const active = isActive(item)
 
             if (isCenter) {
@@ -215,12 +218,12 @@ function Navbar({
             </Typography>
           </>
         ) : (
-          <Box sx={{ cursor: 'pointer' }} onClick={() => navigate(logoTo ?? '/')}>
+          <Box sx={{ cursor: 'pointer' }} onClick={() => navigate(logoTo ?? (isLoggedIn ? '/dashboard/tournaments' : '/'))}>
             <AppLogo />
           </Box>
         )}
         <Box sx={{ display: 'flex', gap: 1, ml: 'auto', alignItems: 'center' }}>
-          {items.map((item) => (
+          {navItems.map((item) => (
             <Button
               key={item.value ?? item.path ?? item.label}
               variant={item.variant}
