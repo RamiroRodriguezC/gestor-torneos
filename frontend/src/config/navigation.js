@@ -20,6 +20,12 @@ export const authNavItemsLoggedIn = [
   { label: 'Cerrar sesión', variant: 'outlined', action: 'logout', type: 'action' },
 ]
 
+export const publicDashboardNavItems = [
+  { label: 'Explorar', path: '/torneos', icon: ExploreIcon, type: 'navigation' },
+  { label: 'Login', path: '/login', icon: PersonIcon, type: 'navigation' },
+  { label: 'Registrarse', path: '/register', icon: DashboardIcon, variant: 'contained', type: 'navigation' },
+]
+
 export const dashboardNavItems = [
   { label: 'Explorar', path: '/torneos', icon: ExploreIcon, type: 'navigation' },
   { label: 'Equipos', path: '/dashboard/teams', icon: GroupsIcon, type: 'navigation' },

@@ -4,7 +4,7 @@ import { getToken, logout } from '../data/auth.js'
 const API = getApiBaseUrl()
 
 // Wrapper de fetch que adjunta el JWT en cada request.
-// Si el backend responde 401 (token ausente/vencido), cierra la sesión y vuelve al login.
+// Si el backend responde 401 o 403 (token ausente, inválido o expirado), cierra la sesión y redirige al login.
 export async function apiFetch(path, options = {}) {
   const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) }
   const token = getToken()
@@ -12,13 +12,23 @@ export async function apiFetch(path, options = {}) {
 
   const res = await fetch(`${API}${path}`, { ...options, headers })
 
-  if (res.status === 401) {
+  const json = await res.json().catch(() => ({}))
+
+  const isAuthError =
+    res.status === 401 ||
+    (res.status === 403 &&
+      (json.error?.type === 'FORBIDDEN' ||
+        json.error?.message?.toLowerCase().includes('token') ||
+        json.error?.toLowerCase?.()?.includes('token')))
+
+  if (isAuthError) {
     logout()
-    window.location.href = '/login'
+    if (!window.location.pathname.startsWith('/login')) {
+      window.location.href = '/login'
+    }
     throw new Error('La sesión expiró. Volvé a iniciar sesión.')
   }
 
-  const json = await res.json().catch(() => ({}))
   if (!res.ok) {
     throw new Error(json.error?.message || json.error || `HTTP ${res.status}`)
   }

@@ -333,6 +333,37 @@ Al presionar el botón "Generar Fixture" desde el frontend desplegado en Vercel,
 4. **Despliegue Continuo a Render:**
    - Los cambios fueron fusionados a la rama `dev` y pusheados al repositorio remoto para activar el redeploy automático del servicio backend en Render.
 
+---
 
+### 4.9 Actualización 22/10/2026 — Acceso de Invitados (Navbar Condicional, Rutas Protegidas) y Ciclo de Vida de Sesión por Expiración de Token
 
+#### Síntomas y Desafíos Reportados
+1. **Acceso de Invitados y Pantallas Negras sin Salida:**
+   - En la sección pública de exploración (`/torneos`), un usuario no autenticado podía visualizar el dashboard completo, pero al hacer clic en los accesos de *Equipos*, *Torneos*, *Perfil* o *Ajustes*, la pantalla quedaba completamente negra sin controles ni posibilidad de regresar.
+   - Requerimiento: La sección `/torneos` y las vistas públicas de torneos deben seguir siendo accesibles sin loguearse, pero las secciones privadas no deben mostrarse ni permitir acceso desautenticado.
+2. **Sesión "Fantasma" por Token Expirado y Falso Fallo de Sincronización:**
+   - Un usuario logueado como organizador de un torneo (con fixture generado en el backend) no visualizaba los partidos en la pestaña de Fixture tras expirar su token.
+   - En `authMiddleware.js`, ante un token expirado/inválido en `jwt.verify`, el servidor respondía erróneamente con código HTTP `403 FORBIDDEN` (en vez de `401 UNAUTHORIZED`).
+   - El cliente (`apiFetch.js`) solo interceptaba `401` para disparar el logout. Al recibir `403`, la petición fallaba en silencio en el `try/catch` de `userSync.js`, manteniendo al usuario con apariencia de "logueado" en `localStorage`, pero sin poder descargar partidos (`/matches`) ni datos frescos a Dexie.
 
+#### Solución Implementada
+
+1. **Rutas Protegidas en el Cliente (`ProtectedRoute.jsx` y `App.jsx`):**
+   - Se creó el componente `frontend/src/components/ProtectedRoute.jsx` que verifica `isLoggedIn` vía `useAuth()`. Si el usuario no tiene sesión activa, redirige inmediatamente a `/login` preservando la ruta previa en `state.from`.
+   - En `App.jsx`, se envolvieron todas las rutas privadas (`/dashboard`, `/dashboard/tournaments`, `/dashboard/teams`, `/dashboard/profile`, `/dashboard/config`, inscripciones y gestión de solicitudes).
+   - Se mantuvieron públicas las rutas de descubrimiento (`/torneos`, `/tournament/:id`, `/user/:userId`).
+
+2. **Renderizado Condicional de Navegación (`Navbar.jsx` y `config/navigation.js`):**
+   - Se definió `publicDashboardNavItems` en `frontend/src/config/navigation.js`: cuando no hay sesión, la barra (tanto superior desktop como bottom-navigation mobile) solo muestra:
+     - **Explorar** (`/torneos`)
+     - **Login** (`/login`)
+     - **Registrarse** (`/register`)
+   - Se eliminaron los botones a rutas privadas cuando no hay sesión, y el clic en el logo `TourneyFy` redirige a `/torneos` o `/` en lugar de `/dashboard/tournaments`.
+
+3. **Detección Proactiva de Token Expirado (`useAuth.js`):**
+   - En `frontend/src/hooks/useAuth.js`, se añadió la función `isTokenExpired(token)` que decodifica el payload JWT y compara el timestamp `exp` con `Date.now()`.
+   - Si el token guardado en `localStorage` ya expiró, el hook purga automáticamente `token` y `currentUserId`, retornando `isLoggedIn: false` antes de que la aplicación realice llamadas fallidas de red.
+
+4. **Normalización de Código HTTP y Cierre Automático de Sesión (`apiFetch.js` y `authMiddleware.js`):**
+   - En `backend/src/middlewares/authMiddleware.js`, se corrigió el error de verificación de JWT para responder con `ErrorType.UNAUTHORIZED` (`401`) cuando el token no es válido o está expirado.
+   - En `frontend/src/utils/apiFetch.js`, se interceptan tanto respuestas `401` como `403` por expiración de token, invocando `logout()` y redirigiendo inmediatamente a `/login` para evitar estados inconsistentes.
