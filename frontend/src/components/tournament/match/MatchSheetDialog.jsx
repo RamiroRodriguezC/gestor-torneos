@@ -3,14 +3,16 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button,
   Box, Typography, Stack, IconButton, Divider, Alert, Chip, CircularProgress,
   TextField, Select, MenuItem, FormControl, InputLabel, Tab, Tabs,
-  List, ListItem, ListItemText, ListItemSecondaryAction,
+  List, ListItem, ListItemText, ListItemSecondaryAction, Avatar,
 } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import RemoveIcon from '@mui/icons-material/Remove'
 import DeleteIcon from '@mui/icons-material/Delete'
 import SportsScoreIcon from '@mui/icons-material/SportsScore'
+import PersonIcon from '@mui/icons-material/Person'
 import CompetitorPhoto from '../../shared/CompetitorPhoto'
 import { updateMatchSheet } from '../../../data/matches.js'
+import { db } from '../../../lib/db.js'
 import {
   MATCH_STATUS_LABEL, STATUS_STYLE,
   buildSheetFromMatch, buildKeyEventsFromSheet,
@@ -54,13 +56,82 @@ function MatchSheetDialog({ open, match, sportConfig, onClose }) {
   // Formulario para nuevo evento en modo detallado
   const [selectedEventType, setSelectedEventType] = useState('')
   const [selectedCompetitorId, setSelectedCompetitorId] = useState('')
+  const [selectedPlayerId, setSelectedPlayerId] = useState('')
   const [minute, setMinute] = useState('')
+
+  // Mapas de jugadores por competidor: { [competitorId]: Array<{ userId, fullName, photoURL }> }
+  const [teamMembersMap, setTeamMembersMap] = useState({})
 
   const competitors = match?.competitors || []
   const validEvents = sportConfig?.validEvents || []
-  const competitorEvents = validEvents.filter((e) => e.targetField === 'COMPETITOR')
-  const playerEvents = validEvents.filter((e) => e.targetField !== 'COMPETITOR')
+  const isTeamSport = sportConfig?.sportProps?.participantType === 'TEAM'
   const statusInfo = STATUS_STYLE[match?.status] || STATUS_STYLE.PROGRAMADO
+
+  // Cargar miembros del plantel de cada competidor
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadMembers() {
+      if (!open || !match?.competitors) return
+      const map = {}
+
+      for (const comp of match.competitors) {
+        const compId = String(getCompetitorId(comp))
+        // 1. Si el competidor ya tiene lineup definido en el match
+        if (comp.lineUp && comp.lineUp.length > 0) {
+          map[compId] = comp.lineUp.map((p) => ({
+            userId: String(p.userId ?? p._id),
+            fullName: p.fullName || 'Jugador',
+            photoURL: p.photoURL || '',
+          }))
+          continue
+        }
+
+        // 2. Si es deporte por equipos, buscamos en Dexie db.teams y db.users
+        if (isTeamSport && compId) {
+          try {
+            const team = await db.teams.get(compId)
+            if (team && Array.isArray(team.members) && team.members.length > 0) {
+              const userIds = team.members.map((m) => String(m.userId)).filter(Boolean)
+              const users = await db.users.where('_id').anyOf(userIds).toArray()
+              const usersById = new Map(users.map((u) => [String(u._id), u]))
+
+              map[compId] = userIds.map((uId) => {
+                const u = usersById.get(uId)
+                return {
+                  userId: uId,
+                  fullName: u ? `${u.name} ${u.lastName}`.trim() : `Jugador (${uId.slice(-4)})`,
+                  photoURL: u?.url_profile_photo || '',
+                }
+              })
+              continue
+            }
+          } catch (e) {
+            console.error('Error cargando miembros para competidor:', compId, e)
+          }
+        }
+
+        // 3. Deporte individual o participante único
+        map[compId] = [
+          {
+            userId: compId,
+            fullName: comp.displayNameSnapshot || 'Participante',
+            photoURL: comp.logoURLSnapshot || '',
+          },
+        ]
+      }
+
+      if (isMounted) {
+        setTeamMembersMap(map)
+      }
+    }
+
+    loadMembers()
+
+    return () => {
+      isMounted = false
+    }
+  }, [open, match, isTeamSport])
 
   const initialSheet = useMemo(
     () => (match && sportConfig ? buildSheetFromMatch(match, sportConfig) : null),
@@ -74,7 +145,8 @@ function MatchSheetDialog({ open, match, sportConfig, onClose }) {
         setSheet(initialSheet)
         setKeyEvents(match?.keyEvents ? [...match.keyEvents] : [])
         if (validEvents.length > 0) setSelectedEventType(validEvents[0].code)
-        if (competitors.length > 0) setSelectedCompetitorId(getCompetitorId(competitors[0]) || '')
+        if (competitors.length > 0) setSelectedCompetitorId(String(getCompetitorId(competitors[0])) || '')
+        setSelectedPlayerId('')
         setMinute('')
         setHasOpened(true)
         setError('')
@@ -105,17 +177,30 @@ function MatchSheetDialog({ open, match, sportConfig, onClose }) {
 
   const isVersus = sportConfig?.sportProps?.matchExecution === 'VERSUS'
 
+  // Lista de jugadores elegibles para el competidor seleccionado actualmente
+  const availablePlayers = selectedCompetitorId ? (teamMembersMap[selectedCompetitorId] || []) : []
+
   const handleAddDetailedEvent = () => {
     if (!selectedEventType) return
     const eventDef = validEvents.find((e) => e.code === selectedEventType)
+
+    let playerObj = null
+    if (selectedCompetitorId && selectedPlayerId) {
+      playerObj = availablePlayers.find((p) => String(p.userId) === String(selectedPlayerId))
+    }
+
     const newEv = {
       eventType: selectedEventType,
       competitorId: selectedCompetitorId || undefined,
+      playerId: selectedPlayerId || undefined,
+      playerName: playerObj ? playerObj.fullName : undefined,
+      playerPhotoURL: playerObj ? playerObj.photoURL : undefined,
       minute: minute !== '' ? Number(minute) : undefined,
       incrementScore: eventDef?.incrementScore || 0,
     }
     setKeyEvents((prev) => [...prev, newEv])
     setMinute('')
+    setSelectedPlayerId('')
   }
 
   const handleDeleteEvent = (index) => {
@@ -136,12 +221,32 @@ function MatchSheetDialog({ open, match, sportConfig, onClose }) {
         finalKeyEvents = [...keyEvents].sort((a, b) => (a.minute || 0) - (b.minute || 0))
       }
 
+      // Reconstruir o completar lineUp en competitors si no lo tenían
+      const updatedCompetitors = (match.competitors || []).map((comp) => {
+        const compId = String(getCompetitorId(comp))
+        const existingLineUp = comp.lineUp && comp.lineUp.length > 0 ? comp.lineUp : []
+        if (existingLineUp.length > 0) return comp
+
+        const discovered = teamMembersMap[compId] || []
+        if (discovered.length > 0) {
+          return {
+            ...comp,
+            lineUp: discovered.map((d) => ({
+              userId: d.userId,
+              fullName: d.fullName,
+              photoURL: d.photoURL || '',
+            })),
+          }
+        }
+        return comp
+      })
+
       const updatedMatch = {
         ...match,
         sportConfigId: typeof match.sportConfigId === 'string' ? match.sportConfigId : match.sportConfigId?._id,
         status: 'FINALIZADO',
         keyEvents: finalKeyEvents,
-        competitors: match.competitors,
+        competitors: updatedCompetitors,
       }
       await updateMatchSheet(match._id, updatedMatch)
       onClose()
@@ -163,8 +268,23 @@ function MatchSheetDialog({ open, match, sportConfig, onClose }) {
     return comp?.displayNameSnapshot || compId
   }
 
+  const resolvePlayerName = (ev) => {
+    if (!ev.playerId) return null
+    if (ev.playerName) return ev.playerName
+    const compId = String(ev.competitorId)
+    const players = teamMembersMap[compId] || []
+    const matchLineUp = competitors.find((c) => String(getCompetitorId(c)) === compId)?.lineUp || []
+    const foundLineUp = matchLineUp.find((p) => String(p.userId ?? p._id) === String(ev.playerId))
+    if (foundLineUp?.fullName) return foundLineUp.fullName
+    const found = players.find((p) => String(p.userId) === String(ev.playerId))
+    return found ? found.fullName : null
+  }
+
+  const competitorEvents = validEvents.filter((e) => e.targetField === 'COMPETITOR')
+  const playerEvents = validEvents.filter((e) => e.targetField !== 'COMPETITOR')
+
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
         <Stack direction="row" alignItems="center" spacing={1}>
           <SportsScoreIcon sx={{ color: '#00e676' }} />
@@ -186,7 +306,7 @@ function MatchSheetDialog({ open, match, sportConfig, onClose }) {
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 3 }}>
         <Tabs value={tab} onChange={(_, val) => setTab(val)} variant="fullWidth">
-          <Tab label="Minuto a Minuto" />
+          <Tab label="Minuto a Minuto (Con Jugadores)" />
           <Tab label="Carga Rápida (Contadores)" />
         </Tabs>
       </Box>
@@ -205,8 +325,8 @@ function MatchSheetDialog({ open, match, sportConfig, onClose }) {
                 <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, color: '#00e676' }}>
                   Agregar Evento al Partido
                 </Typography>
-                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
-                  <FormControl size="small" sx={{ flex: 1 }}>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems="center" sx={{ mb: 2 }}>
+                  <FormControl size="small" sx={{ flex: 1.2, minWidth: 140 }}>
                     <InputLabel>Evento</InputLabel>
                     <Select
                       value={selectedEventType}
@@ -221,22 +341,52 @@ function MatchSheetDialog({ open, match, sportConfig, onClose }) {
                     </Select>
                   </FormControl>
 
-                  <FormControl size="small" sx={{ flex: 1 }}>
-                    <InputLabel>Participante</InputLabel>
+                  <FormControl size="small" sx={{ flex: 1.4, minWidth: 150 }}>
+                    <InputLabel>Participante / Equipo</InputLabel>
                     <Select
                       value={selectedCompetitorId}
-                      label="Participante"
-                      onChange={(e) => setSelectedCompetitorId(e.target.value)}
+                      label="Participante / Equipo"
+                      onChange={(e) => {
+                        setSelectedCompetitorId(e.target.value)
+                        setSelectedPlayerId('')
+                      }}
                     >
                       <MenuItem value="">General / Ninguno</MenuItem>
                       {competitors.map((comp) => {
-                        const compId = getCompetitorId(comp)
+                        const compId = String(getCompetitorId(comp))
                         return (
-                          <MenuItem key={String(compId)} value={compId}>
+                          <MenuItem key={compId} value={compId}>
                             {comp.displayNameSnapshot || compId}
                           </MenuItem>
                         )
                       })}
+                    </Select>
+                  </FormControl>
+
+                  {/* Selector de Jugador / Miembro del Lineup */}
+                  <FormControl size="small" sx={{ flex: 1.6, minWidth: 160 }} disabled={!selectedCompetitorId}>
+                    <InputLabel>Jugador</InputLabel>
+                    <Select
+                      value={selectedPlayerId}
+                      label="Jugador"
+                      onChange={(e) => setSelectedPlayerId(e.target.value)}
+                    >
+                      <MenuItem value="">
+                        <em>Sin especificar / Equipo</em>
+                      </MenuItem>
+                      {availablePlayers.map((player) => (
+                        <MenuItem key={player.userId} value={player.userId}>
+                          <Stack direction="row" alignItems="center" spacing={1}>
+                            <Avatar
+                              src={player.photoURL}
+                              sx={{ width: 20, height: 20, fontSize: '0.75rem' }}
+                            >
+                              <PersonIcon fontSize="small" />
+                            </Avatar>
+                            <Typography variant="body2">{player.fullName}</Typography>
+                          </Stack>
+                        </MenuItem>
+                      ))}
                     </Select>
                   </FormControl>
 
@@ -246,7 +396,7 @@ function MatchSheetDialog({ open, match, sportConfig, onClose }) {
                     type="number"
                     value={minute}
                     onChange={(e) => setMinute(e.target.value)}
-                    sx={{ width: 90 }}
+                    sx={{ width: { xs: '100%', sm: 80 } }}
                   />
 
                   <Button
@@ -256,6 +406,7 @@ function MatchSheetDialog({ open, match, sportConfig, onClose }) {
                     onClick={handleAddDetailedEvent}
                     disabled={!selectedEventType}
                     startIcon={<AddIcon />}
+                    sx={{ width: { xs: '100%', sm: 'auto' } }}
                   >
                     Agregar
                   </Button>
@@ -273,37 +424,58 @@ function MatchSheetDialog({ open, match, sportConfig, onClose }) {
                   </Typography>
                 ) : (
                   <List dense sx={{ bgcolor: '#1e1e1e', borderRadius: 1 }}>
-                    {keyEvents.map((ev, index) => (
-                      <ListItem key={index} divider={index < keyEvents.length - 1}>
-                        <ListItemText
-                          primary={
-                            <Stack direction="row" alignItems="center" spacing={1}>
-                              {ev.minute != null && (
-                                <Chip
-                                  label={`${ev.minute}'`}
-                                  size="small"
-                                  sx={{ bgcolor: '#333', color: '#00e676', fontWeight: 700, height: 22 }}
-                                />
-                              )}
-                              <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                {getEventLabel(ev.eventType)}
-                              </Typography>
-                              {ev.incrementScore > 0 && (
-                                <Typography variant="caption" sx={{ color: 'grey.400' }}>
-                                  (+{ev.incrementScore})
+                    {keyEvents.map((ev, index) => {
+                      const playerName = resolvePlayerName(ev)
+                      const isGoal = ev.eventType.toUpperCase().includes('GOL')
+                      const isYellow = ev.eventType.toUpperCase().includes('AMARILLA')
+                      const isRed = ev.eventType.toUpperCase().includes('ROJA')
+
+                      return (
+                        <ListItem key={index} divider={index < keyEvents.length - 1}>
+                          <ListItemText
+                            primary={
+                              <Stack direction="row" alignItems="center" spacing={1} sx={{ flexWrap: 'wrap' }}>
+                                {ev.minute != null && (
+                                  <Chip
+                                    label={`${ev.minute}'`}
+                                    size="small"
+                                    sx={{ bgcolor: '#333', color: '#00e676', fontWeight: 700, height: 22 }}
+                                  />
+                                )}
+                                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                  {isGoal ? '⚽ ' : isYellow ? '🟨 ' : isRed ? '🟥 ' : ''}
+                                  {getEventLabel(ev.eventType)}
                                 </Typography>
-                              )}
-                            </Stack>
-                          }
-                          secondary={`Participante: ${getCompetitorLabel(ev.competitorId)}`}
-                        />
-                        <ListItemSecondaryAction>
-                          <IconButton edge="end" size="small" onClick={() => handleDeleteEvent(index)} sx={{ color: 'error.main' }}>
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </ListItemSecondaryAction>
-                      </ListItem>
-                    ))}
+                                {ev.incrementScore > 0 && (
+                                  <Typography variant="caption" sx={{ color: 'grey.400' }}>
+                                    (+{ev.incrementScore})
+                                  </Typography>
+                                )}
+                                {playerName ? (
+                                  <Chip
+                                    icon={<PersonIcon sx={{ fontSize: '1rem !important' }} />}
+                                    label={playerName}
+                                    size="small"
+                                    variant="outlined"
+                                    sx={{ height: 22, fontSize: '0.75rem', borderColor: 'rgba(255,255,255,0.2)' }}
+                                  />
+                                ) : (
+                                  <Typography variant="caption" sx={{ color: 'grey.500', fontStyle: 'italic' }}>
+                                    (Sin especificar jugador)
+                                  </Typography>
+                                )}
+                              </Stack>
+                            }
+                            secondary={`Equipo / Participante: ${getCompetitorLabel(ev.competitorId)}`}
+                          />
+                          <ListItemSecondaryAction>
+                            <IconButton edge="end" size="small" onClick={() => handleDeleteEvent(index)} sx={{ color: 'error.main' }}>
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </ListItemSecondaryAction>
+                        </ListItem>
+                      )
+                    })}
                   </List>
                 )}
               </Box>

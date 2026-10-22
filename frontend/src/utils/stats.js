@@ -12,19 +12,20 @@ const SCORING_UNIT_LABELS = {
 
 /**
  * Calcula las estadísticas agregadas de un torneo a partir de sus partidos y configuración de deporte.
- * Respeta la estructura de un único punto de salida para la lógica principal.
+ * Incluye tanto estadísticas por equipo/participante como estadísticas individuales de jugadores.
  *
  * @param {Object} tournament - Documento o snapshot del torneo
  * @param {Array} allMatches - Lista de partidos del torneo (Dexie / Backend)
  * @param {Object} sportConfig - Configuración del deporte (SportsConfig)
- * @returns {Object} { scorers, discipline, summary, scoringUnitLabel, hasDiscipline }
+ * @returns {Object} { scorers, discipline, playerScorers, playerDiscipline, summary, scoringUnitLabel, hasDiscipline }
  */
 export function computeTournamentStats(tournament, allMatches = [], sportConfig = null) {
-  // Guard clause al inicio para validar inputs esenciales
   if (!tournament) {
     return {
       scorers: [],
       discipline: [],
+      playerScorers: [],
+      playerDiscipline: [],
       summary: {
         totalMatches: 0,
         completedMatches: 0,
@@ -43,7 +44,7 @@ export function computeTournamentStats(tournament, allMatches = [], sportConfig 
   const rawScoringUnit = sportConfig?.sportProps?.scoringUnit || 'POINTS'
   const scoringUnitLabel = SCORING_UNIT_LABELS[rawScoringUnit] || 'Puntos'
 
-  // Mapas auxiliares para rápida resolución de nombres y fotos de participantes
+  // Mapas auxiliares para rápida resolución de nombres y fotos de participantes (equipos)
   const participantMap = new Map()
   for (const p of participants) {
     const pId = String(getParticipantId(p))
@@ -54,13 +55,16 @@ export function computeTournamentStats(tournament, allMatches = [], sportConfig 
     })
   }
 
-  // Estructuras de acumulación
+  // Estructuras de acumulación por equipo
   const scorersMap = new Map()
   const disciplineMap = new Map()
 
+  // Estructuras de acumulación por jugador individual
+  const playerScorersMap = new Map()
+  const playerDisciplineMap = new Map()
+
   // Inicializar contadores por participante existente
   for (const [pId, pData] of participantMap.entries()) {
-    // Contar cuántos partidos finalizados jugó este participante
     const pj = completedMatches.filter((m) =>
       (m.competitors || []).some(
         (c) => String(c.participantId ?? c.teamId) === pId
@@ -91,39 +95,99 @@ export function computeTournamentStats(tournament, allMatches = [], sportConfig 
   let topScoringMatch = null
   let maxMatchScoreSum = -1
 
+  // Helper para resolver el nombre de un jugador en el partido
+  const getPlayerMeta = (match, compId, playerId, eventPlayerName) => {
+    if (eventPlayerName) return { name: eventPlayerName, photoURL: '' }
+    const comp = (match.competitors || []).find(
+      (c) => String(c.participantId ?? c.teamId) === compId
+    )
+    const member = comp?.lineUp?.find(
+      (m) => String(m.userId ?? m._id) === playerId
+    )
+    return {
+      name: member?.fullName || `Jugador (${playerId.slice(-4)})`,
+      photoURL: member?.photoURL || '',
+    }
+  }
+
   // Recorrer todos los partidos finalizados y sus eventos clave
   for (const match of completedMatches) {
     let matchScoreSum = 0
 
     for (const event of match.keyEvents || []) {
       const compId = event.competitorId ? String(event.competitorId) : null
+      const playerId = event.playerId ? String(event.playerId) : null
       const eventCode = (event.eventType || '').toUpperCase()
       const eventDef = validEvents.find((e) => e.code.toUpperCase() === eventCode)
       const increment = event.incrementScore ?? eventDef?.incrementScore ?? 0
+      const teamMeta = compId ? participantMap.get(compId) : null
 
       // 1. Acumulación de Anotaciones / Goles
       if (increment > 0) {
         totalTournamentScores += increment
         matchScoreSum += increment
 
+        // Acumulación a nivel Equipo
         if (compId && scorersMap.has(compId)) {
           const currentScorer = scorersMap.get(compId)
           currentScorer.totalScore += increment
         }
+
+        // Acumulación a nivel Jugador Individual
+        if (playerId) {
+          if (!playerScorersMap.has(playerId)) {
+            const playerMeta = getPlayerMeta(match, compId, playerId, event.playerName)
+            playerScorersMap.set(playerId, {
+              playerId,
+              displayName: playerMeta.name,
+              photoURL: playerMeta.photoURL,
+              teamId: compId,
+              teamName: teamMeta?.displayName || 'Equipo',
+              teamLogoURL: teamMeta?.logoURL || '',
+              totalScore: 0,
+            })
+          }
+          playerScorersMap.get(playerId).totalScore += increment
+        }
       }
 
       // 2. Acumulación de Disciplina / Sanciones
-      if (compId && disciplineMap.has(compId)) {
-        const currentDisc = disciplineMap.get(compId)
-        if (eventCode.includes('AMARILLA')) {
-          currentDisc.yellowCards += 1
+      const isYellow = eventCode.includes('AMARILLA')
+      const isRed = eventCode.includes('ROJA') || eventCode.includes('EXCLUSION')
+      const isFoul = eventCode.includes('FALTA') || eventCode.includes('TECNICA')
+
+      if (isYellow || isRed || isFoul) {
+        // Por equipo
+        if (compId && disciplineMap.has(compId)) {
+          const currentDisc = disciplineMap.get(compId)
+          if (isYellow) currentDisc.yellowCards += 1
+          if (isRed) currentDisc.redCards += 1
+          if (isFoul) currentDisc.fouls += 1
           currentDisc.totalSanctions += 1
-        } else if (eventCode.includes('ROJA') || eventCode.includes('EXCLUSION')) {
-          currentDisc.redCards += 1
-          currentDisc.totalSanctions += 1
-        } else if (eventCode.includes('FALTA') || eventCode.includes('TECNICA')) {
-          currentDisc.fouls += 1
-          currentDisc.totalSanctions += 1
+        }
+
+        // Por jugador individual
+        if (playerId) {
+          if (!playerDisciplineMap.has(playerId)) {
+            const playerMeta = getPlayerMeta(match, compId, playerId, event.playerName)
+            playerDisciplineMap.set(playerId, {
+              playerId,
+              displayName: playerMeta.name,
+              photoURL: playerMeta.photoURL,
+              teamId: compId,
+              teamName: teamMeta?.displayName || 'Equipo',
+              teamLogoURL: teamMeta?.logoURL || '',
+              yellowCards: 0,
+              redCards: 0,
+              fouls: 0,
+              totalSanctions: 0,
+            })
+          }
+          const pDisc = playerDisciplineMap.get(playerId)
+          if (isYellow) pDisc.yellowCards += 1
+          if (isRed) pDisc.redCards += 1
+          if (isFoul) pDisc.fouls += 1
+          pDisc.totalSanctions += 1
         }
       }
     }
@@ -138,14 +202,14 @@ export function computeTournamentStats(tournament, allMatches = [], sportConfig 
     }
   }
 
-  // Calcular promedios para anotadores
+  // Calcular promedios para anotadores de equipos
   for (const scorer of scorersMap.values()) {
     scorer.averageScore = scorer.matchesPlayed > 0
       ? Number((scorer.totalScore / scorer.matchesPlayed).toFixed(2))
       : 0
   }
 
-  // Ordenar lista de anotadores (mayor puntaje primero)
+  // Ordenar lista de equipos anotadores
   const sortedScorers = Array.from(scorersMap.values())
     .filter((s) => s.totalScore > 0 || s.matchesPlayed > 0)
     .sort((a, b) => {
@@ -154,8 +218,25 @@ export function computeTournamentStats(tournament, allMatches = [], sportConfig 
       return a.displayName.localeCompare(b.displayName)
     })
 
-  // Ordenar lista de disciplina (tarjetas rojas primero, luego amarillas, luego faltas)
+  // Ordenar lista de jugadores goleadores/anotadores
+  const sortedPlayerScorers = Array.from(playerScorersMap.values())
+    .filter((p) => p.totalScore > 0)
+    .sort((a, b) => {
+      if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore
+      return a.displayName.localeCompare(b.displayName)
+    })
+
+  // Ordenar lista de equipos disciplina
   const sortedDiscipline = Array.from(disciplineMap.values())
+    .filter((d) => d.totalSanctions > 0)
+    .sort((a, b) => {
+      if (b.redCards !== a.redCards) return b.redCards - a.redCards
+      if (b.yellowCards !== a.yellowCards) return b.yellowCards - a.yellowCards
+      return b.fouls - a.fouls
+    })
+
+  // Ordenar lista de jugadores disciplina
+  const sortedPlayerDiscipline = Array.from(playerDisciplineMap.values())
     .filter((d) => d.totalSanctions > 0)
     .sort((a, b) => {
       if (b.redCards !== a.redCards) return b.redCards - a.redCards
@@ -175,10 +256,11 @@ export function computeTournamentStats(tournament, allMatches = [], sportConfig 
     )
   })
 
-  // Objeto de retorno único acumulado
-  const result = {
+  return {
     scorers: sortedScorers,
     discipline: sortedDiscipline,
+    playerScorers: sortedPlayerScorers,
+    playerDiscipline: sortedPlayerDiscipline,
     summary: {
       totalMatches: (allMatches || []).length,
       completedMatches: completedMatches.length,
@@ -191,6 +273,4 @@ export function computeTournamentStats(tournament, allMatches = [], sportConfig 
     scoringUnitLabel,
     hasDiscipline: hasDisciplineEvents,
   }
-
-  return result
 }

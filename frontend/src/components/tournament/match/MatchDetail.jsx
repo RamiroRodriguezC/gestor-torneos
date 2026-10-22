@@ -7,6 +7,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
 import PlaceIcon from '@mui/icons-material/Place'
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
+import PersonIcon from '@mui/icons-material/Person'
 import CompetitorPhoto from '../../shared/CompetitorPhoto'
 import { useSport } from '../../../hooks/useSportsConfig'
 import { getTeamScore, STATUS_STYLE, MATCH_STATUS_LABEL } from './matchUtils'
@@ -46,21 +47,38 @@ function MatchDetail({ match, tournament, user }) {
       groups[String(getCompetitorId(comp))] = []
     }
     const global = []
+
     for (const ev of match.keyEvents || []) {
       const label = eventLabelMap[ev.eventType] || ev.eventType
+
+      // Buscar nombre del jugador en el lineUp del competidor si está disponible
+      let playerName = ev.playerName || null
+      if (!playerName && ev.playerId && ev.competitorId) {
+        const comp = match.competitors?.find(
+          (c) => String(getCompetitorId(c)) === String(ev.competitorId)
+        )
+        const lineUpMember = comp?.lineUp?.find(
+          (p) => String(p.userId ?? p._id) === String(ev.playerId)
+        )
+        if (lineUpMember?.fullName) {
+          playerName = lineUpMember.fullName
+        }
+      }
+
+      const item = {
+        key: `${ev.eventType}-${ev.competitorId || 'global'}-${groups[String(ev.competitorId)]?.length || global.length}`,
+        eventType: ev.eventType,
+        label,
+        incrementScore: ev.incrementScore || 0,
+        minute: ev.minute,
+        playerId: ev.playerId,
+        playerName,
+      }
+
       if (ev.competitorId && groups[String(ev.competitorId)]) {
-        groups[String(ev.competitorId)].push({
-          key: `${ev.eventType}-${ev.competitorId}-${groups[String(ev.competitorId)].length}`,
-          label,
-          incrementScore: ev.incrementScore || 0,
-          minute: ev.minute,
-        })
+        groups[String(ev.competitorId)].push(item)
       } else {
-        global.push({
-          key: `${ev.eventType}-global-${global.length}`,
-          label,
-          incrementScore: ev.incrementScore || 0,
-        })
+        global.push(item)
       }
     }
     return { byCompetitor: groups, global }
@@ -190,15 +208,28 @@ function MatchDetail({ match, tournament, user }) {
                         Sin eventos
                       </Typography>
                     ) : (
-                      <Stack direction="row" spacing={0.5} sx={{ flexWrap: 'wrap' }}>
-                        {events.map((ev) => (
-                          <Chip
-                            key={ev.key}
-                            label={`${ev.label}${ev.minute != null ? ` ${ev.minute}'` : ''}`}
-                            size="small"
-                            sx={{ bgcolor: '#2a2a2a', color: 'grey.300', fontSize: '0.7rem' }}
-                          />
-                        ))}
+                      <Stack direction="row" spacing={0.8} sx={{ flexWrap: 'wrap', rowGap: 0.8 }}>
+                        {events.map((ev) => {
+                          const isGoal = ev.eventType.toUpperCase().includes('GOL')
+                          const isYellow = ev.eventType.toUpperCase().includes('AMARILLA')
+                          const isRed = ev.eventType.toUpperCase().includes('ROJA')
+                          const iconPrefix = isGoal ? '⚽ ' : isYellow ? '🟨 ' : isRed ? '🟥 ' : ''
+                          const playerText = ev.playerName ? ` (${ev.playerName})` : ''
+
+                          return (
+                            <Chip
+                              key={ev.key}
+                              label={`${iconPrefix}${ev.label}${ev.minute != null ? ` ${ev.minute}'` : ''}${playerText}`}
+                              size="small"
+                              sx={{
+                                bgcolor: '#2a2a2a',
+                                color: 'grey.200',
+                                fontSize: '0.75rem',
+                                '& .MuiChip-label': { px: 1 },
+                              }}
+                            />
+                          )
+                        })}
                       </Stack>
                     )}
                   </Box>
@@ -207,13 +238,13 @@ function MatchDetail({ match, tournament, user }) {
               {eventsByCompetitor.global.length > 0 && (
                 <Box>
                   <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>Generales</Typography>
-                  <Stack direction="row" spacing={0.5} sx={{ flexWrap: 'wrap' }}>
+                  <Stack direction="row" spacing={0.8} sx={{ flexWrap: 'wrap', rowGap: 0.8 }}>
                     {eventsByCompetitor.global.map((ev) => (
                       <Chip
                         key={ev.key}
                         label={ev.label}
                         size="small"
-                        sx={{ bgcolor: '#2a2a2a', color: 'grey.300', fontSize: '0.7rem' }}
+                        sx={{ bgcolor: '#2a2a2a', color: 'grey.300', fontSize: '0.75rem' }}
                       />
                     ))}
                   </Stack>
