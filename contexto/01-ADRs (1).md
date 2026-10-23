@@ -179,3 +179,34 @@ Alternativa descartada: Extraer `Round` a colección propia — daba identidad r
 | 009 | JWT en localStorage | 🟡 Diseño ok / protección real pendiente |
 | 010 | `AppError`/`ErrorType` | ✅ Resuelto 27/08/2026 — formato `{error:{type,message,code}}` unificado (`handle.js` + `requireDB` + `index.js`) |
 | 011 | Consolidar auth frontend en `data/auth.js` | ✅ Decidido / 🔴 implementación pendiente |
+| 012 | Polimorfismo de participantes `participantId` | ✅ Decidido e implementado 22/10/2026 |
+| 013 | Carga de planillas: atribución a jugadores y simplificación de eventos inversos (sin `AUTO_GOL`) | ✅ Decidido e implementado 22/10/2026 |
+
+---
+
+## ADR-012 — Polimorfismo en identificadores de participantes (`participantId ?? teamId`)
+
+**Contexto.** En torneos y partidos, existían divergencias donde el modelo requería `teamId` mientras el nuevo estándar polimórfico utilizaba `participantId` para admitir tanto deportes por equipos (`TEAM`) como individuales (`INDIVIDUAL`).
+
+**Decisión.** Adoptar `participantId` como estándar unificado tolerando `teamId` por retrocompatibilidad en todos los puntos de lectura (`participantId ?? teamId`) y poblar ambos en la creación del fixture.
+
+**Estado.** ✅ Decidido e implementado.
+
+---
+
+## ADR-013 — Carga de planillas: atribución de eventos a jugadores del lineup y simplificación de autogoles
+
+**Contexto.** Inicialmente los eventos de partido (`keyEvents`) solo sumaban al marcador global del competidor/equipo sin identificar a la persona que realizó la acción. Al diseñar la atribución a jugadores surgieron complejidades con eventos "inversos" o cruzados como el `AUTO_GOL` (donde la acción la realiza un jugador/equipo, pero el punto suma al rival en el marcador). Tratar el autogol como evento separado generaba inconsistencias semánticas (un evento atribuido al infractor sumándole un gol a favor en la tabla de goleadores) o exigía acoplar lógica condicional ad-hoc de "equipo beneficiario vs infractor", rompiendo la genericidad del motor multideporte.
+
+**Decisión.**
+1. **Atribución genérica a jugadores:** En deportes colectivos (`TEAM`), la planilla permite asociar eventos (`GOL`, `AMARILLA`, `ROJA`, etc.) a cualquier miembro del lineup del equipo (obtenido reactivamente desde `db.teams` + `db.users` o del subdocumento `competitors[].lineUp`).
+2. **Opción "Sin especificar / Equipo":** En todo evento es posible omitir el jugador (`playerId: undefined`). Esto permite registrar goles anónimos, jugadas confusas y situaciones colectivas sin trabar la planilla.
+3. **Eliminación de `AUTO_GOL`:** Se decide explícitamente **descartar el evento `AUTO_GOL` del catálogo de eventos de `SportsConfig`** (removido de `futbol7.json`). Cuando ocurre un autogol, se registra genéricamente como un `GOL` a favor del equipo que lo recibe, seleccionando la opción *"Sin especificar / Equipo"*.
+4. **Impacto en estadísticas:** Los goles con jugador identificado alimentan la tabla de goleadores individuales del torneo (`playerScorers`), mientras que los goles sin especificar suman al total del equipo y del partido sin distorsionar la tabla individual.
+
+**Alternativas descartadas:**
+- **Evento `AUTO_GOL` con equipo invertido o lógica especial de "equipo contrario":** descartado por complejidad innecesaria. Obligaba a bifurcar los cálculos de marcador en `matchUtils`, `standings` y `BracketTree` para chequear casos especiales de eventos negativos, contradiciendo el principio de mantener el motor deportivo lo más agnóstico y genérico posible.
+
+**Consecuencias:** Carga rápida y simple para el árbitro/organizador, cero lógica acoplada a nombres de eventos específicos, y datos 100% compatibles con los schemas preexistentes de Mongoose.
+
+**Estado.** ✅ Decidido e implementado (22/10/2026).

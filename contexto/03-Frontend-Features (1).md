@@ -110,13 +110,14 @@ El corazón de la app. `TournamentNavbar` con 6 secciones (`config/navigation.js
 | General | `TournamentGeneral` | ✅ funcional — selector de ronda, tarjeta de "mi equipo" con últimos 5 resultados (W/D/L) y próximo partido, lista de partidos de la ronda |
 | Clasificación | `TournamentStandings` | ✅ funcional para `ROUND_ROBIN` (tabla de posiciones, `computeStandings`) y `SINGLE_ELIMINATION`/`DOUBLE_ELIMINATION` (bracket, `BracketTree`) — 🔴 `SWISS` explícitamente placeholder (`UnderConstruction`) |
 | Participantes | `TournamentParticipants` | ✅ lista/búsqueda de participantes ya aprobados — no hay acción para inscribirse desde acá |
-| Estadísticas | `TournamentStats` | 🔴 placeholder explícito ("se implementará a futuro") |
+| Estadísticas | `TournamentStats` | ✅ funcional — doble vista de Anotaciones y Disciplina (Por Jugadores y Por Equipos) + KPIs de torneo |
 | Fixture | `TournamentFixture` | ✅ funcional — tabs por ronda + destacado de "próximos partidos de mi equipo" |
 | Anuncios | — | 🔴 placeholder explícito (`UnderConstruction feature="Anuncios"`) |
 
 `TournamentStandings` decide el componente a renderizar en base a `tournament.rules?.format`, y **cae a `StandingsTable` por default** si el formato no matchea ninguno de los casos (comportamiento razonable pero no documentado como tal en ningún lado).
 
 ### Componentes compartidos reutilizables
+- `MatchSheetDialog` y `MatchDetail` — planilla con atribución a jugadores del lineup y opción "Sin especificar / Equipo" (ADR-013 sin AUTO_GOL).
 - `MatchCard` — despacha a `MatchCardVersus` según `sportConfigId.sportProps.matchExecution`; **`LEADERBOARD` renderiza `null`** (ningún deporte tipo "todos contra todos cronometrado", ej. golf, tiene UI de partido todavía).
 - `CompetitorPhoto`, `Tags` (`UsernameTag`, `SportsTag`), `ErrorDisplay`, `UnderConstruction` — utilitarios consistentes en toda la app.
 - `Navbar` — un solo componente parametrizable que sirve tanto para la barra superior de escritorio como para bottom-navigation mobile (`mobileVariant="bottom"`), usado también por `TournamentNavbar`.

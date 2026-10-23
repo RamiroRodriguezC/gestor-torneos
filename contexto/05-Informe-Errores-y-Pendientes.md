@@ -367,3 +367,15 @@ Al presionar el botón "Generar Fixture" desde el frontend desplegado en Vercel,
 4. **Normalización de Código HTTP y Cierre Automático de Sesión (`apiFetch.js` y `authMiddleware.js`):**
    - En `backend/src/middlewares/authMiddleware.js`, se corrigió el error de verificación de JWT para responder con `ErrorType.UNAUTHORIZED` (`401`) cuando el token no es válido o está expirado.
    - En `frontend/src/utils/apiFetch.js`, se interceptan tanto respuestas `401` como `403` por expiración de token, invocando `logout()` y redirigiendo inmediatamente a `/login` para evitar estados inconsistentes.
+
+---
+
+### 4.10 Actualización 22/10/2026 — Mejora de Planilla de Partidos: Atribución a Jugadores, Opción Sin Especificar y Descarte de Autogol
+
+#### Contexto y Decisión de Diseño
+- **Problema detectado:** Al modelar eventos como `AUTO_GOL`, se producía una inconsistencia de pertenencia: la acción física la comete el jugador de un equipo, pero el incremento de marcador favorece al equipo rival. Asignar el evento al equipo infractor sumaba el gol erróneamente a su propio tanteador, y asignarlo al rival impedía seleccionar al autor o le otorgaba un gol a favor en la tabla individual de goleadores.
+- **Toma de Decisión (Principio de Genericidad y Simplicidad):**
+  1. Se eliminó el evento artificial `AUTO_GOL` de la configuración deportiva (`futbol7.json`).
+  2. Todo gol se registra genéricamente como `GOL` a favor del equipo beneficiado.
+  3. Si el gol fue en contra o no tiene autor identificado, el operador selecciona la opción **"Sin especificar / Equipo"** en el selector de jugador.
+  4. Los goles con jugador identificado acumulan en la tabla de goleadores individuales (`playerScorers`), mientras que los goles sin especificar acumulan únicamente en el marcador del partido y en la tabla general de equipos (`scorers`).
