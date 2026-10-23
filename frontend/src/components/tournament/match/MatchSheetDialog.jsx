@@ -63,7 +63,7 @@ function MatchSheetDialog({ open, match, sportConfig, onClose }) {
   const [teamMembersMap, setTeamMembersMap] = useState({})
 
   const competitors = match?.competitors || []
-  const validEvents = sportConfig?.validEvents || []
+  const validEvents = (sportConfig?.validEvents || []).filter((e) => e.code !== 'AUTO_GOL')
   const isTeamSport = sportConfig?.sportProps?.participantType === 'TEAM'
   const statusInfo = STATUS_STYLE[match?.status] || STATUS_STYLE.PROGRAMADO
 

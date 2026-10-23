@@ -41,10 +41,11 @@ export function buildSheetFromMatch(match, sportConfig) {
   const byEvent = {}
   const globalByEvent = {}
 
-  const competitorEvents = (sportConfig?.validEvents || []).filter(
+  const allEvents = (sportConfig?.validEvents || []).filter((e) => e.code !== 'AUTO_GOL');
+  const competitorEvents = allEvents.filter(
     (e) => e.targetField === 'COMPETITOR'
   )
-  const globalEvents = (sportConfig?.validEvents || []).filter(
+  const globalEvents = allEvents.filter(
     (e) => e.targetField !== 'COMPETITOR'
   )
 
