@@ -182,6 +182,18 @@ function MatchSheetDialog({ open, match, sportConfig, onClose }) {
 
   const handleAddDetailedEvent = () => {
     if (!selectedEventType) return
+    setError('')
+    if (minute !== '') {
+      const m = Number(minute)
+      if (isNaN(m) || m < 0) {
+        setError('El minuto no puede ser negativo.')
+        return
+      }
+      if (m > 999) {
+        setError('El minuto no puede superar 999.')
+        return
+      }
+    }
     const eventDef = validEvents.find((e) => e.code === selectedEventType)
 
     let playerObj = null
@@ -394,9 +406,22 @@ function MatchSheetDialog({ open, match, sportConfig, onClose }) {
                     size="small"
                     label="Minuto"
                     type="number"
+                    slotProps={{
+                      htmlInput: { min: 0, max: 999, step: 1 },
+                    }}
                     value={minute}
-                    onChange={(e) => setMinute(e.target.value)}
-                    sx={{ width: { xs: '100%', sm: 80 } }}
+                    onChange={(e) => {
+                      const val = e.target.value
+                      if (val === '') {
+                        setMinute('')
+                        return
+                      }
+                      const n = parseInt(val, 10)
+                      if (!isNaN(n) && n >= 0 && n <= 999) {
+                        setMinute(String(n))
+                      }
+                    }}
+                    sx={{ width: { xs: '100%', sm: 90 } }}
                   />
 
                   <Button

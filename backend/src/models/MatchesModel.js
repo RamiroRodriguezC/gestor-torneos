@@ -18,7 +18,7 @@ const MatchEventSchema = new Schema({
   eventType: { type: String, required: true },
   competitorId: { type: Schema.Types.ObjectId, required: true },
   playerId: { type: Schema.Types.ObjectId, ref: 'User' },
-  minute: { type: Number, default: 0 },
+  minute: { type: Number, default: 0, min: 0, max: 999 },
   incrementScore: { type: Number, default: 0 },
   value: { type: Schema.Types.Mixed }
 }, { _id: false });

@@ -401,3 +401,24 @@ Al presionar el botón "Generar Fixture" desde el frontend desplegado en Vercel,
 
 #### Estado y Verificación
 - Integrado en ramas `dev`, `main` y `fix/match-sheet-round-validation` con build de producción validado exitosamente.
+
+
+---
+
+### 4.12 Actualización 26/10/2026 — Validación de Rango de Minutos en Planilla de Partido y Pendiente de Duración por Deporte
+
+#### Contexto y Problema Detectado
+- En la carga de eventos minuto a minuto de `MatchSheetDialog`, el campo de texto de minuto permitía ingresar valores negativos (ej. `-5`) o números arbitrariamente gigantes sin límite (ej. `23123123`).
+- Ni en el componente frontend ni en el esquema Mongoose (`MatchesModel.js`) ni en el validador del servicio (`matches.service.js`) existía una restricción que evitara números menores a cero o valores fuera de escala.
+
+#### Solución Implementada
+1. **Frontend (`MatchSheetDialog.jsx`):**
+   - Se configuró el `TextField` con `slotProps={{ htmlInput: { min: 0, max: 999, step: 1 } }}` y saneamiento en `onChange` para restringir la entrada a enteros entre 0 y 999.
+   - En `handleAddDetailedEvent`, se agregaron validaciones explícitas (`m < 0` o `m > 999`) mostrando un mensaje de error si el usuario intenta ingresar un valor fuera de rango.
+2. **Backend (`MatchesModel.js` y `matches.service.js`):**
+   - En `MatchesModel.js`, se añadió `min: 0, max: 999` a la propiedad `minute` de `MatchEventSchema`.
+   - En `matches.service.js:validate`, se agregó la validación para que cualquier evento en `keyEvents` contenga un minuto numérico entre 0 y 999.
+
+#### Pendiente para Próximos Sprints / Roadmap
+- **Parametrización de Duración Reglamentaria por Deporte y Torneo:**
+  Actualmente se utilizó un límite superior amplio (`999`) para permitir prórrogas y adaptarse genéricamente a deportes de distinta duración. Queda registrado para futuras versiones incorporar en `SportsConfig.sportProps` o en `Tournament.rules` la duración reglamentaria del partido (ej. 50' para Fútbol 7, 90' para Fútbol 11, 40' para Básquet FIBA, etc.) y una regla de tolerancia para tiempos extra/suplementarios.

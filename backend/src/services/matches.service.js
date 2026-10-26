@@ -28,6 +28,17 @@ const validate = (data, isUpdate = false) => {
   if (data.status !== undefined && !MATCH_STATUS.includes(data.status)) {
     errors.push(`status debe ser uno de: ${MATCH_STATUS.join(', ')}`);
   }
+  if (data.keyEvents && Array.isArray(data.keyEvents)) {
+    for (const ev of data.keyEvents) {
+      if (ev.minute !== undefined && ev.minute !== null && ev.minute !== '') {
+        const m = Number(ev.minute);
+        if (isNaN(m) || m < 0 || m > 999) {
+          errors.push('El minuto de cada evento debe ser un número entre 0 y 999');
+          break;
+        }
+      }
+    }
+  }
 
   return errors;
 };
