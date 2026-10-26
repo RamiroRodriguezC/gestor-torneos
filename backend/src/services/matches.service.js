@@ -52,7 +52,16 @@ export const create = async (data) => {
 
   // Verificar que roundId pertenezca al torneo (PK compuesta lógica tournamentId+roundId — ADR-008 opción 1)
   const Tournament = (await import('../models/TournamentsModel.js')).default;
-  const tournament = await Tournament.findOne({ _id: data.tournamentId, 'rounds._id': data.round.roundId }).select('rounds');
+  let tournament = await Tournament.findOne({ _id: data.tournamentId, 'rounds._id': data.round.roundId }).select('rounds');
+  if (!tournament && data.round?.number) {
+    tournament = await Tournament.findOne({ _id: data.tournamentId, 'rounds.roundNumber': data.round.number }).select('rounds');
+    if (tournament) {
+      const realRound = tournament.rounds.find((r) => r.roundNumber === data.round.number);
+      if (realRound?._id) {
+        data.round.roundId = realRound._id;
+      }
+    }
+  }
   if (!tournament) throw new AppError(ErrorType.VALIDATION_ERROR, 'roundId no pertenece al torneo indicado o torneo inexistente');
   // Sincronizar round.number con el round real para evitar divergencia
   const realRound = tournament.rounds.id(data.round.roundId);
@@ -69,16 +78,33 @@ export const update = async (id, data) => {
   const errors = validate(data, true);
   if (errors.length) throw new AppError(ErrorType.VALIDATION_ERROR, errors.join('; '));
 
-  // Si se actualiza round, validar pertenencia al torneo
-  if (data.round?.roundId || data.tournamentId) {
+  // Si se actualiza round o torneo, validar pertenencia al torneo solo si hubo cambio real
+  if (data.round !== undefined || data.tournamentId !== undefined) {
     const current = await Match.findById(id).select('tournamentId round');
     if (!current) throw new AppError(ErrorType.MATCH_NOT_FOUND);
-    const tournamentId = data.tournamentId || current.tournamentId;
-    const roundId = data.round?.roundId || current.round?.roundId;
-    if (roundId) {
-      const Tournament = (await import('../models/TournamentsModel.js')).default;
-      const tournament = await Tournament.findOne({ _id: tournamentId, 'rounds._id': roundId }).select('rounds');
-      if (!tournament) throw new AppError(ErrorType.VALIDATION_ERROR, 'roundId no pertenece al torneo indicado');
+
+    const isRoundChanging = data.round?.roundId && String(data.round.roundId) !== String(current.round?.roundId);
+    const isTournamentChanging = data.tournamentId && String(data.tournamentId) !== String(current.tournamentId);
+
+    if (isRoundChanging || isTournamentChanging) {
+      const tournamentId = data.tournamentId || current.tournamentId;
+      let roundId = data.round?.roundId || current.round?.roundId;
+      if (roundId) {
+        const Tournament = (await import('../models/TournamentsModel.js')).default;
+        let tournament = await Tournament.findOne({ _id: tournamentId, 'rounds._id': roundId }).select('rounds');
+        if (!tournament && (data.round?.number || current.round?.number)) {
+          const targetRoundNumber = data.round?.number || current.round?.number;
+          tournament = await Tournament.findOne({ _id: tournamentId, 'rounds.roundNumber': targetRoundNumber }).select('rounds');
+          if (tournament) {
+            const matchingRound = tournament.rounds.find((r) => r.roundNumber === targetRoundNumber);
+            if (matchingRound?._id) {
+              if (data.round) data.round.roundId = matchingRound._id;
+              roundId = matchingRound._id;
+            }
+          }
+        }
+        if (!tournament) throw new AppError(ErrorType.VALIDATION_ERROR, 'roundId no pertenece al torneo indicado');
+      }
     }
   }
 

@@ -69,7 +69,16 @@ export async function removeMatch(id) {
 // ({ _id, name, sportProps }), pero el schema espera el id string. Tampoco hay que
 // reenviar campos de control (updatedAt, isDeleted, isOffline) que el backend regenera.
 function buildMatchUpdatePayload(data) {
-  const { sportConfigId, updatedAt: _updatedAt, isDeleted: _isDeleted, isOffline: _isOffline, ...rest } = data
+  const {
+    _id: _id,
+    tournamentId: _tournamentId,
+    round: _round,
+    sportConfigId,
+    updatedAt: _updatedAt,
+    isDeleted: _isDeleted,
+    isOffline: _isOffline,
+    ...rest
+  } = data
   return {
     ...rest,
     sportConfigId: typeof sportConfigId === 'string' ? sportConfigId : sportConfigId?._id,
