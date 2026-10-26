@@ -379,3 +379,25 @@ Al presionar el botón "Generar Fixture" desde el frontend desplegado en Vercel,
   2. Todo gol se registra genéricamente como `GOL` a favor del equipo beneficiado.
   3. Si el gol fue en contra o no tiene autor identificado, el operador selecciona la opción **"Sin especificar / Equipo"** en el selector de jugador.
   4. Los goles con jugador identificado acumulan en la tabla de goleadores individuales (`playerScorers`), mientras que los goles sin especificar acumulan únicamente en el marcador del partido y en la tabla general de equipos (`scorers`).
+
+
+---
+
+### 4.11 Actualización 26/10/2026 — Corrección de Error "roundId no pertenece al torneo indicado" al Guardar Planilla
+
+#### Contexto del Error Detectado en Producción
+- **Síntoma:** Al finalizar o corregir la planilla de un partido desde la interfaz web (Vercel) conectada al backend (Render), al presionar **"GUARDAR PLANILLA"** se mostraba un cartel de error rojo: *`roundId no pertenece al torneo indicado`*. Sin embargo, en el entorno local (IndexedDB / Dexie) la vista se actualizaba reflejando los eventos agregados.
+- **Causa Raíz:**
+  1. **Actualización optimista de Dexie:** `frontend/src/data/matches.js:updateMatchSheet` escribe primero en Dexie (`await putMatch(data)`) antes de realizar la petición de red, dando la impresión visual de que los cambios se guardaron localmente.
+  2. **Envío de claves inmutables en el PUT:** La función `buildMatchUpdatePayload` enviaba todo el objeto del partido (`...rest`), incluyendo `tournamentId` y `round` (`{ roundId, number }`).
+  3. **Validación restrictiva en `matches.service.js:update`:** El backend contenía una verificación que consultaba `Tournament.findOne({ _id: tournamentId, 'rounds._id': roundId })`. Si los datos provenían de seeds iniciales donde los subdocumentos de `Tournament.rounds` tenían `_id` autogenerados distintos a los que tenían los partidos en su propiedad `round.roundId`, la validación fallaba con `400 Bad Request` y el backend rechazaba el guardado.
+
+#### Solución Técnica Implementada
+1. **Frontend (`frontend/src/data/matches.js`):** Se limpió `buildMatchUpdatePayload` para extraer y descartar `_id`, `tournamentId` y `round`. Al actualizar la planilla solo deben viajar datos propios del resultado y eventos (`status`, `keyEvents`, `competitors`, `result`, `sportConfigId`). Al no enviar `round`, el backend no ejecuta validaciones de cambio de ronda.
+2. **Backend (`backend/src/services/matches.service.js`):**
+   - Se modificó `update` para que la verificación de existencia de ronda solo se ejecute si realmente hay un intento de mutar la ronda o el torneo (`isRoundChanging || isTournamentChanging`). Si el partido continúa en su jornada asignada, la operación no se bloquea.
+   - Se incorporó un fallback: si la ronda se modifica pero el `roundId` difiere a nivel de ObjectId respecto al subdocumento, se busca por `roundNumber` y se auto-resuelve el `_id` real de la ronda.
+3. **Script de Reconciliación (`backend/scripts/migrate-rounds-adr008.js`):** Se actualizó para permitir la sincronización bidireccional entre los `_id` de las rondas del torneo y los `round.roundId` de los partidos en bases de datos existentes.
+
+#### Estado y Verificación
+- Integrado en ramas `dev`, `main` y `fix/match-sheet-round-validation` con build de producción validado exitosamente.

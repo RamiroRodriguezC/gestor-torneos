@@ -181,6 +181,7 @@ Alternativa descartada: Extraer `Round` a colección propia — daba identidad r
 | 011 | Consolidar auth frontend en `data/auth.js` | ✅ Decidido / 🔴 implementación pendiente |
 | 012 | Polimorfismo de participantes `participantId` | ✅ Decidido e implementado 22/10/2026 |
 | 013 | Carga de planillas: atribución a jugadores y simplificación de eventos inversos (sin `AUTO_GOL`) | ✅ Decidido e implementado 22/10/2026 |
+| 014 | Desacoplamiento de validación de rondas y payload selectivo en actualización de partidos | ✅ Decidido e implementado 26/10/2026 |
 
 ---
 
@@ -210,3 +211,25 @@ Alternativa descartada: Extraer `Round` a colección propia — daba identidad r
 **Consecuencias:** Carga rápida y simple para el árbitro/organizador, cero lógica acoplada a nombres de eventos específicos, y datos 100% compatibles con los schemas preexistentes de Mongoose.
 
 **Estado.** ✅ Decidido e implementado (22/10/2026).
+
+
+---
+
+## ADR-014 — Desacoplamiento de validación de rondas y payload selectivo en actualización de partidos
+
+**Contexto.** Al guardar una planilla de partido finalizado en producción (`PUT /matches/:id`), la aplicación retornaba un error `400 Bad Request` con el mensaje: *"roundId no pertenece al torneo indicado"*. Si bien en IndexedDB (Dexie) los cambios se visualizaban de inmediato gracias al guardado optimista local, la petición al backend era rechazada y no se persistía en MongoDB.
+
+El origen del problema radicaba en que:
+1. En `frontend/src/data/matches.js:buildMatchUpdatePayload`, se reenviaba todo el objeto del partido incluyendo `tournamentId` y `round` (`{ roundId, number }`).
+2. En `backend/src/services/matches.service.js:update`, la existencia de `data.round?.roundId` disparaba incondicionalmente una verificación contra la base de datos (`Tournament.findOne({ _id: tournamentId, 'rounds._id': roundId })`).
+3. En bases de datos existentes o datos precargados (seeds donde `Tournament.rounds` generó `_id` aleatorios de subdocumento que no coincidían exactamente con el `round.roundId` del partido), esta consulta fallaba catastróficamente, bloqueando el guardado de eventos, resultados y estados de partidos legítimos.
+
+**Decisión.**
+1. **Payload selectivo en Frontend:** Modificar `buildMatchUpdatePayload` en `frontend/src/data/matches.js` para excluir `_id`, `tournamentId` y `round`. La planilla de partido solo debe enviar los datos dinámicos que cambian en el encuentro (`status`, `keyEvents`, `competitors`, `result`, `sportConfigId`), protegiendo las referencias estructurales del torneo/fixture de mutaciones accidentales o validaciones indebidas.
+2. **Validación condicional al cambio real en Backend:** En `backend/src/services/matches.service.js:update`, restringir la validación de pertenencia al torneo únicamente a los casos donde el partido efectivamente esté cambiando de ronda o de torneo (`isRoundChanging || isTournamentChanging`). Si el partido se mantiene en su jornada actual, no se ejecuta la validación.
+3. **Mecanismo de fallback por número de jornada:** Si una operación de creación o cambio de ronda envía un `roundId` que no coincide por `_id` de subdocumento pero sí coincide con el `roundNumber` de la jornada del torneo, el backend auto-resuelve el `_id` real de la ronda en el torneo (`data.round.roundId = matchingRound._id`) evitando falsos positivos.
+4. **Script de sincronización bidireccional:** Actualizar `backend/scripts/migrate-rounds-adr008.js` para permitir reconciliar y alinear los `_id` de las rondas de los torneos con los `round.roundId` de los partidos en bases de datos ya desplegadas.
+
+**Consecuencias:** La carga y guardado de planillas funciona fluidamente online y offline sin colisionar con discrepancias históricas de identificadores de subdocumentos. Se respeta el principio de mínima superficie de mutación en las peticiones REST.
+
+**Estado.** ✅ Decidido e implementado (26/10/2026).
