@@ -18,6 +18,7 @@ import {
   CircularProgress,
 } from '@mui/material'
 import ShieldIcon from '@mui/icons-material/Shield'
+import { useAuth } from '../../hooks/useAuth'
 import { useSports } from '../../hooks/useSportsConfig'
 import { createTeam } from '../../data/teams'
 
@@ -26,6 +27,7 @@ function formatSportName(name = '') {
 }
 
 function CreateTeamModal({ open, onClose, onSuccess }) {
+  const { user } = useAuth()
   const sports = useSports()
   const teamSports = useMemo(
     () => (sports || []).filter((s) => !s.sportProps || s.sportProps.participantType === 'TEAM'),
@@ -81,6 +83,7 @@ function CreateTeamModal({ open, onClose, onSuccess }) {
         name: name.trim(),
         discipline,
         logoURL: logoURL.trim() || '',
+        capitanId: user?._id,
       }
       const created = await createTeam(payload)
       if (onSuccess) onSuccess(created)

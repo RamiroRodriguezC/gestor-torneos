@@ -13,7 +13,7 @@ export async function createTeam(teamData) {
     await db.teams.put(team)
 
     // 2. Actualizar el usuario en Dexie para que useTeamsByUser y useAuth reaccionen de inmediato
-    const captainId = typeof team.capitanId === 'object' ? team.capitanId?._id : team.capitanId
+    const captainId = typeof team.capitanId === 'object' ? team.capitanId?._id : (team.capitanId || teamData.capitanId)
     if (captainId) {
       const user = await db.users.get(captainId)
       if (user) {
