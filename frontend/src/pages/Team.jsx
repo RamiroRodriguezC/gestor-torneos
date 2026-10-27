@@ -95,7 +95,7 @@ function Team() {
               sx={{
                 bgcolor: '#1a1a1a',
                 border: '1px solid',
-                borderColor: member._id === team.capitanId ? '#ffd700' : 'divider',
+                borderColor: String(member._id) === String(team.capitanId?._id || team.capitanId) ? '#ffd700' : 'divider',
                 cursor: 'pointer',
                 '&:hover': { borderColor: '#00e676' },
               }}
@@ -116,7 +116,7 @@ function Team() {
                       @{member.username}
                     </Typography>
                   </Box>
-                  {member._id === team.capitanId && (
+                  {String(member._id) === String(team.capitanId?._id || team.capitanId) && (
                     <Chip
                       icon={<WorkspacePremiumIcon sx={{ color: '#000' }} />}
                       label="Owner"

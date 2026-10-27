@@ -6,7 +6,7 @@ import { useSport } from '../../hooks/useSportsConfig'
 function TeamCard({ team, userId }) {
   const navigate = useNavigate()
   const sport = useSport(team.discipline)
-  const isCaptain = team.capitanId === userId
+  const isCaptain = String(team.capitanId?._id || team.capitanId) === String(userId)
   const memberCount = team.members?.length ?? 0
 
   return (

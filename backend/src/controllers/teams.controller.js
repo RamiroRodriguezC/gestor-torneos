@@ -15,7 +15,10 @@ export const getById = handle(async (req) => {
 });
 
 export const create = handle(async (req) => {
-  const data = await teamsService.create(req.body);
+  const capitanId = (req.user?.globalRole === 'ADMIN' && req.body.capitanId)
+    ? req.body.capitanId
+    : req.user.id;
+  const data = await teamsService.create({ ...req.body, capitanId });
   return { data };
 });
 
