@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Dialog,
   DialogTitle,
@@ -27,8 +27,9 @@ function formatSportName(name = '') {
 
 function CreateTeamModal({ open, onClose, onSuccess }) {
   const sports = useSports()
-  const teamSports = sports.filter(
-    (s) => !s.sportProps || s.sportProps.participantType === 'TEAM'
+  const teamSports = useMemo(
+    () => (sports || []).filter((s) => !s.sportProps || s.sportProps.participantType === 'TEAM'),
+    [sports]
   )
 
   const [name, setName] = useState('')
@@ -38,7 +39,7 @@ function CreateTeamModal({ open, onClose, onSuccess }) {
   const [error, setError] = useState(null)
   const [fieldErrors, setFieldErrors] = useState({})
 
-  // Limpiar campos al abrir
+  // Limpiar campos ÚNICAMENTE cuando el modal se abre
   useEffect(() => {
     if (open) {
       setName('')
@@ -46,10 +47,19 @@ function CreateTeamModal({ open, onClose, onSuccess }) {
       setError(null)
       setFieldErrors({})
       if (teamSports.length > 0) {
-        setDiscipline((prev) => prev || teamSports[0]._id)
+        setDiscipline(teamSports[0]._id)
+      } else {
+        setDiscipline('')
       }
     }
-  }, [open, teamSports])
+  }, [open])
+
+  // Si teamSports termina de cargar después de abrir el modal y no hay deporte seleccionado
+  useEffect(() => {
+    if (open && !discipline && teamSports.length > 0) {
+      setDiscipline(teamSports[0]._id)
+    }
+  }, [open, discipline, teamSports])
 
   const validate = () => {
     const errs = {}
