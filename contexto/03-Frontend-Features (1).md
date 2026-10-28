@@ -94,7 +94,14 @@ Lista los torneos del usuario logueado (`useTournamentsByUser`, 100% Dexie). Bot
 Formulario largo (info básica, ubicación, fechas, contacto, extras). Al enviar: `createTournament(payload)` → `POST /tournaments` directo (sin passthrough por `syncQueue` si está offline, ver arriba) → `putTournament(tournament)` en Dexie → navega al detalle. El `<select>` de formato de torneo (`FORMATS`) está **hardcodeado a las 4 opciones del enum global**, sin consultar `sportsConfig.rulesConfig.format.allowed` del deporte elegido — es decir, el manifiesto por deporte que se diseñó para esto no se usa todavía en esta pantalla.
 
 ### `Teams` (`/dashboard/teams`) y `Team` (`/dashboard/teams/:id` y `/team/:id`)
-`Teams` lista los equipos del usuario (`useTeamsByUser`). `Team` es el detalle: torneos del equipo + `LineUp` (miembros, con badge "Owner" para el capitán). Los miembros salen de `db.users` filtrados por los `userId` embebidos en `team.members[]` — **es exactamente el dato que hoy no llega bien** por la falla de `/teams/:id/members` (ver informe de errores); lo que se ve en pantalla es lo que haya quedado de un seed/sync anterior, potencialmente incompleto (`username` vacío, por ejemplo).
+- **`Teams.jsx`**: Lista los equipos del usuario logueado (`useTeamsByUser`). Incluye:
+  - Botón **"Crear Equipo"**: Abre `CreateTeamModal.jsx` con selector de deportes (filtrando deportes colectivos de `SportsConfig`), campo de nombre con validación en tiempo real, URL de logo opcional y preview del escudo. Al crearlo, actualiza atómicamente Dexie (`db.teams` y `db.users`) y redirige al detalle del equipo.
+  - Botón **"Unirme con código"**: Abre `JoinTeamModal.jsx` con input alfanumérico formateado (auto-mayúsculas, monospace). Al validar el código contra `POST /teams/join`, incorpora al usuario como miembro en IndexedDB y navega al equipo.
+  - Estado vacío amigable cuando el usuario no pertenece a ningún plantel, con accesos directos a ambas acciones.
+- **`Team.jsx`**: Vista de detalle del equipo:
+  - **Tarjeta de Invitación:** Exclusiva para el capitán (o admin). Muestra el código alfanumérico generado con CSPRNG Crockford Base32, botón para copiar al portapapeles con feedback tipo snackbar, y botón para regenerar el código en caliente.
+  - **Torneos:** Lista los torneos asociados al equipo (`team.tournaments[]`).
+  - **LineUp interactivo:** Muestra los jugadores del plantel con su rol (badge especial para el Capitán/Owner). El capitán cuenta con un botón para expulsar miembros no deseados mediante modal de confirmación (`DELETE /teams/:id/members/:userId`). Los miembros regulares cuentan con un botón para "Abandonar equipo" voluntariamente.
 
 ### `Profile` (`/dashboard/profile` propio, `/user/:userId` ajeno)
 Muestra datos + deportes de interés (resueltos contra `sportsConfig` local). Distingue `profileUser === null` (cargando) de `=== undefined` (no encontrado) para mostrar el estado correcto con `ErrorDisplay`.

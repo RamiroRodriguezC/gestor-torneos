@@ -233,3 +233,36 @@ El origen del problema radicaba en que:
 **Consecuencias:** La carga y guardado de planillas funciona fluidamente online y offline sin colisionar con discrepancias históricas de identificadores de subdocumentos. Se respeta el principio de mínima superficie de mutación en las peticiones REST.
 
 **Estado.** ✅ Decidido e implementado (26/10/2026).
+
+
+---
+
+## ADR-015 — Sistema de Creación de Equipos y Gestión de Planteles mediante Códigos de Invitación (Join Code)
+
+**Contexto.** Hasta el momento, los equipos participantes solo existían como datos precargados mediante seeds. Un usuario registrado no disponía de ninguna interfaz ni flujo en el backend para fundar su propio equipo, ni existía un mecanismo para convocar a otros jugadores y conformar el plantel (roster).
+Además, el endpoint primitivo `POST /teams` requería enviar `capitanId` manualmente en el cuerpo de la petición sin vincular al usuario autenticado, no añadía al capitán a la lista de integrantes (`team.members[]`) y no actualizaba la relación en la colección de usuarios (`user.teams[]`), dejando los datos desvinculados tanto en MongoDB como en el almacenamiento local IndexedDB (Dexie).
+
+**Decisión.**
+1. **Creación con vinculación reactiva bidireccional:**
+   - En el backend (`teams.controller.js` y `teams.service.js`), `POST /teams` toma automáticamente el `req.user.id` del token JWT autenticado (permitiendo `capitanId` manual solo si el rol global es `ADMIN`).
+   - Valida la disciplina contra `SportsConfig` y previene nombres duplicados dentro del mismo deporte.
+   - Inicializa el array de integrantes agregando de forma inmediata al creador (`{ userId: capitanId }`).
+   - Actualiza atómicamente al usuario en MongoDB (`$addToSet: { teams: { teamId, role: 'CAPITAN' } }`).
+   - En el frontend (`data/teams.js:createTeam`), persiste el equipo en `db.teams` y actualiza `user.teams` en `db.users`, garantizando que hooks reactivos como `useTeamsByUser` y `useAuth` reflejen la pertenencia al instante sin necesidad de relogueo.
+2. **Generación criptográfica de códigos de invitación (Join Code):**
+   - Se descartó el hasheado unidireccional (como bcrypt) porque el capitán requiere poder consultar su código en cualquier momento para compartirlo.
+   - Se adoptó el alfabeto *Crockford Base32* (`23456789ABCDEFGHJKLMNPQRSTUVWXYZ`, 32 caracteres) generado mediante CSPRNG nativo (`crypto.randomBytes`). Al ser $256 \pmod{32} = 0$, la distribución de caracteres es estrictamente uniforme (cero sesgo de módulo).
+   - Se excluyen caracteres ambiguos (`0/O`, `1/I/L`) para maximizar la usabilidad en dispositivos móviles.
+   - Longitud estándar de 6 caracteres ($32^6 \approx 1.07 \times 10^9$ combinaciones posibles).
+3. **Privacidad y ciclo de vida del código:**
+   - El código se almacena en el subdocumento `team.inviteCode` con `select: false` en Mongoose, evitando su exposición en listados públicos o consultas generales de equipos.
+   - Solo el capitán del equipo (o un `ADMIN`) puede consultar el código a través del endpoint protegido `GET /teams/:id/invite-code`.
+   - Vencimiento automático a los 7 días desde su generación (`expiresAt`).
+   - El capitán cuenta con la capacidad de regenerar el código en cualquier momento (`POST /teams/:id/regenerate-code`), invalidando inmediatamente el anterior en caso de filtraciones.
+4. **Flujo de unión y control de plantel:**
+   - Endpoint `POST /teams/join` que valida código, vigencia, estado activo, previene duplicados (no permite unirse si ya es miembro o capitán) y respeta el límite de participantes máximos configurado en el deporte (`SportsConfig`).
+   - Endpoint `DELETE /teams/:id/members/:userId` que permite al capitán o administrador expulsar a integrantes no deseados, o a los miembros abandonar el equipo de forma voluntaria (protegiendo siempre al capitán de auto-expulsión sin traspaso previo).
+
+**Consecuencias.** Se cierra el ciclo vital de conformación de equipos de forma intuitiva, segura y alineada con la experiencia habitual de aplicaciones sociales/deportivas (estilo Discord o Classroom). La sincronización local en Dexie permite que tanto la creación como la unión se reflejen de inmediato en la UI.
+
+**Estado.** ✅ Decidido e implementado (28/10/2026).

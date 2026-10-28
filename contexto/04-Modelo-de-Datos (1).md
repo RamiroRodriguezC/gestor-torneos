@@ -39,6 +39,7 @@ erDiagram
         ObjectId capitanId FK
         object[] members "embed: userId"
         object[] tournaments "embed: tournamentId"
+        object inviteCode "embed: code (select: false), expiresAt, isActive"
         bool isDeleted
     }
 

@@ -422,3 +422,12 @@ Al presionar el botón "Generar Fixture" desde el frontend desplegado en Vercel,
 #### Pendiente para Próximos Sprints / Roadmap
 - **Parametrización de Duración Reglamentaria por Deporte y Torneo:**
   Actualmente se utilizó un límite superior amplio (`999`) para permitir prórrogas y adaptarse genéricamente a deportes de distinta duración. Queda registrado para futuras versiones incorporar en `SportsConfig.sportProps` o en `Tournament.rules` la duración reglamentaria del partido (ej. 50' para Fútbol 7, 90' para Fútbol 11, 40' para Básquet FIBA, etc.) y una regla de tolerancia para tiempos extra/suplementarios.
+
+
+---
+
+### Creación de Equipos y Formación de Planteles (Join Code) — ✅ RESUELTO (28/10/2026)
+- [x] **Creación de equipos:** Formulario modal en frontend (`CreateTeamModal.jsx`), vinculación automática de `capitanId = req.user.id`, incorporación automática a `team.members[]` y persistencia atómica en `User.teams[]` y en Dexie (`db.teams`, `db.users`).
+- [x] **Código de invitación (Join Code):** Generación segura con `crypto.randomBytes` en alfabeto Crockford Base32 (sin caracteres ambiguos), vencimiento a 7 días, `select: false` en base de datos.
+- [x] **Flujo de unión:** Modal `JoinTeamModal.jsx` y endpoint `POST /teams/join` con anti-duplicados y respeto de cupo deportivo.
+- [x] **Gestión del capitán:** Endpoints y controles UI en `Team.jsx` para copiar código, regenerar código y expulsar miembros del plantel (`DELETE /teams/:id/members/:userId`).

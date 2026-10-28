@@ -118,16 +118,28 @@ Firmado con `process.env.JWT_SECRET`, expira según `JWT_EXPIRES_IN` (default `1
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| GET | `/:id/members` | Miembros del equipo (⚠️ ver informe de errores — rota en runtime) |
+| POST | `/join` | Unirse a un equipo mediante código de invitación (`{ code }`) |
+| GET | `/:id/invite-code` | Obtener código de invitación vigente (solo Capitán o ADMIN) |
+| POST | `/:id/regenerate-code` | Regenerar código de invitación (solo Capitán o ADMIN) |
+| GET | `/:id/members` | Miembros del equipo (populado sin contraseña) |
+| DELETE | `/:id/members/:userId` | Expulsar miembro (Capitán/ADMIN) o abandonar equipo (propio usuario) |
 | GET | `/:id/tournaments` | Torneos en los que participó el equipo |
 | GET | `/` | Lista equipos activos, con `capitanId` populado (`name lastName url_profile_photo`) |
 | GET | `/:id` | Detalle de equipo |
-| POST | `/` | Alta de equipo |
+| POST | `/` | Alta de equipo (toma automáticamente `capitanId` del token) |
 | PUT | `/:id` | Edición de equipo |
 
-**`POST /teams`** — body: `{ name, discipline, capitanId, logoURL?, members?, tournaments? }`. Validaciones: `name`, `discipline`, `capitanId` requeridos.
+**`POST /teams`** — body: `{ name, discipline, logoURL?, capitanId? }`. Validaciones: `name` (no vacío), `discipline` (valida contra `SportsConfig`), `capitanId` (se autocompleta con `req.user.id`; si es ADMIN puede asignarlo explícitamente). No permite nombres duplicados en la misma disciplina. Agrega automáticamente al creador a `members[]` y actualiza atómicamente `User.teams[]` con rol `CAPITAN`. Inicializa `inviteCode` seguro con 7 días de vigencia.
 
-**`GET /teams/:id/members`** — ⚠️ **Actualmente devuelve 500** en todos los casos: `teams.service.js#findTeamMembers` usa el modelo `User` sin haberlo importado en el archivo. Confirmado en producción (Render) vía consola del navegador — devuelve `Internal Server Error` de forma consistente. Este endpoint es consumido por `frontend/src/data/userSync.js` durante el login; al fallar, el `fetchJSON` interno lo trata como "sin datos" (loguea un warning) y el login **continúa sin romperse**, pero los miembros de los equipos nunca llegan a Dexie. Ver informe de errores para el detalle y la corrección sugerida.
+**`POST /teams/join`** — body: `{ code }`. Busca equipo con `inviteCode.code`, valida que esté activo y no expirado, previene duplicados (no permite unirse si ya es miembro o capitán) y respeta cupo del deporte. Suma al usuario como `MIEMBRO` en `team.members[]` y en `User.teams[]`.
+
+**`GET /teams/:id/invite-code`** — Protegido: solo el capitán o ADMIN. Devuelve `{ code, expiresAt, isActive }`. Si el equipo no tenía código, se le genera uno automáticamente.
+
+**`POST /teams/:id/regenerate-code`** — Protegido: solo el capitán o ADMIN. Invalida el código anterior y genera uno nuevo de 6 caracteres con 7 días de vigencia.
+
+**`DELETE /teams/:id/members/:userId`** — Protegido: capitán, ADMIN o el propio usuario saliendo. Remueve de `team.members[]` y desvincula en `User.teams[]`. No permite expulsar al capitán directamente.
+
+**`GET /teams/:id/members`** — ✅ Operativo. Retorna los usuarios del lineup sin password.
 
 ---
 
