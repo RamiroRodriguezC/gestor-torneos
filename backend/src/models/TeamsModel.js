@@ -1,5 +1,11 @@
 import { Schema, model } from 'mongoose';
 
+const InviteCodeSchema = new Schema({
+  code: { type: String, uppercase: true, trim: true, sparse: true, index: true, select: false },
+  expiresAt: { type: Date },
+  isActive: { type: Boolean, default: true },
+}, { _id: false });
+
 const TeamSchema = new Schema({
   name: { type: String, required: true },
   logoURL: { type: String, default: '' },
@@ -7,6 +13,7 @@ const TeamSchema = new Schema({
   capitanId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   members: [{ userId: { type: Schema.Types.ObjectId, ref: 'User' } }],
   tournaments: [{ tournamentId: { type: Schema.Types.ObjectId, ref: 'Tournament' } }],
+  inviteCode: { type: InviteCodeSchema, default: () => ({}) },
   isDeleted: { type: Boolean, default: false }
 }, { timestamps: true });
 

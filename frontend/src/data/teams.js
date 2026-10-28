@@ -29,6 +29,70 @@ export async function createTeam(teamData) {
   return team
 }
 
+export async function joinTeamByCode(code, currentUserId) {
+  const json = await apiFetch('/teams/join', {
+    method: 'POST',
+    body: JSON.stringify({ code }),
+  })
+  const team = json.data
+  if (team) {
+    await db.teams.put(team)
+
+    const userId = currentUserId || localStorage.getItem('currentUserId')
+    if (userId) {
+      const user = await db.users.get(userId)
+      if (user) {
+        const teams = user.teams || []
+        const alreadyIn = teams.some((t) => String(t.teamId) === String(team._id))
+        if (!alreadyIn) {
+          user.teams = [...teams, { teamId: team._id, role: 'MIEMBRO' }]
+          await putUser(user)
+        }
+      }
+    }
+  }
+  return team
+}
+
+export async function fetchTeamInviteCode(teamId) {
+  const json = await apiFetch(`/teams/${teamId}/invite-code`)
+  return json.data
+}
+
+export async function regenerateTeamInviteCode(teamId) {
+  const json = await apiFetch(`/teams/${teamId}/regenerate-code`, {
+    method: 'POST',
+  })
+  return json.data
+}
+
+export async function removeMemberFromTeam(teamId, memberUserId) {
+  const json = await apiFetch(`/teams/${teamId}/members/${memberUserId}`, {
+    method: 'DELETE',
+  })
+
+  // Actualizar equipo en Dexie
+  const localTeam = await db.teams.get(teamId)
+  if (localTeam) {
+    localTeam.members = (localTeam.members || []).filter(
+      (m) => String(m.userId) !== String(memberUserId)
+    )
+    await db.teams.put(localTeam)
+  }
+
+  // Actualizar usuario en Dexie si es el usuario logueado
+  const currentUserId = localStorage.getItem('currentUserId')
+  if (String(currentUserId) === String(memberUserId)) {
+    const user = await db.users.get(currentUserId)
+    if (user) {
+      user.teams = (user.teams || []).filter((t) => String(t.teamId) !== String(teamId))
+      await putUser(user)
+    }
+  }
+
+  return json.data
+}
+
 export async function getAllTeams() {
   return db.teams.toArray()
 }

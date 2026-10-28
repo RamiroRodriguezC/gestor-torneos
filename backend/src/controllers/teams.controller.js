@@ -36,3 +36,24 @@ export const getTeamTournaments = handle(async (req) => {
   const data = await teamsService.findTeamTournaments(req.params.id);
   return { data, count: data.length };
 });
+
+export const joinByCode = handle(async (req) => {
+  const { code } = req.body;
+  const data = await teamsService.joinByCode(code, req.user.id);
+  return { data };
+});
+
+export const getInviteCode = handle(async (req) => {
+  const data = await teamsService.getInviteCode(req.params.id, req.user.id, req.user.globalRole);
+  return { data };
+});
+
+export const regenerateInviteCode = handle(async (req) => {
+  const data = await teamsService.regenerateInviteCode(req.params.id, req.user.id, req.user.globalRole);
+  return { data };
+});
+
+export const removeMember = handle(async (req) => {
+  const data = await teamsService.removeTeamMember(req.params.id, req.params.userId, req.user.id, req.user.globalRole);
+  return { data };
+});

@@ -5,6 +5,7 @@ import mongoose from 'mongoose';
 import { requireDB } from '../config/db.js';
 import { AppError } from '../utils/AppError.js';
 import { ErrorType } from '../constants/errorTypes.js';
+import { generateInviteCode } from '../utils/codeGenerator.js';
 
 const validate = (data, isUpdate = false) => {
   const errors = [];
@@ -70,10 +71,18 @@ export const create = async (data) => {
     members.push({ userId: data.capitanId });
   }
 
+  // Generar código de invitación seguro (7 días de vigencia por defecto)
+  const inviteCode = {
+    code: generateInviteCode(6),
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    isActive: true,
+  };
+
   const team = await Team.create({
     ...data,
     name: trimmedName,
     members,
+    inviteCode,
   });
 
   // Vincular equipo al usuario capitán
@@ -119,4 +128,148 @@ export const findTeamTournaments = async (teamId) => {
   if (ids.length === 0) return [];
   const Tournament = (await import('../models/TournamentsModel.js')).default;
   return Tournament.find({ _id: { $in: ids }, isDeleted: false });
+};
+
+export const joinByCode = async (code, userId) => {
+  requireDB();
+
+  if (!code || typeof code !== 'string' || !code.trim()) {
+    throw new AppError(ErrorType.VALIDATION_ERROR, 'El código de invitación es requerido.');
+  }
+
+  const cleanCode = code.trim().toUpperCase();
+  const team = await Team.findOne({
+    'inviteCode.code': cleanCode,
+    isDeleted: false,
+  }).select('+inviteCode.code');
+
+  if (!team) {
+    throw new AppError(ErrorType.TEAM_NOT_FOUND, 'Código de invitación inválido o inexistente.');
+  }
+
+  if (!team.inviteCode || !team.inviteCode.isActive) {
+    throw new AppError(ErrorType.VALIDATION_ERROR, 'Este código de invitación ha sido desactivado.');
+  }
+
+  if (team.inviteCode.expiresAt && new Date() > new Date(team.inviteCode.expiresAt)) {
+    throw new AppError(ErrorType.VALIDATION_ERROR, 'El código de invitación ha expirado.');
+  }
+
+  const isCaptain = String(team.capitanId) === String(userId);
+  const isMember = (team.members || []).some((m) => String(m.userId) === String(userId));
+  if (isCaptain || isMember) {
+    throw new AppError(ErrorType.CONFLICT, 'Ya perteneces a este equipo.');
+  }
+
+  // Verificar cupo si el deporte define límites
+  if (team.discipline) {
+    const sport = await SportsConfig.findById(team.discipline);
+    const maxSubs = sport?.rulesConfig?.subsLimit?.supported ? (sport?.rulesConfig?.subsLimit?.max || 0) : 0;
+    const maxStarters = sport?.sportProps?.maxParticipants || 0;
+    const totalMax = maxStarters + maxSubs;
+    if (totalMax > 0 && (team.members || []).length >= totalMax) {
+      throw new AppError(ErrorType.CONFLICT, `El equipo alcanzó el cupo máximo de jugadores permitidos (${totalMax}).`);
+    }
+  }
+
+  team.members.push({ userId });
+  await team.save();
+
+  await User.findByIdAndUpdate(userId, {
+    $addToSet: {
+      teams: {
+        teamId: team._id,
+        role: 'MIEMBRO',
+      },
+    },
+  });
+
+  return team;
+};
+
+export const getInviteCode = async (teamId, actorId, role) => {
+  requireDB();
+
+  const team = await Team.findOne({ _id: teamId, isDeleted: false }).select('+inviteCode.code');
+  if (!team) throw new AppError(ErrorType.TEAM_NOT_FOUND);
+
+  const isCaptain = String(team.capitanId) === String(actorId);
+  const isAdmin = role === 'ADMIN';
+  if (!isCaptain && !isAdmin) {
+    throw new AppError(ErrorType.FORBIDDEN, 'Solo el capitán del equipo o un administrador pueden ver el código de invitación.');
+  }
+
+  if (!team.inviteCode?.code) {
+    team.inviteCode = {
+      code: generateInviteCode(6),
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      isActive: true,
+    };
+    await team.save();
+  }
+
+  return {
+    code: team.inviteCode.code,
+    expiresAt: team.inviteCode.expiresAt,
+    isActive: team.inviteCode.isActive,
+  };
+};
+
+export const regenerateInviteCode = async (teamId, actorId, role) => {
+  requireDB();
+
+  const team = await Team.findOne({ _id: teamId, isDeleted: false }).select('+inviteCode.code');
+  if (!team) throw new AppError(ErrorType.TEAM_NOT_FOUND);
+
+  const isCaptain = String(team.capitanId) === String(actorId);
+  const isAdmin = role === 'ADMIN';
+  if (!isCaptain && !isAdmin) {
+    throw new AppError(ErrorType.FORBIDDEN, 'Solo el capitán del equipo o un administrador pueden regenerar el código de invitación.');
+  }
+
+  const newCode = generateInviteCode(6);
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+  team.inviteCode = {
+    code: newCode,
+    expiresAt,
+    isActive: true,
+  };
+  await team.save();
+
+  return {
+    code: team.inviteCode.code,
+    expiresAt: team.inviteCode.expiresAt,
+    isActive: team.inviteCode.isActive,
+  };
+};
+
+export const removeTeamMember = async (teamId, memberUserId, actorId, role) => {
+  requireDB();
+
+  const team = await Team.findOne({ _id: teamId, isDeleted: false });
+  if (!team) throw new AppError(ErrorType.TEAM_NOT_FOUND);
+
+  const isCaptain = String(team.capitanId) === String(actorId);
+  const isAdmin = role === 'ADMIN';
+  const isSelf = String(memberUserId) === String(actorId);
+
+  if (!isCaptain && !isAdmin && !isSelf) {
+    throw new AppError(ErrorType.FORBIDDEN, 'No tienes permisos para remover a este miembro del equipo.');
+  }
+
+  if (String(memberUserId) === String(team.capitanId)) {
+    throw new AppError(ErrorType.VALIDATION_ERROR, 'El capitán no puede ser expulsado del equipo. Debe transferir la capitanía o eliminar el equipo.');
+  }
+
+  team.members = (team.members || []).filter((m) => String(m.userId) !== String(memberUserId));
+  await team.save();
+
+  await User.findByIdAndUpdate(memberUserId, {
+    $pull: {
+      teams: { teamId: team._id },
+    },
+  });
+
+  return { success: true, teamId: team._id, removedUserId: memberUserId };
 };
