@@ -121,5 +121,15 @@ export const update = async (id, data) => {
 
   const match = await Match.findByIdAndUpdate(id, data, { new: true, runValidators: true });
   if (!match) throw new AppError(ErrorType.MATCH_NOT_FOUND);
+
+  if (match.tournamentId) {
+    try {
+      const { syncTournamentLifecycle } = await import('./tournaments.service.js');
+      await syncTournamentLifecycle(match.tournamentId);
+    } catch (lifecycleErr) {
+      console.warn('Error al sincronizar ciclo de vida del torneo:', lifecycleErr);
+    }
+  }
+
   return match;
 };

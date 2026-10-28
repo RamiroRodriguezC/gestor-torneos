@@ -27,7 +27,10 @@ export const update = handle(async (req) => {
 });
 
 export const updateStatus = handle(async (req) => {
-  const data = await tournamentsService.updateStatus(req.params.id, req.body.status, { actorId: req.user.id });
+  const data = await tournamentsService.updateStatus(req.params.id, req.body.status, {
+    actorId: req.user.id,
+    champion: req.body.champion,
+  });
   return { data };
 });
 

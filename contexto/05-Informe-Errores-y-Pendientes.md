@@ -431,3 +431,13 @@ Al presionar el botón "Generar Fixture" desde el frontend desplegado en Vercel,
 - [x] **Código de invitación (Join Code):** Generación segura con `crypto.randomBytes` en alfabeto Crockford Base32 (sin caracteres ambiguos), vencimiento a 7 días, `select: false` en base de datos.
 - [x] **Flujo de unión:** Modal `JoinTeamModal.jsx` y endpoint `POST /teams/join` con anti-duplicados y respeto de cupo deportivo.
 - [x] **Gestión del capitán:** Endpoints y controles UI en `Team.jsx` para copiar código, regenerar código y expulsar miembros del plantel (`DELETE /teams/:id/members/:userId`).
+
+---
+
+### Ciclo de Vida de Rondas, Torneo y Coronación del Campeón — ✅ RESUELTO (28/10/2026)
+- [x] **Culminación de Rondas:** Cada ronda pasa a `COMPLETED` estrictamente cuando todos los partidos correspondientes a dicha jornada tienen `status === 'FINALIZADO'`. Si están en disputa o parcialmente jugados, se marca `IN_PROCESS`.
+- [x] **Culminación de Torneo y Transición de Estados:** Se levanta la restricción del backend en `tournaments.service.js` para admitir `EN_CURSO` y `FINALIZADO`. El torneo culmina automáticamente cuando el 100% de las rondas están en `COMPLETED`.
+- [x] **Proclamación y Persistencia del Campeón:** Incorporación de subdocumento `champion` en `TournamentsModel.js`. Cálculo determinístico según la tabla de posiciones oficial (puntos, diferencia de gol, goles a favor) o llave final de playoff.
+- [x] **Experiencia Visual de Coronación:** Hero Banner de campeón consagrado en `TournamentPage`, distintivos de podio (`🏆 CAMPEÓN`, 🥈 Subcampeón, 🥉 3er puesto) en `StandingsTable` y visualización en `TournamentCard`.
+- [x] **Decisión de Diseño Post-MVP:** Se formaliza en ADR-016 que el palmarés/historial acumulado en perfil de equipos y el tablón de anuncios quedan fuera del MVP para próximos sprints.
+

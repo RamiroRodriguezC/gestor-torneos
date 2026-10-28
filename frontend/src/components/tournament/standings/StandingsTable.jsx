@@ -1,4 +1,4 @@
-import { Box, Table, TableContainer, TableHead, TableBody, TableRow, TableCell, Typography, Paper } from '@mui/material'
+import { Box, Table, TableContainer, TableHead, TableBody, TableRow, TableCell, Typography, Paper, Chip, Stack } from '@mui/material'
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
 import CompetitorPhoto from '../../shared/CompetitorPhoto'
 import { computeStandings } from '../../../utils/standings'
@@ -63,15 +63,60 @@ function StandingsTable({ tournament, matches, myTeamId }) {
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                       <CompetitorPhoto logoURL={row.logoURL} displayName={row.displayName} />
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontWeight: isMyTeam ? 700 : 400,
-                          color: isMyTeam ? '#00e676' : 'text.primary',
-                        }}
-                      >
-                        {row.displayName}
-                      </Typography>
+                      <Box>
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontWeight: isMyTeam ? 700 : i === 0 && tournament?.status === 'FINALIZADO' ? 700 : 400,
+                              color: isMyTeam ? '#00e676' : i === 0 && tournament?.status === 'FINALIZADO' ? '#FFD700' : 'text.primary',
+                            }}
+                          >
+                            {row.displayName}
+                          </Typography>
+                          {tournament?.status === 'FINALIZADO' && i === 0 && (
+                            <Chip
+                              label="CAMPEÓN 🏆"
+                              size="small"
+                              sx={{
+                                bgcolor: '#FFD700',
+                                color: '#000',
+                                fontWeight: 800,
+                                fontSize: '0.68rem',
+                                height: 20,
+                              }}
+                            />
+                          )}
+                          {tournament?.status === 'FINALIZADO' && i === 1 && (
+                            <Chip
+                              label="Subcampeón 🥈"
+                              size="small"
+                              variant="outlined"
+                              sx={{
+                                borderColor: '#C0C0C0',
+                                color: '#C0C0C0',
+                                fontWeight: 700,
+                                fontSize: '0.65rem',
+                                height: 18,
+                              }}
+                            />
+                          )}
+                          {tournament?.status === 'FINALIZADO' && i === 2 && (
+                            <Chip
+                              label="3° Puesto 🥉"
+                              size="small"
+                              variant="outlined"
+                              sx={{
+                                borderColor: '#CD7F32',
+                                color: '#CD7F32',
+                                fontWeight: 700,
+                                fontSize: '0.65rem',
+                                height: 18,
+                              }}
+                            />
+                          )}
+                        </Stack>
+                      </Box>
                     </Box>
                   </TableCell>
                   <TableCell align="center">{row.pj}</TableCell>

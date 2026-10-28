@@ -122,7 +122,17 @@ function TournamentFixture({ tournament, user, onGoToAdmin }) {
   const [tabIndex, setTabIndex] = useState(initialRoundIndex)
 
   const roundTabs = useMemo(() => {
-    return rounds.map((r, i) => ({ label: r.roundName || `Ronda ${r.roundNumber}`, value: r.roundNumber, index: i }))
+    return rounds.map((r, i) => {
+      const isCompleted = r.status === 'COMPLETED'
+      const isInProcess = r.status === 'IN_PROCESS'
+      const statusSuffix = isCompleted ? ' (Culminada)' : isInProcess ? ' (En disputa)' : ''
+      return {
+        label: `${r.roundName || `Ronda ${r.roundNumber}`}${statusSuffix}`,
+        value: r.roundNumber,
+        status: r.status,
+        index: i,
+      }
+    })
   }, [rounds])
 
   const selectedRound = roundTabs[tabIndex]

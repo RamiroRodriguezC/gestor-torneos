@@ -1,5 +1,6 @@
 import Tournament from '../models/TournamentsModel.js';
 import Application from '../models/ApplicationsModel.js';
+import Match from '../models/MatchesModel.js';
 import { requireDB } from '../config/db.js';
 import { AppError } from '../utils/AppError.js';
 import { ErrorType } from '../constants/errorTypes.js';
@@ -138,7 +139,176 @@ export const addRound = async (id, data) => {
   return tournament.rounds;
 };
 
-export const updateStatus = async (id, status, { actorId } = {}) => {
+export const calculateTournamentChampion = (tournament, matches = []) => {
+  const participants = tournament.participantes || [];
+  if (!participants.length) return null;
+
+  const format = tournament.rules?.format || 'ROUND_ROBIN';
+
+  if (format === 'ROUND_ROBIN') {
+    const { winPoints = 3, drawPoints = 1, lossPoints = 0 } = tournament.rules?.scoringSystem || {};
+    const completedMatches = matches.filter((m) => m.status === 'FINALIZADO');
+
+    const stats = participants.map((p) => {
+      const pId = String(p.participantId ?? p.teamId);
+      const pMatches = completedMatches.filter((m) =>
+        m.competitors?.some((c) => String(c.participantId ?? c.teamId) === pId)
+      );
+
+      let pj = 0, pg = 0, pe = 0, pp = 0, gf = 0, gc = 0;
+      for (const m of pMatches) {
+        pj++;
+        const myScore = m.keyEvents
+          ?.filter((e) => String(e.competitorId) === pId && (e.incrementScore || 0) > 0)
+          ?.reduce((s, e) => s + (e.incrementScore || 0), 0) || 0;
+        const oppScore = m.keyEvents
+          ?.filter((e) => String(e.competitorId) !== pId && (e.incrementScore || 0) > 0)
+          ?.reduce((s, e) => s + (e.incrementScore || 0), 0) || 0;
+
+        gf += myScore;
+        gc += oppScore;
+        if (myScore > oppScore) pg++;
+        else if (myScore === oppScore) pe++;
+        else pp++;
+      }
+
+      const pts = pg * winPoints + pe * drawPoints + pp * lossPoints;
+      const dg = gf - gc;
+
+      return {
+        participantId: p.participantId ?? p.teamId,
+        displayNameSnapshot: p.displayNameSnapshot || '',
+        logoURL: p.logoURL || '',
+        participantType: p.participantType || 'TEAM',
+        pts,
+        dg,
+        gf,
+      };
+    });
+
+    stats.sort((a, b) => {
+      if (b.pts !== a.pts) return b.pts - a.pts;
+      if (b.dg !== a.dg) return b.dg - a.dg;
+      return b.gf - a.gf;
+    });
+
+    if (stats.length > 0) {
+      const winner = stats[0];
+      return {
+        participantId: winner.participantId,
+        displayNameSnapshot: winner.displayNameSnapshot,
+        logoURL: winner.logoURL,
+        participantType: winner.participantType,
+        crownedAt: new Date(),
+      };
+    }
+    return null;
+  }
+
+  if (format === 'SINGLE_ELIMINATION' || format === 'DOUBLE_ELIMINATION') {
+    const rounds = tournament.rounds || [];
+    if (!rounds.length) return null;
+    const finalRound = [...rounds].sort((a, b) => b.roundNumber - a.roundNumber)[0];
+    const finalMatches = matches.filter((m) =>
+      (m.round?.roundId && String(m.round.roundId) === String(finalRound._id)) ||
+      m.round?.number === finalRound.roundNumber
+    );
+
+    if (finalMatches.length > 0) {
+      const finalMatch = finalMatches[0];
+      const scores = (finalMatch.competitors || []).map((c) => {
+        const cId = String(c.participantId ?? c.teamId);
+        const score = (finalMatch.keyEvents || [])
+          ?.filter((e) => String(e.competitorId) === cId && (e.incrementScore || 0) > 0)
+          ?.reduce((s, e) => s + (e.incrementScore || 0), 0) || 0;
+        return { competitor: c, score };
+      });
+
+      scores.sort((a, b) => b.score - a.score);
+      if (scores.length > 0) {
+        const winnerComp = scores[0].competitor;
+        return {
+          participantId: winnerComp.participantId ?? winnerComp.teamId,
+          displayNameSnapshot: winnerComp.displayNameSnapshot || '',
+          logoURL: winnerComp.logoURLSnapshot || winnerComp.logoURL || '',
+          participantType: winnerComp.participantType || 'TEAM',
+          crownedAt: new Date(),
+        };
+      }
+    }
+  }
+
+  const first = participants[0];
+  return {
+    participantId: first.participantId ?? first.teamId,
+    displayNameSnapshot: first.displayNameSnapshot || '',
+    logoURL: first.logoURL || '',
+    participantType: first.participantType || 'TEAM',
+    crownedAt: new Date(),
+  };
+};
+
+export const syncTournamentLifecycle = async (tournamentId) => {
+  requireDB();
+
+  const tournament = await Tournament.findOne({ _id: tournamentId, isDeleted: false });
+  if (!tournament) return null;
+
+  const matches = await Match.find({ tournamentId, isDeleted: false });
+  const rounds = tournament.rounds || [];
+
+  if (!rounds.length) return tournament;
+
+  let allRoundsCompleted = true;
+  let hasAnyStartedMatch = false;
+  let hasAnyCompletedRound = false;
+
+  for (const r of rounds) {
+    const roundMatches = matches.filter(
+      (m) => (m.round?.roundId && String(m.round.roundId) === String(r._id)) || m.round?.number === r.roundNumber
+    );
+
+    if (roundMatches.length === 0) {
+      r.status = 'SCHEDULED';
+      allRoundsCompleted = false;
+    } else {
+      const allMatchesFinished = roundMatches.every((m) => m.status === 'FINALIZADO');
+      const anyMatchStarted = roundMatches.some((m) => m.status === 'FINALIZADO' || m.status === 'EN_CURSO');
+
+      if (anyMatchStarted) hasAnyStartedMatch = true;
+
+      if (allMatchesFinished) {
+        r.status = 'COMPLETED';
+        hasAnyCompletedRound = true;
+      } else if (anyMatchStarted) {
+        r.status = 'IN_PROCESS';
+        allRoundsCompleted = false;
+      } else {
+        r.status = 'SCHEDULED';
+        allRoundsCompleted = false;
+      }
+    }
+  }
+
+  if (allRoundsCompleted && matches.length > 0) {
+    tournament.status = 'FINALIZADO';
+    if (!tournament.champion || !tournament.champion.participantId) {
+      tournament.champion = calculateTournamentChampion(tournament, matches);
+    }
+  } else if (hasAnyStartedMatch || hasAnyCompletedRound) {
+    if (tournament.status === 'PUBLICADO' || tournament.status === 'BORRADOR') {
+      tournament.status = 'EN_CURSO';
+    } else if (tournament.status === 'FINALIZADO') {
+      tournament.status = 'EN_CURSO';
+      tournament.champion = null;
+    }
+  }
+
+  await tournament.save();
+  return tournament;
+};
+
+export const updateStatus = async (id, status, { actorId, champion } = {}) => {
   requireDB();
 
   if (!TOURNAMENT_STATUS.includes(status)) {
@@ -149,15 +319,34 @@ export const updateStatus = async (id, status, { actorId } = {}) => {
   if (!tournament) throw new AppError(ErrorType.TOURNAMENT_NOT_FOUND);
 
   if (!actorId || String(tournament.organizerId) !== String(actorId)) {
-    throw new AppError(ErrorType.FORBIDDEN, 'Solo el organizador del torneo puede publicarlo o cambiar su estado.');
+    throw new AppError(ErrorType.FORBIDDEN, 'Solo el organizador del torneo puede cambiar su estado.');
   }
 
-  // El ciclo de competencia (EN_CURSO/FINALIZADO) no se maneja desde acá: solo BORRADOR ↔ PUBLICADO.
-  if (!['BORRADOR', 'PUBLICADO'].includes(status)) {
-    throw new AppError(ErrorType.VALIDATION_ERROR, 'Este endpoint solo permite pasar el torneo a BORRADOR o PUBLICADO.');
+  const updateFields = { status };
+
+  if (status === 'FINALIZADO') {
+    const matches = await Match.find({ tournamentId: id, isDeleted: false });
+    if (tournament.rounds && tournament.rounds.length > 0) {
+      tournament.rounds.forEach((r) => {
+        r.status = 'COMPLETED';
+      });
+      updateFields.rounds = tournament.rounds;
+    }
+    if (champion && champion.participantId) {
+      updateFields.champion = {
+        ...champion,
+        crownedAt: champion.crownedAt || new Date(),
+      };
+    } else if (!tournament.champion?.participantId) {
+      updateFields.champion = calculateTournamentChampion(tournament, matches);
+    }
+  } else if (status === 'BORRADOR' || status === 'PUBLICADO') {
+    if (tournament.champion) {
+      updateFields.champion = null;
+    }
   }
 
-  const updated = await Tournament.findByIdAndUpdate(id, { status }, { new: true, runValidators: true });
+  const updated = await Tournament.findByIdAndUpdate(id, updateFields, { new: true, runValidators: true });
   return updated;
 };
 

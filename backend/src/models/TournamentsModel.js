@@ -24,6 +24,14 @@ const ApplicationSummarySchema = new Schema({
   status: { type: String, enum: APPLICATION_STATUS, default: 'PENDIENTE' }
 }, { _id: false });
 
+const ChampionSchema = new Schema({
+  participantId: { type: Schema.Types.ObjectId, required: true },
+  displayNameSnapshot: { type: String, default: '' },
+  logoURL: { type: String, default: '' },
+  participantType: { type: String, enum: PARTICIPANT_TYPE, default: 'TEAM' },
+  crownedAt: { type: Date, default: Date.now },
+}, { _id: false });
+
 const roundSchema = new Schema({
   roundName: { type: String, required: true },
   roundNumber: { type: Number, required: true },
@@ -89,6 +97,7 @@ const TournamentSchema = new Schema({
   participantes: [ParticipantSnapshotSchema],
   applications: [ApplicationSummarySchema],
   rounds: [roundSchema],
+  champion: { type: ChampionSchema, default: null },
 
   isDeleted: { type: Boolean, default: false }
 }, { timestamps: true });

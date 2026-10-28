@@ -266,3 +266,32 @@ Además, el endpoint primitivo `POST /teams` requería enviar `capitanId` manual
 **Consecuencias.** Se cierra el ciclo vital de conformación de equipos de forma intuitiva, segura y alineada con la experiencia habitual de aplicaciones sociales/deportivas (estilo Discord o Classroom). La sincronización local en Dexie permite que tanto la creación como la unión se reflejen de inmediato en la UI.
 
 **Estado.** ✅ Decidido e implementado (28/10/2026).
+
+---
+
+## ADR-016 — Ciclo de vida de rondas y torneos, coronación automática del campeón y postergación de palmarés/anuncios para post-MVP
+
+**Contexto.**
+1. En la versión anterior, las rondas (`tournament.rounds[]`) permanecían estáticas en estado `SCHEDULED` sin importar si sus partidos se estaban jugando o ya se habían completado.
+2. El endpoint de estado del torneo (`PATCH /tournaments/:id/status`) tenía una restricción en el backend que rechazaba cualquier transición distinta de `BORRADOR` y `PUBLICADO`, impidiendo que los torneos avanzaran legítimamente a `EN_CURSO` o `FINALIZADO`.
+3. El modelo de datos (`TournamentsModel.js`) no poseía un campo para persistir al campeón o ganador del certamen, careciendo de un mecanismo de coronación oficial una vez jugados todos los partidos.
+4. Respecto a requerimientos complementarios como el palmarés histórico en los perfiles de equipos y jugadores, y la pestaña de anuncios del torneo, se evaluó su alcance respecto al MVP.
+
+**Decisión.**
+1. **Ciclo de vida automático de jornadas/rondas:**
+   - Una ronda permanece en `SCHEDULED` mientras todos sus partidos estén programados.
+   - Pasa a `IN_PROCESS` cuando al menos un partido ha iniciado o finalizado, pero aún restan encuentros pendientes.
+   - Pasa a `COMPLETED` (culminada) de forma estricta y automática cuando **el 100% de los partidos de dicha ronda tienen `status === 'FINALIZADO'`**.
+2. **Ciclo de vida y culminación del torneo:**
+   - Pasa a `EN_CURSO` al iniciar el torneo o al disputarse sus primeros encuentros.
+   - Pasa a `FINALIZADO` cuando **todas las rondas del torneo alcanzan el estado `COMPLETED`**.
+   - Se habilita además en el backend y frontend la acción explícita del organizador para gestionar estas transiciones.
+3. **Persistencia y Proclamación del Campeón:**
+   - Se incorpora el subdocumento `champion` dentro de `TournamentSchema` con snapshot del participante (`participantId`, `displayNameSnapshot`, `logoURL`, `participantType`, `crownedAt`).
+   - Al finalizar todas las rondas, el backend calcula automáticamente el campeón oficial (según tabla de clasificación por puntos, diferencia de goles y goles a favor para Round Robin, o el ganador de la final para llaves eliminatorias).
+   - En el frontend, se despliega el Banner de Coronación en `TournamentPage`, insignias en la tabla de posiciones (`StandingsTable`) y en las tarjetas de torneos (`TournamentCard`).
+4. **Decisión de Diseño de Alcance (MVP):**
+   - **Palmarés e historial acumulado en equipos/usuarios** y la funcionalidad de **Anuncios comunitarios** quedan formalmente definidos como características **fuera del MVP** y se postergan para futuros sprints y versiones post-lanzamiento.
+
+**Estado.** ✅ Decidido e implementado (28/10/2026).
+

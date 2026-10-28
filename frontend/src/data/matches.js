@@ -102,6 +102,17 @@ export async function updateMatchSheet(id, data) {
     })
     // Actualizamos Dexie con la respuesta del backend (tiene los campos completos)
     await putMatch(json.data)
+
+    // Refrescar el torneo en Dexie para sincronizar estado de rondas, torneo y campeón
+    if (data.tournamentId) {
+      try {
+        const { fetchTournament } = await import('./tournaments.js')
+        await fetchTournament(data.tournamentId)
+      } catch (tErr) {
+        console.warn('No se pudo refrescar el torneo tras actualizar planilla:', tErr)
+      }
+    }
+
     return json.data
   }
 

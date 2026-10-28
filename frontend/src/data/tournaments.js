@@ -25,16 +25,22 @@ export async function fetchTournament(id) {
   return json.data
 }
 
-export async function publishTournament(id, status) {
+export async function updateTournamentStatus(id, status, extra = {}) {
   if (!navigator.onLine) {
     throw new Error('Necesitás conexión para cambiar el estado del torneo.')
   }
   const json = await apiFetch(`/tournaments/${id}/status`, {
     method: 'PATCH',
-    body: JSON.stringify({ status }),
+    body: JSON.stringify({ status, ...extra }),
   })
   if (json.data) await putTournament(json.data)
   return json.data
+}
+
+export const publishTournament = updateTournamentStatus
+
+export async function finishTournament(id, champion = null) {
+  return updateTournamentStatus(id, 'FINALIZADO', champion ? { champion } : {})
 }
 
 // Genera el fixture del torneo (Round Robin). Acción de organizador.

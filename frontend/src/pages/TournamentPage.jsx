@@ -1,9 +1,11 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Container, Box, Stack, Button, Chip, Alert, CircularProgress } from '@mui/material'
+import { Container, Box, Stack, Button, Chip, CircularProgress, Card, CardContent, Typography } from '@mui/material'
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn'
 import PendingActionsIcon from '@mui/icons-material/PendingActions'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
+import CompetitorPhoto from '../components/shared/CompetitorPhoto'
 import { useAuth } from '../hooks/useAuth'
 import { useTournament } from '../hooks/useTournaments'
 import { useApplicationsByApplicant } from '../hooks/useApplications'
@@ -100,11 +102,17 @@ function TournamentPage() {
                 : tournament.status === 'PUBLICADO'
                 ? 'info'
                 : tournament.status === 'FINALIZADO'
-                ? 'default'
+                ? 'primary'
                 : 'warning'
             }
             size="small"
-            sx={{ fontWeight: 700 }}
+            sx={{
+              fontWeight: 700,
+              ...(tournament.status === 'FINALIZADO' && {
+                bgcolor: '#FFD700',
+                color: '#000',
+              }),
+            }}
           />
 
           {/* Jugador no inscripto: CTA a la página de inscripción */}
@@ -120,6 +128,74 @@ function TournamentPage() {
             <Chip icon={<CheckCircleIcon />} label="Ya inscripto" color="primary" size="small" variant="outlined" />
           )}
         </Stack>
+
+        {/* Hero Card de Coronación de Campeón (cuando el torneo finalizó) */}
+        {tournament.status === 'FINALIZADO' && (
+          <Card
+            sx={{
+              mt: 2.5,
+              mb: 1,
+              background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(20, 20, 20, 0.95) 100%)',
+              border: '2px solid #FFD700',
+              borderRadius: 3,
+              boxShadow: '0 8px 32px rgba(255, 215, 0, 0.15)',
+            }}
+          >
+            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+              <Stack
+                direction={{ xs: 'column', sm: 'row' }}
+                alignItems="center"
+                justifyContent="space-between"
+                spacing={2.5}
+              >
+                <Stack direction="row" alignItems="center" spacing={2.5}>
+                  <Box
+                    sx={{
+                      width: 60,
+                      height: 60,
+                      borderRadius: '50%',
+                      bgcolor: 'rgba(255, 215, 0, 0.18)',
+                      border: '2px solid #FFD700',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <EmojiEventsIcon sx={{ color: '#FFD700', fontSize: 36 }} />
+                  </Box>
+                  <Box>
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <Chip
+                        label="CAMPEÓN OFICIAL 🏆"
+                        size="small"
+                        sx={{
+                          bgcolor: '#FFD700',
+                          color: '#000',
+                          fontWeight: 800,
+                          fontSize: '0.72rem',
+                          height: 22,
+                        }}
+                      />
+                      <Typography variant="caption" sx={{ color: 'grey.400' }}>
+                        Torneo Culminado
+                      </Typography>
+                    </Stack>
+                    <Typography variant="h5" sx={{ fontWeight: 800, color: 'white', mt: 0.5 }}>
+                      {tournament.champion?.displayNameSnapshot || 'Campeón Consagrado'}
+                    </Typography>
+                  </Box>
+                </Stack>
+
+                <CompetitorPhoto
+                  logoURL={tournament.champion?.logoURL}
+                  displayName={tournament.champion?.displayNameSnapshot}
+                  size={60}
+                />
+              </Stack>
+            </CardContent>
+          </Card>
+        )}
 
         {activeSection === 'fixture' && (
           <TournamentFixture

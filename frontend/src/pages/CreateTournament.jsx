@@ -25,9 +25,9 @@ const StyledCard = styled(Card)(({ theme }) => ({
 }))
 
 const FORMATS = [
+  { value: 'ROUND_ROBIN', label: 'Todos contra todos (Liga - Recomendado)' },
   { value: 'SINGLE_ELIMINATION', label: 'Eliminación Simple' },
   { value: 'DOUBLE_ELIMINATION', label: 'Doble Eliminación' },
-  { value: 'ROUND_ROBIN', label: 'Todos contra todos' },
   { value: 'SWISS', label: 'Suizo' },
 ]
 
@@ -41,7 +41,7 @@ function CreateTournament() {
     title: '',
     description: '',
     sportConfigId: '',
-    format: 'SINGLE_ELIMINATION',
+    format: 'ROUND_ROBIN',
     isOnline: false,
     city: '',
     country: '',

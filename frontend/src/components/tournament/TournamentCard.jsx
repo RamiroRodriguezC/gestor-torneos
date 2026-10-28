@@ -4,8 +4,9 @@ import { useSport } from '../../hooks/useSportsConfig'
 
 const STATUS_COLORS = {
   PUBLICADO: '#00e676',
+  EN_CURSO: '#ff9800',
   BORRADOR: 'grey.500',
-  FINALIZADO: '#42a5f5',
+  FINALIZADO: '#FFD700',
   CANCELADO: '#ef5350',
 }
 
@@ -63,6 +64,11 @@ function TournamentCard({ tournament }) {
               <Typography variant="body2" color="grey.400">
                 👥 {tournament.participantes?.length ?? 0} {isTeamSport ? 'equipos' : 'participantes'}
               </Typography>
+              {tournament.status === 'FINALIZADO' && tournament.champion?.displayNameSnapshot && (
+                <Typography variant="body2" sx={{ color: '#FFD700', fontWeight: 700 }}>
+                  🏆 Campeón: {tournament.champion.displayNameSnapshot}
+                </Typography>
+              )}
             </Stack>
           </Box>
           <Chip
