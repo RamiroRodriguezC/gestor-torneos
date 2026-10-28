@@ -110,16 +110,20 @@ Muestra datos + deportes de interés (resueltos contra `sportsConfig` local). Di
 Placeholder — solo título, sin contenido funcional.
 
 ### `TournamentPage` (`/tournament/:id`)
-El corazón de la app. `TournamentNavbar` con 6 secciones (`config/navigation.js`), estado local `activeSection`, cada una renderiza un componente distinto sin cambiar de ruta:
+El corazón de la app. Implementa refresco reactivo en segundo plano (*stale-while-revalidate*): lee inmediatamente la copia local de Dexie para evitar pantallas de carga y consulta en paralelo al backend (`fetchTournament`) sincronizando cambios de estado y resultados.
+
+- **Hero Card de Coronación:** Cuando el torneo está `FINALIZADO`, despliega un banner dorado conmemorativo con trofeo 🏆, escudo/foto y nombre oficial del Campeón.
+- **Chip de Estado:** Muestra claramente `Torneo: FINALIZADO 🏆`, `Torneo: EN_CURSO`, etc., evitando ambigüedades con las fechas.
+- **Navegación:** `TournamentNavbar` con secciones (`config/navigation.js`), estado local `activeSection`, cada una renderiza un componente distinto sin cambiar de ruta:
 
 | Sección | Componente | Estado |
 |---|---|---|
-| General | `TournamentGeneral` | ✅ funcional — selector de ronda, tarjeta de "mi equipo" con últimos 5 resultados (W/D/L) y próximo partido, lista de partidos de la ronda |
-| Clasificación | `TournamentStandings` | ✅ funcional para `ROUND_ROBIN` (tabla de posiciones, `computeStandings`) y `SINGLE_ELIMINATION`/`DOUBLE_ELIMINATION` (bracket, `BracketTree`) — 🔴 `SWISS` explícitamente placeholder (`UnderConstruction`) |
-| Participantes | `TournamentParticipants` | ✅ lista/búsqueda de participantes ya aprobados — no hay acción para inscribirse desde acá |
+| Clasificación | `TournamentStandings` | ✅ funcional para `ROUND_ROBIN` (tabla de posiciones, `computeStandings`) con podio oficial (`🏆 CAMPEÓN`, `🥈 Subcampeón`, `🥉 3° Puesto`) al finalizar y `SINGLE_ELIMINATION`/`DOUBLE_ELIMINATION` (bracket, `BracketTree`) — 🔴 `SWISS` explícitamente placeholder (`UnderConstruction`) |
+| Fixture | `TournamentFixture` | ✅ funcional — tabs por ronda con estado dinámico (`(Culminada)`, `(En disputa)`) + destacado de "próximos partidos de mi equipo" |
+| Participantes | `TournamentParticipants` | ✅ lista/búsqueda de participantes ya aprobados con snapshots de nombre y logo |
 | Estadísticas | `TournamentStats` | ✅ funcional — doble vista de Anotaciones y Disciplina (Por Jugadores y Por Equipos) + KPIs de torneo |
-| Fixture | `TournamentFixture` | ✅ funcional — tabs por ronda + destacado de "próximos partidos de mi equipo" |
-| Anuncios | — | 🔴 placeholder explícito (`UnderConstruction feature="Anuncios"`) |
+| Ajustes | `TournamentAdminSettings` | ✅ exclusivo organizador — gestión de solicitudes, generación de fixture, inicio de torneo (`EN_CURSO`), progreso de fechas y finalización oficial de certamen |
+| Anuncios | — | 🔴 placeholder explícito (`UnderConstruction feature="Anuncios"`) — postergado formalmente fuera del MVP (ADR-016) |
 
 `TournamentStandings` decide el componente a renderizar en base a `tournament.rules?.format`, y **cae a `StandingsTable` por default** si el formato no matchea ninguno de los casos (comportamiento razonable pero no documentado como tal en ningún lado).
 

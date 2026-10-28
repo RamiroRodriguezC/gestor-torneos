@@ -154,10 +154,16 @@ Las sub-rutas anidadas están declaradas **antes** que las genéricas `/:id` par
 | GET | `/:id/rounds` | Lista `rounds[]` del torneo |
 | POST | `/:id/rounds` | Agrega una ronda |
 | GET | `/:id/applications` | Lista solicitudes (`Application`) de ese torneo |
-| GET | `/` | Lista torneos no borrados |
-| GET | `/:id` | Detalle de torneo |
+| POST | `/:id/fixture` | Genera y persiste fixture Round Robin (jornadas y partidos) |
+| PATCH | `/:id/status` | Cambia estado (`BORRADOR`, `PUBLICADO`, `EN_CURSO`, `FINALIZADO`) y persiste campeón |
+| GET | `/` | Lista torneos no borrados (?status=PUBLICADO para catálogo) |
+| GET | `/:id` | Detalle de torneo (reconcilia ciclo de vida de rondas y campeón) |
 | POST | `/` | Alta de torneo |
 | PUT | `/:id` | Edición de torneo |
+
+**`GET /tournaments/:id`** — Devuelve el torneo completo. Dispara internamente `syncTournamentLifecycle`: si todos los partidos de una jornada están finalizados, la marca `COMPLETED`; si todas las jornadas del torneo culminan, pasa el torneo a `FINALIZADO` y calcula/corona automáticamente al campeón (`champion`).
+
+**`PATCH /tournaments/:id/status`** — body: `{ status, champion? }`. Permite al organizador gestionar el ciclo de vida del certamen (`BORRADOR`, `PUBLICADO`, `EN_CURSO`, `FINALIZADO`). Al finalizar, persiste el subdocumento `champion` con snapshot del participante y fecha de coronación.
 
 **`POST /tournaments`** — validaciones: `title`, `organizerId`, `sportConfigId` requeridos. El resto de los campos (`rules`, `location`, `startDate`, etc.) son opcionales con defaults del schema.
 

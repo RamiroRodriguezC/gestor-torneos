@@ -290,7 +290,10 @@ Además, el endpoint primitivo `POST /teams` requería enviar `capitanId` manual
    - Se incorpora el subdocumento `champion` dentro de `TournamentSchema` con snapshot del participante (`participantId`, `displayNameSnapshot`, `logoURL`, `participantType`, `crownedAt`).
    - Al finalizar todas las rondas, el backend calcula automáticamente el campeón oficial (según tabla de clasificación por puntos, diferencia de goles y goles a favor para Round Robin, o el ganador de la final para llaves eliminatorias).
    - En el frontend, se despliega el Banner de Coronación en `TournamentPage`, insignias en la tabla de posiciones (`StandingsTable`) y en las tarjetas de torneos (`TournamentCard`).
-4. **Decisión de Diseño de Alcance (MVP):**
+4. **Reconciliación Activa y Refresco Reactivo (Stale-While-Revalidate):**
+   - En el backend, `findById` (`GET /tournaments/:id`) ejecuta automáticamente `syncTournamentLifecycle`, asegurando que cualquier lectura del torneo reconcilie el estado de rondas y campeón según los partidos disputados, utilizando `tournament.markModified('rounds')` y `tournament.markModified('champion')` para garantizar su persistencia estricta en Mongoose.
+   - En el frontend, `TournamentPage.jsx` implementa una consulta en segundo plano al montar la vista si hay conectividad, actualizando Dexie de forma reactiva (`useLiveQuery`) sin bloquear el render inicial.
+5. **Decisión de Diseño de Alcance (MVP):**
    - **Palmarés e historial acumulado en equipos/usuarios** y la funcionalidad de **Anuncios comunitarios** quedan formalmente definidos como características **fuera del MVP** y se postergan para futuros sprints y versiones post-lanzamiento.
 
 **Estado.** ✅ Decidido e implementado (28/10/2026).

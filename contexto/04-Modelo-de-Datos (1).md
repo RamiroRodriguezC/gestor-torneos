@@ -58,11 +58,12 @@ erDiagram
         ObjectId organizerId FK
         ObjectId sportConfigId FK
         object rules "scoringSystem,finishingCriteria,format..."
-        enum status
+        enum status "BORRADOR|PUBLICADO|EN_CURSO|FINALIZADO"
         object location "city,country"
-        object[] participantes "embed SNAPSHOT: teamId,displayNameSnapshot,logoURL"
+        object[] participantes "embed SNAPSHOT: participantId,teamId,displayNameSnapshot,logoURL"
         object[] applications "embed resumen: applicationId,applicantId,participantId,status"
-        object[] rounds "embed SIN _id propio: roundName,roundNumber,type,status,matches[]"
+        object[] rounds "embed con _id propio (ADR-008): roundName,roundNumber,type,status,matches[]"
+        object champion "embed SNAPSHOT (ADR-016): participantId,displayNameSnapshot,logoURL,participantType,crownedAt"
         bool isDeleted
     }
 
@@ -128,7 +129,7 @@ Es la pieza central del diseño polimórfico (ver ADR-005). No se crea desde la 
 La colección más aislada del sistema: nada más la referencia salvo `Match.field.fieldId` (snapshot de `name`). Sin UI de gestión.
 
 ### `Tournament`
-El documento más grande y con más responsabilidad. `rules` es un sub-objeto rico (sistema de puntos, criterio de desempate, formato, reglas especiales libres). `participantes[]` es el snapshot de quién juega; `rounds[]` es la estructura temporal/competitiva (ver ADR-007/008).
+El documento más grande y con más responsabilidad. `rules` es un sub-objeto rico (sistema de puntos, criterio de desempate, formato, reglas especiales libres). `participantes[]` es el snapshot de quién juega; `rounds[]` es la estructura temporal/competitiva con identidad propia (`_id`) y ciclo de vida (`SCHEDULED`, `IN_PROCESS`, `COMPLETED` según el avance de sus partidos). Incorpora el subdocumento `champion` (ADR-016) para persistir al ganador oficial con snapshot (`participantId`, `displayNameSnapshot`, `logoURL`, `participantType`, `crownedAt`) una vez finalizado el certamen.
 
 ### `Match`
 `round.number` (no `roundId`) es lo que efectivamente se usa para filtrar en la práctica (`getMatchesByTournamentAndRound`, índice compuesto `[tournamentId+round.roundId]` en Dexie — que en rigor debería llamarse `[tournamentId+round.number]` si `roundId` no es confiable; ver informe de errores). `competitors[]` soporta exactamente 2 elementos hoy (diseñado para `VERSUS`; `LEADERBOARD` no tiene aún una forma definida de listar N competidores con ranking).
