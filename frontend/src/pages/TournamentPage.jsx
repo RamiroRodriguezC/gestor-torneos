@@ -30,22 +30,26 @@ function TournamentPage() {
   const [loadingBackend, setLoadingBackend] = useState(false)
   const fetchedRef = useRef(false)
 
-  // Si Dexie ya terminó de consultar (tournament === null) y confirmó que NO está localmente,
-  // intentamos traerlo del backend una única vez por si navegó directamente por URL en un dispositivo nuevo.
+  // Sincronizar el torneo desde el backend para mantener al día su ciclo de vida y resultados (stale-while-revalidate)
   useEffect(() => {
-    if (tournament === null && !fetchedRef.current && id) {
-      fetchedRef.current = true
-      let isMounted = true
+    if (!id || fetchedRef.current) return
+    fetchedRef.current = true
+    let isMounted = true
+
+    if (tournament === null) {
       setLoadingBackend(true)
+    }
+
+    if (navigator.onLine) {
       fetchTournament(id)
         .catch((err) => {
-          console.warn('No se pudo obtener el torneo del backend:', err)
+          console.warn('No se pudo refrescar el torneo del backend:', err)
         })
         .finally(() => {
           if (isMounted) setLoadingBackend(false)
         })
-      return () => { isMounted = false }
     }
+    return () => { isMounted = false }
   }, [id, tournament])
 
   const isOrganizer = tournament && user && String(tournament.organizerId) === String(user._id)
@@ -93,9 +97,13 @@ function TournamentPage() {
       />
       <Container sx={{ pb: 8 }}>
         <Stack direction="row" spacing={1} sx={{ mt: 2, flexWrap: 'wrap', alignItems: 'center', gap: 0.5 }}>
-          {/* Chip de estado actual */}
+          {/* Chip de estado actual del torneo */}
           <Chip
-            label={tournament.status || 'BORRADOR'}
+            label={
+              tournament.status === 'FINALIZADO'
+                ? 'Torneo: FINALIZADO 🏆'
+                : `Torneo: ${tournament.status || 'BORRADOR'}`
+            }
             color={
               tournament.status === 'EN_CURSO'
                 ? 'success'

@@ -31,6 +31,11 @@ export const findAll = async ({ status } = {}) => {
 
 export const findById = async (id) => {
   requireDB();
+  try {
+    await syncTournamentLifecycle(id);
+  } catch (err) {
+    console.warn('Error al sincronizar ciclo de vida en findById:', err);
+  }
   return Tournament.findOne({ _id: id, isDeleted: false });
 };
 
@@ -304,6 +309,8 @@ export const syncTournamentLifecycle = async (tournamentId) => {
     }
   }
 
+  tournament.markModified('rounds');
+  tournament.markModified('champion');
   await tournament.save();
   return tournament;
 };

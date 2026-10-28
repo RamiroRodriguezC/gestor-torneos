@@ -147,10 +147,21 @@ function TournamentAdminSettings({ tournament, user: _user, onSectionChange, onT
           Ajustes del Torneo
         </Typography>
         <Chip
-          label={tournament.status || 'BORRADOR'}
+          label={
+            tournament.status === 'FINALIZADO'
+              ? 'Torneo: FINALIZADO 🏆'
+              : `Torneo: ${tournament.status || 'BORRADOR'}`
+          }
           color={statusColor}
           size="small"
-          sx={{ fontWeight: 700, ml: 'auto' }}
+          sx={{
+            fontWeight: 700,
+            ml: 'auto',
+            ...(tournament.status === 'FINALIZADO' && {
+              bgcolor: '#FFD700',
+              color: '#000',
+            }),
+          }}
         />
       </Stack>
       <Typography variant="body2" sx={{ color: 'grey.400', mb: 3 }}>
