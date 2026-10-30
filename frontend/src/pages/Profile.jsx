@@ -1,11 +1,8 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import {
-  Container, Typography, Avatar, Chip, Box, Paper, Grid, Divider, Stack,
+  Container, Typography, Avatar, Chip, Box, Paper, Grid, Stack,
   Button, CircularProgress,
 } from '@mui/material'
-import EmailIcon from '@mui/icons-material/Email'
-import PhoneIcon from '@mui/icons-material/Phone'
-import CakeIcon from '@mui/icons-material/Cake'
 import EditIcon from '@mui/icons-material/Edit'
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
 import GroupsIcon from '@mui/icons-material/Groups'
@@ -46,17 +43,6 @@ function RoleChip({ role, label }) {
         height: 22,
       }}
     />
-  )
-}
-
-function InfoRow({ icon: Icon, children }) {
-  return (
-    <Stack direction="row" spacing={1} alignItems="center">
-      <Icon sx={{ color: 'grey.600', fontSize: 18 }} />
-      <Typography variant="body2" color="grey.400">
-        {children}
-      </Typography>
-    </Stack>
   )
 }
 
@@ -119,227 +105,382 @@ function Profile() {
     (user.tournaments || []).map((t) => [String(t.tournamentId), t.role])
   )
 
-  const formatDate = (dateStr) => {
-    if (!dateStr) return null
-    return new Date(dateStr).toLocaleDateString('es-AR', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    })
-  }
-
-  const hasRightColumn = user.bio || teams.length > 0 || tournaments.length > 0
-
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <>
       <Navbar />
       <Container maxWidth="lg" sx={{ mt: 4, mb: 6, pb: 8 }}>
-        <Grid container spacing={3}>
+        
+        {/* ── BLOQUE SUPERIOR (HEADER HORIZONTAL ESTILO RED SOCIAL) ── */}
+        <Paper
+          elevation={0}
+          sx={{
+            bgcolor: 'background.paper',
+            borderRadius: 3,
+            border: '1px solid',
+            borderColor: 'divider',
+            overflow: 'hidden',
+            mb: 4,
+          }}
+        >
+          {/* Banner de portada decorativo con gradiente representativo de la marca */}
+          <Box
+            sx={{
+              height: { xs: 90, sm: 130 },
+              background: 'linear-gradient(90deg, rgba(0, 230, 118, 0.22) 0%, rgba(18, 18, 18, 0.95) 45%, rgba(255, 109, 0, 0.18) 100%)',
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+            }}
+          />
 
-          {/* ── COLUMNA IZQUIERDA: identidad + contacto + deportes ── */}
-          <Grid item xs={12} md={4}>
-            <Paper
-              elevation={0}
-              sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 3 }}
+          {/* Cuerpo del encabezado */}
+          <Box sx={{ p: { xs: 2.5, sm: 3.5 }, pt: 0 }}>
+            {/* Avatar superpuesto + Botón de acción */}
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-end',
+                mt: { xs: '-45px', sm: '-60px' },
+                mb: 2,
+                flexWrap: 'wrap',
+                gap: 2,
+              }}
             >
-              {/* Avatar + nombre + username */}
-              <Box
+              <Avatar
+                src={user.url_profile_photo || ''}
                 sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  textAlign: 'center',
-                  mb: 3,
+                  width: { xs: 90, sm: 120 },
+                  height: { xs: 90, sm: 120 },
+                  bgcolor: 'primary.main',
+                  color: '#000',
+                  fontSize: { xs: 34, sm: 46 },
+                  fontWeight: 800,
+                  border: '4px solid',
+                  borderColor: 'background.paper',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.6)',
                 }}
               >
-                <Avatar
-                  src={user.url_profile_photo || ''}
-                  sx={{ width: 100, height: 100, bgcolor: 'primary.main', fontSize: 40, mb: 2 }}
-                >
-                  {user.name?.[0]}{user.lastName?.[0]}
-                </Avatar>
+                {user.name?.[0]}{user.lastName?.[0]}
+              </Avatar>
 
-                <Typography variant="h5" fontWeight={700}>
+              {isOwnProfile && (
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<EditIcon />}
+                  onClick={() => navigate('/dashboard/config')}
+                  sx={{
+                    borderColor: 'primary.main',
+                    color: 'primary.main',
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    borderRadius: 2,
+                    px: 2,
+                    py: 0.75,
+                    '&:hover': {
+                      borderColor: 'primary.light',
+                      bgcolor: 'rgba(0, 230, 118, 0.08)',
+                    },
+                  }}
+                >
+                  Editar perfil
+                </Button>
+              )}
+            </Box>
+
+            {/* Nombre, username y rol de usuario */}
+            <Box sx={{ mb: 2 }}>
+              <Stack direction="row" alignItems="center" spacing={1.5} flexWrap="wrap" useFlexGap>
+                <Typography variant="h5" fontWeight={800} sx={{ color: '#fff' }}>
                   {user.name} {user.lastName}
                 </Typography>
-                <UsernameTag username={user.username} sx={{ mt: 0.5 }} />
-
                 {user.globalRole === 'ADMIN' && (
                   <Chip
                     label="Administrador"
                     size="small"
                     color="warning"
-                    sx={{ mt: 1, fontWeight: 700 }}
+                    sx={{ fontWeight: 700, height: 22, fontSize: '0.72rem' }}
                   />
                 )}
-
-                {isOwnProfile && (
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    startIcon={<EditIcon />}
-                    sx={{ mt: 2 }}
-                    onClick={() => navigate('/dashboard/config')}
-                  >
-                    Editar perfil
-                  </Button>
-                )}
+              </Stack>
+              <Box sx={{ mt: 0.5 }}>
+                <UsernameTag username={user.username} />
               </Box>
+            </Box>
 
-              <Divider sx={{ mb: 2 }} />
+            {/* Biografía en lugar de correo y fecha de nacimiento */}
+            {user.bio ? (
+              <Typography
+                variant="body1"
+                sx={{
+                  color: 'grey.300',
+                  lineHeight: 1.7,
+                  maxWidth: 900,
+                  whiteSpace: 'pre-line',
+                  mb: 2,
+                }}
+              >
+                {user.bio}
+              </Typography>
+            ) : (
+              <Typography
+                variant="body2"
+                sx={{
+                  color: 'grey.500',
+                  fontStyle: 'italic',
+                  mb: 2,
+                }}
+              >
+                {isOwnProfile
+                  ? 'Aún no agregaste una biografía. Hacé clic en "Editar perfil" para presentarte ante la comunidad.'
+                  : 'Este usuario no tiene biografía pública.'}
+              </Typography>
+            )}
 
-              {/* Datos de contacto */}
-              <Stack spacing={1.5} sx={{ mb: 3 }}>
-                <InfoRow icon={EmailIcon}>{user.email}</InfoRow>
-                {user.phoneNumber && (
-                  <InfoRow icon={PhoneIcon}>{user.phoneNumber}</InfoRow>
-                )}
-                {user.dateOfBirth && (
-                  <InfoRow icon={CakeIcon}>{formatDate(user.dateOfBirth)}</InfoRow>
-                )}
+            {/* Deportes de interés */}
+            {userSports.length > 0 && (
+              <Stack
+                direction="row"
+                spacing={1}
+                flexWrap="wrap"
+                useFlexGap
+                alignItems="center"
+                sx={{ pt: 1.5, borderTop: '1px solid', borderColor: 'divider' }}
+              >
+                <Typography
+                  variant="caption"
+                  color="grey.500"
+                  fontWeight={600}
+                  sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}
+                >
+                  Deportes de interés:
+                </Typography>
+                {userSports.map((sport) => (
+                  <SportsTag key={sport} sport={sport} />
+                ))}
+              </Stack>
+            )}
+          </Box>
+        </Paper>
+
+        {/* ── BLOQUES INFERIORES: EQUIPOS Y TORNEOS ── */}
+        <Grid container spacing={3}>
+
+          {/* Bloque: Equipos */}
+          <Grid item xs={12} md={6}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 3,
+                bgcolor: 'background.paper',
+                borderRadius: 3,
+                border: '1px solid',
+                borderColor: 'divider',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2.5 }}>
+                <GroupsIcon sx={{ color: 'primary.main', fontSize: 24 }} />
+                <Typography variant="h6" fontWeight={700}>
+                  Equipos
+                </Typography>
+                <Chip
+                  label={teams.length}
+                  size="small"
+                  sx={{
+                    bgcolor: 'rgba(255, 255, 255, 0.08)',
+                    color: 'grey.300',
+                    fontWeight: 700,
+                    fontSize: '0.75rem',
+                    height: 22,
+                  }}
+                />
               </Stack>
 
-              {/* Deportes de interés */}
-              {userSports.length > 0 && (
-                <>
-                  <Divider sx={{ mb: 2 }} />
-                  <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
-                    Deportes de interés
+              {teams.length > 0 ? (
+                <Stack spacing={1.5} sx={{ flexGrow: 1 }}>
+                  {teams.map((team) => {
+                    const role = teamRoleMap[String(team._id)]
+                    return (
+                      <Box
+                        key={team._id}
+                        onClick={() => navigate(`/dashboard/teams/${team._id}`)}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          p: 1.5,
+                          borderRadius: 2,
+                          bgcolor: '#1a1a1a',
+                          border: '1px solid',
+                          borderColor: 'divider',
+                          cursor: 'pointer',
+                          '&:hover': {
+                            borderColor: 'primary.main',
+                            bgcolor: 'rgba(0, 230, 118, 0.04)',
+                          },
+                          transition: 'all 0.15s ease-in-out',
+                        }}
+                      >
+                        <Typography variant="body2" fontWeight={600}>
+                          {team.name}
+                        </Typography>
+                        {role && (
+                          <RoleChip role={role} label={TEAM_ROLE_LABEL[role] || role} />
+                        )}
+                      </Box>
+                    )
+                  })}
+                </Stack>
+              ) : (
+                <Box
+                  sx={{
+                    py: 4,
+                    px: 2,
+                    textAlign: 'center',
+                    borderRadius: 2,
+                    border: '1px dashed',
+                    borderColor: 'divider',
+                    flexGrow: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}
+                >
+                  <Typography variant="body2" color="grey.500" sx={{ mb: isOwnProfile ? 1.5 : 0 }}>
+                    {isOwnProfile
+                      ? 'Aún no pertenecés a ningún equipo.'
+                      : 'Este usuario no forma parte de ningún equipo.'}
                   </Typography>
-                  <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                    {userSports.map((sport) => (
-                      <SportsTag key={sport} sport={sport} />
-                    ))}
-                  </Stack>
-                </>
+                  {isOwnProfile && (
+                    <Button
+                      size="small"
+                      variant="text"
+                      onClick={() => navigate('/dashboard/teams')}
+                      sx={{ color: 'primary.main', fontWeight: 600, textTransform: 'none' }}
+                    >
+                      Explorar o unirse a un equipo
+                    </Button>
+                  )}
+                </Box>
               )}
             </Paper>
           </Grid>
 
-          {/* ── COLUMNA DERECHA: bio + equipos + torneos ── */}
-          <Grid item xs={12} md={8}>
-            <Stack spacing={3}>
+          {/* Bloque: Torneos */}
+          <Grid item xs={12} md={6}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 3,
+                bgcolor: 'background.paper',
+                borderRadius: 3,
+                border: '1px solid',
+                borderColor: 'divider',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2.5 }}>
+                <EmojiEventsIcon sx={{ color: 'primary.main', fontSize: 24 }} />
+                <Typography variant="h6" fontWeight={700}>
+                  Torneos
+                </Typography>
+                <Chip
+                  label={tournaments.length}
+                  size="small"
+                  sx={{
+                    bgcolor: 'rgba(255, 255, 255, 0.08)',
+                    color: 'grey.300',
+                    fontWeight: 700,
+                    fontSize: '0.75rem',
+                    height: 22,
+                  }}
+                />
+              </Stack>
 
-              {/* Bio */}
-              {user.bio && (
-                <Paper elevation={0} sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 3 }}>
-                  <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-                    Sobre mí
-                  </Typography>
-                  <Typography variant="body1" sx={{ color: 'grey.300', lineHeight: 1.8 }}>
-                    {user.bio}
-                  </Typography>
-                </Paper>
-              )}
-
-              {/* Equipos */}
-              {teams.length > 0 && (
-                <Paper elevation={0} sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 3 }}>
-                  <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
-                    <GroupsIcon sx={{ color: 'primary.main', fontSize: 20 }} />
-                    <Typography variant="subtitle1" fontWeight={700}>
-                      Equipos
-                    </Typography>
-                  </Stack>
-                  <Stack spacing={1}>
-                    {teams.map((team) => {
-                      const role = teamRoleMap[String(team._id)]
-                      return (
-                        <Box
-                          key={team._id}
-                          onClick={() => navigate(`/dashboard/teams/${team._id}`)}
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            p: 1.5,
-                            borderRadius: 2,
-                            bgcolor: '#1a1a1a',
-                            border: '1px solid',
-                            borderColor: 'divider',
-                            cursor: 'pointer',
-                            '&:hover': { borderColor: 'primary.main' },
-                            transition: 'border-color 0.15s',
-                          }}
-                        >
+              {tournaments.length > 0 ? (
+                <Stack spacing={1.5} sx={{ flexGrow: 1 }}>
+                  {tournaments.map((t) => {
+                    const role = tournamentRoleMap[String(t._id)]
+                    return (
+                      <Box
+                        key={t._id}
+                        onClick={() => navigate(`/tournament/${t._id}`)}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          p: 1.5,
+                          borderRadius: 2,
+                          bgcolor: '#1a1a1a',
+                          border: '1px solid',
+                          borderColor: 'divider',
+                          cursor: 'pointer',
+                          '&:hover': {
+                            borderColor: 'primary.main',
+                            bgcolor: 'rgba(0, 230, 118, 0.04)',
+                          },
+                          transition: 'all 0.15s ease-in-out',
+                        }}
+                      >
+                        <Box>
                           <Typography variant="body2" fontWeight={600}>
-                            {team.name}
+                            {t.title}
                           </Typography>
-                          {role && (
-                            <RoleChip role={role} label={TEAM_ROLE_LABEL[role] || role} />
-                          )}
+                          <Typography variant="caption" color="grey.500">
+                            {t.status}
+                          </Typography>
                         </Box>
-                      )
-                    })}
-                  </Stack>
-                </Paper>
-              )}
-
-              {/* Torneos */}
-              {tournaments.length > 0 && (
-                <Paper elevation={0} sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 3 }}>
-                  <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
-                    <EmojiEventsIcon sx={{ color: 'primary.main', fontSize: 20 }} />
-                    <Typography variant="subtitle1" fontWeight={700}>
-                      Torneos
-                    </Typography>
-                  </Stack>
-                  <Stack spacing={1}>
-                    {tournaments.map((t) => {
-                      const role = tournamentRoleMap[String(t._id)]
-                      return (
-                        <Box
-                          key={t._id}
-                          onClick={() => navigate(`/tournament/${t._id}`)}
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            p: 1.5,
-                            borderRadius: 2,
-                            bgcolor: '#1a1a1a',
-                            border: '1px solid',
-                            borderColor: 'divider',
-                            cursor: 'pointer',
-                            '&:hover': { borderColor: 'primary.main' },
-                            transition: 'border-color 0.15s',
-                          }}
-                        >
-                          <Box>
-                            <Typography variant="body2" fontWeight={600}>
-                              {t.title}
-                            </Typography>
-                            <Typography variant="caption" color="grey.600">
-                              {t.status}
-                            </Typography>
-                          </Box>
-                          {role && (
-                            <RoleChip
-                              role={role}
-                              label={TOURNAMENT_ROLE_LABEL[role] || role}
-                            />
-                          )}
-                        </Box>
-                      )
-                    })}
-                  </Stack>
-                </Paper>
-              )}
-
-              {/* Empty state: perfil propio sin contenido aún */}
-              {isOwnProfile && !hasRightColumn && (
-                <Paper
-                  elevation={0}
-                  sx={{ p: 5, bgcolor: 'background.paper', borderRadius: 3, textAlign: 'center' }}
+                        {role && (
+                          <RoleChip
+                            role={role}
+                            label={TOURNAMENT_ROLE_LABEL[role] || role}
+                          />
+                        )}
+                      </Box>
+                    )
+                  })}
+                </Stack>
+              ) : (
+                <Box
+                  sx={{
+                    py: 4,
+                    px: 2,
+                    textAlign: 'center',
+                    borderRadius: 2,
+                    border: '1px dashed',
+                    borderColor: 'divider',
+                    flexGrow: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}
                 >
-                  <Typography variant="body1" color="grey.500">
-                    Tu perfil está vacío. ¡Creá un torneo o unite a uno para empezar!
+                  <Typography variant="body2" color="grey.500" sx={{ mb: isOwnProfile ? 1.5 : 0 }}>
+                    {isOwnProfile
+                      ? 'Aún no participás en ningún torneo.'
+                      : 'Este usuario no participa en ningún torneo.'}
                   </Typography>
-                </Paper>
+                  {isOwnProfile && (
+                    <Button
+                      size="small"
+                      variant="text"
+                      onClick={() => navigate('/torneos')}
+                      sx={{ color: 'primary.main', fontWeight: 600, textTransform: 'none' }}
+                    >
+                      Explorar torneos disponibles
+                    </Button>
+                  )}
+                </Box>
               )}
-
-            </Stack>
+            </Paper>
           </Grid>
 
         </Grid>
@@ -347,6 +488,5 @@ function Profile() {
     </>
   )
 }
-
 
 export default Profile
