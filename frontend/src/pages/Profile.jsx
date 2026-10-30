@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import {
-  Container, Typography, Avatar, Chip, Box, Paper, Grid, Stack,
+  Container, Typography, Avatar, Chip, Box, Paper, Stack,
   Button, CircularProgress,
 } from '@mui/material'
 import EditIcon from '@mui/icons-material/Edit'
@@ -264,226 +264,214 @@ function Profile() {
           </Box>
         </Paper>
 
-        {/* ── BLOQUES INFERIORES: EQUIPOS Y TORNEOS ── */}
-        <Grid container spacing={3}>
+        {/* ── BLOQUES INFERIORES: TORNEOS PRIMERO, EQUIPOS DESPUÉS (DISPOSICIÓN VERTICAL) ── */}
+        <Stack spacing={3}>
 
-          {/* Bloque: Equipos */}
-          <Grid item xs={12} md={6}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: 3,
-                bgcolor: 'background.paper',
-                borderRadius: 3,
-                border: '1px solid',
-                borderColor: 'divider',
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-              }}
-            >
-              <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2.5 }}>
-                <GroupsIcon sx={{ color: 'primary.main', fontSize: 24 }} />
-                <Typography variant="h6" fontWeight={700}>
-                  Equipos
-                </Typography>
-                <Chip
-                  label={teams.length}
-                  size="small"
-                  sx={{
-                    bgcolor: 'rgba(255, 255, 255, 0.08)',
-                    color: 'grey.300',
-                    fontWeight: 700,
-                    fontSize: '0.75rem',
-                    height: 22,
-                  }}
-                />
-              </Stack>
+          {/* Bloque 1: Torneos */}
+          <Paper
+            elevation={0}
+            sx={{
+              p: 3,
+              bgcolor: 'background.paper',
+              borderRadius: 3,
+              border: '1px solid',
+              borderColor: 'divider',
+            }}
+          >
+            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2.5 }}>
+              <EmojiEventsIcon sx={{ color: 'primary.main', fontSize: 24 }} />
+              <Typography variant="h6" fontWeight={700}>
+                Torneos
+              </Typography>
+              <Chip
+                label={tournaments.length}
+                size="small"
+                sx={{
+                  bgcolor: 'rgba(255, 255, 255, 0.08)',
+                  color: 'grey.300',
+                  fontWeight: 700,
+                  fontSize: '0.75rem',
+                  height: 22,
+                }}
+              />
+            </Stack>
 
-              {teams.length > 0 ? (
-                <Stack spacing={1.5} sx={{ flexGrow: 1 }}>
-                  {teams.map((team) => {
-                    const role = teamRoleMap[String(team._id)]
-                    return (
-                      <Box
-                        key={team._id}
-                        onClick={() => navigate(`/dashboard/teams/${team._id}`)}
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          p: 1.5,
-                          borderRadius: 2,
-                          bgcolor: '#1a1a1a',
-                          border: '1px solid',
-                          borderColor: 'divider',
-                          cursor: 'pointer',
-                          '&:hover': {
-                            borderColor: 'primary.main',
-                            bgcolor: 'rgba(0, 230, 118, 0.04)',
-                          },
-                          transition: 'all 0.15s ease-in-out',
-                        }}
-                      >
+            {tournaments.length > 0 ? (
+              <Stack spacing={1.5}>
+                {tournaments.map((t) => {
+                  const role = tournamentRoleMap[String(t._id)]
+                  return (
+                    <Box
+                      key={t._id}
+                      onClick={() => navigate(`/tournament/${t._id}`)}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        p: 1.5,
+                        borderRadius: 2,
+                        bgcolor: '#1a1a1a',
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        cursor: 'pointer',
+                        '&:hover': {
+                          borderColor: 'primary.main',
+                          bgcolor: 'rgba(0, 230, 118, 0.04)',
+                        },
+                        transition: 'all 0.15s ease-in-out',
+                      }}
+                    >
+                      <Box>
                         <Typography variant="body2" fontWeight={600}>
-                          {team.name}
+                          {t.title}
                         </Typography>
-                        {role && (
-                          <RoleChip role={role} label={TEAM_ROLE_LABEL[role] || role} />
-                        )}
+                        <Typography variant="caption" color="grey.500">
+                          {t.status}
+                        </Typography>
                       </Box>
-                    )
-                  })}
-                </Stack>
-              ) : (
-                <Box
-                  sx={{
-                    py: 4,
-                    px: 2,
-                    textAlign: 'center',
-                    borderRadius: 2,
-                    border: '1px dashed',
-                    borderColor: 'divider',
-                    flexGrow: 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                  }}
-                >
-                  <Typography variant="body2" color="grey.500" sx={{ mb: isOwnProfile ? 1.5 : 0 }}>
-                    {isOwnProfile
-                      ? 'Aún no pertenecés a ningún equipo.'
-                      : 'Este usuario no forma parte de ningún equipo.'}
-                  </Typography>
-                  {isOwnProfile && (
-                    <Button
-                      size="small"
-                      variant="text"
-                      onClick={() => navigate('/dashboard/teams')}
-                      sx={{ color: 'primary.main', fontWeight: 600, textTransform: 'none' }}
-                    >
-                      Explorar o unirse a un equipo
-                    </Button>
-                  )}
-                </Box>
-              )}
-            </Paper>
-          </Grid>
-
-          {/* Bloque: Torneos */}
-          <Grid item xs={12} md={6}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: 3,
-                bgcolor: 'background.paper',
-                borderRadius: 3,
-                border: '1px solid',
-                borderColor: 'divider',
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-              }}
-            >
-              <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2.5 }}>
-                <EmojiEventsIcon sx={{ color: 'primary.main', fontSize: 24 }} />
-                <Typography variant="h6" fontWeight={700}>
-                  Torneos
-                </Typography>
-                <Chip
-                  label={tournaments.length}
-                  size="small"
-                  sx={{
-                    bgcolor: 'rgba(255, 255, 255, 0.08)',
-                    color: 'grey.300',
-                    fontWeight: 700,
-                    fontSize: '0.75rem',
-                    height: 22,
-                  }}
-                />
+                      {role && (
+                        <RoleChip
+                          role={role}
+                          label={TOURNAMENT_ROLE_LABEL[role] || role}
+                        />
+                      )}
+                    </Box>
+                  )
+                })}
               </Stack>
+            ) : (
+              <Box
+                sx={{
+                  py: 4,
+                  px: 2,
+                  textAlign: 'center',
+                  borderRadius: 2,
+                  border: '1px dashed',
+                  borderColor: 'divider',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+              >
+                <Typography variant="body2" color="grey.500" sx={{ mb: isOwnProfile ? 1.5 : 0 }}>
+                  {isOwnProfile
+                    ? 'No estás jugando ningún torneo actualmente.'
+                    : 'Este usuario no está jugando ningún torneo actualmente.'}
+                </Typography>
+                {isOwnProfile && (
+                  <Button
+                    size="small"
+                    variant="text"
+                    onClick={() => navigate('/torneos')}
+                    sx={{ color: 'primary.main', fontWeight: 600, textTransform: 'none' }}
+                  >
+                    Explorar torneos disponibles
+                  </Button>
+                )}
+              </Box>
+            )}
+          </Paper>
 
-              {tournaments.length > 0 ? (
-                <Stack spacing={1.5} sx={{ flexGrow: 1 }}>
-                  {tournaments.map((t) => {
-                    const role = tournamentRoleMap[String(t._id)]
-                    return (
-                      <Box
-                        key={t._id}
-                        onClick={() => navigate(`/tournament/${t._id}`)}
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          p: 1.5,
-                          borderRadius: 2,
-                          bgcolor: '#1a1a1a',
-                          border: '1px solid',
-                          borderColor: 'divider',
-                          cursor: 'pointer',
-                          '&:hover': {
-                            borderColor: 'primary.main',
-                            bgcolor: 'rgba(0, 230, 118, 0.04)',
-                          },
-                          transition: 'all 0.15s ease-in-out',
-                        }}
-                      >
-                        <Box>
-                          <Typography variant="body2" fontWeight={600}>
-                            {t.title}
-                          </Typography>
-                          <Typography variant="caption" color="grey.500">
-                            {t.status}
-                          </Typography>
-                        </Box>
-                        {role && (
-                          <RoleChip
-                            role={role}
-                            label={TOURNAMENT_ROLE_LABEL[role] || role}
-                          />
-                        )}
-                      </Box>
-                    )
-                  })}
-                </Stack>
-              ) : (
-                <Box
-                  sx={{
-                    py: 4,
-                    px: 2,
-                    textAlign: 'center',
-                    borderRadius: 2,
-                    border: '1px dashed',
-                    borderColor: 'divider',
-                    flexGrow: 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                  }}
-                >
-                  <Typography variant="body2" color="grey.500" sx={{ mb: isOwnProfile ? 1.5 : 0 }}>
-                    {isOwnProfile
-                      ? 'Aún no participás en ningún torneo.'
-                      : 'Este usuario no participa en ningún torneo.'}
-                  </Typography>
-                  {isOwnProfile && (
-                    <Button
-                      size="small"
-                      variant="text"
-                      onClick={() => navigate('/torneos')}
-                      sx={{ color: 'primary.main', fontWeight: 600, textTransform: 'none' }}
+          {/* Bloque 2: Equipos */}
+          <Paper
+            elevation={0}
+            sx={{
+              p: 3,
+              bgcolor: 'background.paper',
+              borderRadius: 3,
+              border: '1px solid',
+              borderColor: 'divider',
+            }}
+          >
+            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2.5 }}>
+              <GroupsIcon sx={{ color: 'primary.main', fontSize: 24 }} />
+              <Typography variant="h6" fontWeight={700}>
+                Equipos
+              </Typography>
+              <Chip
+                label={teams.length}
+                size="small"
+                sx={{
+                  bgcolor: 'rgba(255, 255, 255, 0.08)',
+                  color: 'grey.300',
+                  fontWeight: 700,
+                  fontSize: '0.75rem',
+                  height: 22,
+                }}
+              />
+            </Stack>
+
+            {teams.length > 0 ? (
+              <Stack spacing={1.5}>
+                {teams.map((team) => {
+                  const role = teamRoleMap[String(team._id)]
+                  return (
+                    <Box
+                      key={team._id}
+                      onClick={() => navigate(`/dashboard/teams/${team._id}`)}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        p: 1.5,
+                        borderRadius: 2,
+                        bgcolor: '#1a1a1a',
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        cursor: 'pointer',
+                        '&:hover': {
+                          borderColor: 'primary.main',
+                          bgcolor: 'rgba(0, 230, 118, 0.04)',
+                        },
+                        transition: 'all 0.15s ease-in-out',
+                      }}
                     >
-                      Explorar torneos disponibles
-                    </Button>
-                  )}
-                </Box>
-              )}
-            </Paper>
-          </Grid>
+                      <Typography variant="body2" fontWeight={600}>
+                        {team.name}
+                      </Typography>
+                      {role && (
+                        <RoleChip role={role} label={TEAM_ROLE_LABEL[role] || role} />
+                      )}
+                    </Box>
+                  )
+                })}
+              </Stack>
+            ) : (
+              <Box
+                sx={{
+                  py: 4,
+                  px: 2,
+                  textAlign: 'center',
+                  borderRadius: 2,
+                  border: '1px dashed',
+                  borderColor: 'divider',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+              >
+                <Typography variant="body2" color="grey.500" sx={{ mb: isOwnProfile ? 1.5 : 0 }}>
+                  {isOwnProfile
+                    ? 'No estás en ningún equipo actualmente.'
+                    : 'Este usuario no está en ningún equipo actualmente.'}
+                </Typography>
+                {isOwnProfile && (
+                  <Button
+                    size="small"
+                    variant="text"
+                    onClick={() => navigate('/dashboard/teams')}
+                    sx={{ color: 'primary.main', fontWeight: 600, textTransform: 'none' }}
+                  >
+                    Explorar o unirse a un equipo
+                  </Button>
+                )}
+              </Box>
+            )}
+          </Paper>
 
-        </Grid>
+        </Stack>
       </Container>
     </>
   )
