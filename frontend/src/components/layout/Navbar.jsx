@@ -64,7 +64,14 @@ function Navbar({
       <>
         {/* Banner de conexión para la vista mobile */}
         <OfflineBanner />
-        <AppBar position="sticky" sx={{ bgcolor: '#0a0a0a', boxShadow: '0 2px 20px rgba(0, 230, 118, 0.15)' }}>
+        <AppBar
+          position="sticky"
+          sx={{
+            bgcolor: '#0a0a0a',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+            boxShadow: '0 2px 20px rgba(0, 230, 118, 0.1)',
+          }}
+        >
           <Toolbar>
             {backTo ? (
               <>
@@ -206,57 +213,114 @@ function Navbar({
     <>
       {/* Banner de conexión para la vista desktop */}
       <OfflineBanner />
-      <AppBar position="sticky" sx={{ bgcolor: '#0a0a0a', boxShadow: '0 2px 20px rgba(0, 230, 118, 0.15)' }}>
-      <Toolbar>
-        {backTo ? (
-          <>
-            <IconButton onClick={() => navigate(backTo)} sx={{ color: 'grey.400', mr: 0.5 }}>
-              <ArrowBackIcon />
-            </IconButton>
-            <Typography variant="body2" sx={{ color: 'grey.400', mr: 2, cursor: 'pointer' }} onClick={() => navigate(backTo)}>
-              Volver
-            </Typography>
-          </>
-        ) : (
-          <Box sx={{ cursor: 'pointer' }} onClick={() => navigate(logoTo ?? (isLoggedIn ? '/dashboard/tournaments' : '/'))}>
-            <AppLogo />
-          </Box>
-        )}
-        <Box sx={{ display: 'flex', gap: 1, ml: 'auto', alignItems: 'center' }}>
-          {navItems.map((item) => (
-            <Button
-              key={item.value ?? item.path ?? item.label}
-              variant={item.variant}
-              color="primary"
-              onClick={() => handleItemClick(item)}
-              sx={
-                item.variant
-                  ? { px: 3 }
-                  : {
-                      color: isActive(item) ? '#00e676' : 'grey.400',
-                      fontWeight: isActive(item) ? 600 : 400,
-                      textTransform: 'none',
-                      fontSize: '0.95rem',
-                      '&:hover': { color: '#00e676' },
-                    }
-              }
-            >
-              {item.icon && (
-                <Box component="span" sx={{ display: 'inline-flex', mr: 0.5, alignItems: 'center' }}>
-                  <item.icon fontSize="small" />
-                </Box>
-              )}
-              {item.label}
-            </Button>
-          ))}
-          {rightAction && (
-            <Box sx={{ ml: 1, display: 'flex', alignItems: 'center' }}>
-              {rightAction}
+      <AppBar
+        position="sticky"
+        sx={{
+          bgcolor: '#0a0a0a',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+          boxShadow: '0 2px 20px rgba(0, 230, 118, 0.1)',
+        }}
+      >
+        <Toolbar>
+          {backTo ? (
+            <>
+              <IconButton onClick={() => navigate(backTo)} sx={{ color: 'grey.400', mr: 0.5 }}>
+                <ArrowBackIcon />
+              </IconButton>
+              <Typography variant="body2" sx={{ color: 'grey.400', mr: 2, cursor: 'pointer' }} onClick={() => navigate(backTo)}>
+                Volver
+              </Typography>
+            </>
+          ) : (
+            <Box sx={{ cursor: 'pointer' }} onClick={() => navigate(logoTo ?? (isLoggedIn ? '/dashboard/tournaments' : '/'))}>
+              <AppLogo />
             </Box>
           )}
-        </Box>
-      </Toolbar>
-    </AppBar>
+
+          <Box sx={{ display: 'flex', gap: 1.5, ml: 'auto', alignItems: 'center' }}>
+            {navItems.map((item) => {
+              const active = isActive(item)
+              const isContained = item.variant === 'contained'
+              const isOutlined = item.variant === 'outlined'
+
+              let buttonSx = {
+                textTransform: 'none',
+                fontSize: '0.9rem',
+                fontWeight: active ? 700 : 500,
+                borderRadius: 2,
+                px: 1.8,
+                py: 0.7,
+                color: active ? '#00e676' : 'grey.300',
+                '&:hover': {
+                  color: '#00e676',
+                  bgcolor: 'rgba(255, 255, 255, 0.04)',
+                },
+              }
+
+              if (isContained) {
+                buttonSx = {
+                  textTransform: 'none',
+                  fontSize: '0.88rem',
+                  fontWeight: 700,
+                  borderRadius: '20px',
+                  px: 2.5,
+                  py: 0.7,
+                  bgcolor: 'primary.main',
+                  color: '#000',
+                  boxShadow: '0 0 14px rgba(0, 230, 118, 0.3)',
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    bgcolor: '#00c853',
+                    boxShadow: '0 0 22px rgba(0, 230, 118, 0.5)',
+                    transform: 'translateY(-1px)',
+                  },
+                }
+              } else if (isOutlined) {
+                buttonSx = {
+                  textTransform: 'none',
+                  fontSize: '0.88rem',
+                  fontWeight: 600,
+                  borderRadius: '20px',
+                  px: 2.2,
+                  py: 0.7,
+                  borderColor: 'rgba(255, 255, 255, 0.2)',
+                  color: '#fff',
+                  bgcolor: 'rgba(255, 255, 255, 0.03)',
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    borderColor: 'primary.main',
+                    color: 'primary.main',
+                    bgcolor: 'rgba(0, 230, 118, 0.08)',
+                    transform: 'translateY(-1px)',
+                  },
+                }
+              }
+
+              return (
+                <Button
+                  key={item.value ?? item.path ?? item.label}
+                  variant={item.variant}
+                  color="primary"
+                  onClick={() => handleItemClick(item)}
+                  sx={buttonSx}
+                >
+                  {item.icon && (
+                    <Box component="span" sx={{ display: 'inline-flex', mr: 0.5, alignItems: 'center' }}>
+                      <item.icon fontSize="small" />
+                    </Box>
+                  )}
+                  {item.label}
+                </Button>
+              )
+            })}
+            {rightAction && (
+              <Box sx={{ ml: 1, display: 'flex', alignItems: 'center' }}>
+                {rightAction}
+              </Box>
+            )}
+          </Box>
+        </Toolbar>
+      </AppBar>
     </>
   )
 }
