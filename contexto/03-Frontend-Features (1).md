@@ -1,4 +1,4 @@
-# TourneyFy — Frontend: Features e Implementación (consumo de la API)
+# CopaHub — Frontend: Features e Implementación (consumo de la API)
 
 ## Arquitectura de capas
 

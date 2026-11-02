@@ -32,7 +32,7 @@ function HeroBanner() {
             mb: 2,
           }}
         >
-          TourneyFy
+          CopaHub
         </Typography>
         <Typography
           variant="h5"

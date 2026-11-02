@@ -1,4 +1,4 @@
-# TourneyFy — Backend
+# CopaHub — Backend
 
 ## Scripts disponibles
 

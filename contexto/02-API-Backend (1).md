@@ -1,4 +1,4 @@
-# TourneyFy — Documentación de la API (Backend)
+# CopaHub — Documentación de la API (Backend)
 
 Base URL: `{host}/api` (montado en `backend/src/index.js`). Todas las respuestas son JSON.
 Patrón de capas: `routes → controller → service → model` (Mongoose). Todos los handlers están envueltos por `utils/handle.js`.

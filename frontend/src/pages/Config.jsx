@@ -93,7 +93,7 @@ function Config() {
         <DialogTitle>Cerrar sesión</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            ¿Estás seguro de que querés cerrar sesión en TourneyFy?
+            ¿Estás seguro de que querés cerrar sesión en CopaHub?
           </DialogContentText>
         </DialogContent>
         <DialogActions>

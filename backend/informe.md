@@ -1,4 +1,4 @@
-# Informe de Avance — Backend TourneyFy
+# Informe de Avance — Backend CopaHub
 
 ## 1. Estructura de capas (routes / controllers / services)
 

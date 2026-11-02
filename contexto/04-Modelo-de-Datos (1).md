@@ -1,4 +1,4 @@
-# TourneyFy — Modelo de Datos
+# CopaHub — Modelo de Datos
 
 Fuente de verdad: los schemas de Mongoose en `backend/src/models/*.js` (no el `.mml` viejo, que quedó desactualizado — ver nota al final). El schema de Dexie (`frontend/src/lib/db.js`) es un espejo parcial: mismos documentos, pero solo declara **índices**, no estructura — todo lo demás viaja embebido tal cual llega de la API.
 

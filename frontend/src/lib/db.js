@@ -1,6 +1,6 @@
 import Dexie from 'dexie'
 
-export const db = new Dexie('tourneyfy')
+export const db = new Dexie('copahub')
 
 // Versión 1: stores originales
 db.version(1).stores({

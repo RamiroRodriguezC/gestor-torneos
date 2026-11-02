@@ -1,4 +1,4 @@
-# TourneyFy — Informe de Errores y Trabajo Pendiente para el MVP
+# CopaHub — Informe de Errores y Trabajo Pendiente para el MVP
 
 Basado en lectura directa del código (fuente de verdad) al 10/08/2026, más las confirmaciones dadas por el autor sobre los puntos ambiguos. Se separa en **errores concretos** (algo está roto o va a romperse) y **pendientes de alcance** (funcionalidad prevista en la propuesta original que todavía no existe).
 
@@ -358,7 +358,7 @@ Al presionar el botón "Generar Fixture" desde el frontend desplegado en Vercel,
      - **Explorar** (`/torneos`)
      - **Login** (`/login`)
      - **Registrarse** (`/register`)
-   - Se eliminaron los botones a rutas privadas cuando no hay sesión, y el clic en el logo `TourneyFy` redirige a `/torneos` o `/` en lugar de `/dashboard/tournaments`.
+   - Se eliminaron los botones a rutas privadas cuando no hay sesión, y el clic en el logo `CopaHub` redirige a `/torneos` o `/` en lugar de `/dashboard/tournaments`.
 
 3. **Detección Proactiva de Token Expirado (`useAuth.js`):**
    - En `frontend/src/hooks/useAuth.js`, se añadió la función `isTokenExpired(token)` que decodifica el payload JWT y compara el timestamp `exp` con `Date.now()`.

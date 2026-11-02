@@ -20,7 +20,7 @@ function Footer() {
           }}
         >
           <Typography variant="body2" color="#00e676" sx={{ fontWeight: 600 }}>
-            TourneyFy
+            CopaHub
           </Typography>
           <Stack direction="row" spacing={3}>
             <Link href="#" color="grey.500" underline="hover" variant="body2">
@@ -34,7 +34,7 @@ function Footer() {
             </Link>
           </Stack>
           <Typography variant="body2" color="grey.600">
-            &copy; {new Date().getFullYear()} TourneyFy. Todos los derechos reservados.
+            &copy; {new Date().getFullYear()} CopaHub. Todos los derechos reservados.
           </Typography>
         </Stack>
       </Container>

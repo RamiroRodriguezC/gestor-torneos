@@ -1,4 +1,4 @@
-# TourneyFy — Architecture Decision Records (ADR)
+# CopaHub — Architecture Decision Records (ADR)
 
 > Fuente de verdad: el repositorio y el código ya escrito. Cada ADR se contrastó contra el código real al momento de redactar este documento (10/08/2026). Donde la nota original y el código no coincidían, se marca explícitamente y se resolvió con el autor del proyecto.
 

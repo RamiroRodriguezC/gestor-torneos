@@ -6,7 +6,7 @@ function AppLogo() {
       variant="h5"
       sx={{ flexGrow: 1, fontWeight: 800, letterSpacing: 1, color: '#00e676' }}
     >
-      TourneyFy
+      CopaHub
     </Typography>
   )
 }
