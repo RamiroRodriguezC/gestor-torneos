@@ -17,9 +17,9 @@ Formato: **Contexto → Decisión → Alternativas descartadas → Consecuencias
 - **React Native + Expo:** descartado porque no reutiliza HTML/CSS (obliga a `<View>`/`<Text>` en vez de elementos web) y duplicaría la base de código para admins de escritorio vs. usuarios móviles.
 - **Flutter (Dart):** descartado por curva de aprendizaje de un lenguaje nuevo (Dart) + arquitectura de widgets, incompatible con el plazo de 2 meses y sin sinergia con la experiencia previa en JS/Node del autor.
 
-**Consecuencias.** Se ganó libertad total de diseño (MUI como librería de componentes) al costo de perder los wrappers nativos que Ionic daba gratis (gestos, transiciones nativas). Capacitor sigue siendo el camino para el `.apk`, pero **no hay evidencia en el repo de que el proyecto Capacitor (`npx cap init/add android`) esté efectivamente inicializado** — no existe carpeta `android/` ni `capacitor.config.*` en el árbol provisto. Ver informe de pendientes.
+**Consecuencias.** Se ganó libertad total de diseño (MUI como librería de componentes) al costo de perder los wrappers nativos que Ionic daba gratis (gestos, transiciones nativas). Capacitor es el contenedor nativo oficial: carpeta `android/` inicializada con ID `com.copahub.app`, configuración en `capacitor.config.json` vinculada a la salida `dist` de Vite, y verificado en emulador Android Studio.
 
-**Estado.** ✅ Decidido e implementado (frontend). ⚠️ Empaquetado móvil con Capacitor: pendiente de verificar/inicializar.
+**Estado.** ✅ Decidido e implementado al 100% (frontend web y contenedor nativo Android con Capacitor verificado). Ver `contexto/06-Capacitor-y-Offline-First.md`.
 
 ---
 

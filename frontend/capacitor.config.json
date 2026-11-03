@@ -1,0 +1,10 @@
+{
+  "appId": "com.copahub.app",
+  "appName": "CopaHub",
+  "webDir": "dist",
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "disable"
+    }
+  }
+}
