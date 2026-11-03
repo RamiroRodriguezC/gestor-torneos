@@ -16,10 +16,10 @@ function HomePage() {
   const { isLoggedIn } = useAuth()
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: '#0a0a0a', color: '#fff' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: '#0a0a0a', color: '#fff', width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}>
       <AuthNavbar />
 
-      <Box component="main" sx={{ flexGrow: 1 }}>
+      <Box component="main" sx={{ flexGrow: 1, width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}>
         {/* ── 1. HERO SECTION ── */}
         <Box
           sx={{
