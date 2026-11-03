@@ -111,23 +111,23 @@ flowchart TD
 
 ---
 
-## 4. Plan de Acción para las Siguientes Fases
+## 4. Implementación del Flujo de Sincronización y Red
 
-Para completar la experiencia Offline-First en el código:
+Las siguientes capacidades fueron implementadas y verificadas:
 
-1. **Instalar el plugin oficial de Red:**
-   ```bash
-   npm install @capacitor/network
-   npx cap sync
-   ```
-2. **Crear un Hook o Contexto de Conectividad (`useNetworkStatus`):**
-   * Escuchar `Network.addListener('networkStatusChange', status => ...)`
-   * Proveer un booleano global `isOnline` en toda la aplicación.
-3. **Componente de Feedback Visual:**
-   * Mostrar un banner discreto en el AppBar (o en el Footer) cuando `isOnline === false`: *"Modo sin conexión activo"*.
-4. **Carga de Partidos Offline (Dexie `syncQueue`):**
-   * Asegurar que la pantalla de carga de planillas de partido no bloquee el guardado si `isOnline === false`.
-   * Al guardar sin internet, escribir directamente en Dexie y encolar el payload en `syncQueue`.
-   * Al recibir el evento de reconexión (`status.connected === true`), ejecutar automáticamente el vaciado de la cola contra la API de Render.
-5. **Duración extendida del Token JWT:**
-   * En el backend (`backend/.env`), ajustar `JWT_EXPIRES_IN="7d"` (o `30d`) para que los planilleros y árbitros puedan trabajar en el campo sin que su token expire de forma imprevista.
+1. **Plugin Nativo de Red (`@capacitor/network`):**
+   * Instalado `@capacitor/network` y sincronizado en `frontend/android`.
+   * Integrado en `OnlineContext.jsx` mediante `Network.addListener('networkStatusChange')` y `Network.getStatus()`, con fallback a los eventos nativos del navegador (`window.addEventListener('online'/'offline')`).
+2. **Salvaguarda y Encolado en `updateMatchSheet`:**
+   * *Diagnóstico:* Al guardar sin internet, `navigator.onLine` o `fetch()` arrojaba `Failed to fetch`. La excepción no era capturada, impidiendo que el código alcanzara el bloque `enqueue()`.
+   * *Solución:* Se envolvió la llamada en `try/catch`. Ante cualquier error de red o conectividad, la planilla se almacena de inmediato en la tabla `matches` de Dexie y se encola automáticamente en `sync_queue` con acción `UPDATE_MATCH`.
+3. **Manejo de Reintentos en `pushSync`:**
+   * Las operaciones que sufren fallos de red transitorios ya no se marcan permanentemente como `FAILED` (lo que impedía su sincronización posterior), sino que regresan a estado `PENDING` mediante `markPending()`.
+   * Al completarse la sincronización, se actualiza el partido y se refrescan las tablas y rondas del torneo en Dexie.
+4. **Disparo Automático de Sincronización:**
+   * Al abrir la app (montaje inicial en `OnlineContext`), si hay conexión y operaciones pendientes, se dispara `pushSync()` de inmediato.
+   * Se ejecuta un ciclo de sondeo cada 10 segundos para vaciar la cola en segundo plano si hay conectividad.
+   * Al detectar el evento de reconexión nativo, se dispara el vaciado inmediato.
+5. **Protección en `userSync`:**
+   * Antes de descargar los partidos del servidor, `userSync` intenta vaciar la cola local.
+   * Si existen partidos locales con operaciones pendientes en `sync_queue`, no son pisados con los datos desactualizados del servidor hasta que su sincronización se complete.

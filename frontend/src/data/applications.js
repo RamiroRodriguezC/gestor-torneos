@@ -82,14 +82,26 @@ export async function createApplication({ tournamentId, participantId, notesCapi
   await putApplication(localApp)
 
   if (navigator.onLine) {
-    const json = await apiFetch('/applications', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    })
-    // Reconciliar: el server devuelve el documento real (con _id y timestamps).
-    await removeApplication(localId)
-    await putApplication(json.data)
-    return json.data
+    try {
+      const json = await apiFetch('/applications', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      })
+      // Reconciliar: el server devuelve el documento real (con _id y timestamps).
+      await removeApplication(localId)
+      await putApplication(json.data)
+      return json.data
+    } catch (err) {
+      const isNetworkError =
+        !navigator.onLine ||
+        err.name === 'TypeError' ||
+        err.message?.includes('Failed to fetch') ||
+        err.message?.includes('NetworkError') ||
+        err.message?.includes('net::ERR') ||
+        err.message?.toLowerCase?.()?.includes('network')
+      if (!isNetworkError) throw err
+      console.warn('Fallo de red al crear solicitud. Encolando offline:', err)
+    }
   }
 
   await enqueue({
@@ -109,12 +121,24 @@ export async function updateApplication(id, data) {
   await putApplication(optimistic)
 
   if (navigator.onLine) {
-    const json = await apiFetch(`/applications/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    })
-    await putApplication(json.data)
-    return json.data
+    try {
+      const json = await apiFetch(`/applications/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      })
+      await putApplication(json.data)
+      return json.data
+    } catch (err) {
+      const isNetworkError =
+        !navigator.onLine ||
+        err.name === 'TypeError' ||
+        err.message?.includes('Failed to fetch') ||
+        err.message?.includes('NetworkError') ||
+        err.message?.includes('net::ERR') ||
+        err.message?.toLowerCase?.()?.includes('network')
+      if (!isNetworkError) throw err
+      console.warn('Fallo de red al actualizar solicitud. Encolando offline:', err)
+    }
   }
 
   await enqueue({

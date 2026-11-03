@@ -2,10 +2,10 @@ import { db } from '../lib/db.js'
 
 // Agrega una operación a la cola de sincronización
 // Se llama cuando estamos offline y queremos guardar un cambio para enviarlo después
-export async function enqueue({ action, entity, entityId, payload }) {
+export async function enqueue({ action, entity, entityId, payload, ...extra }) {
   const id = crypto.randomUUID()
   const now = new Date().toISOString()
-  const item = { id, action, entity, entityId, payload, createdAt: now, status: 'PENDING' }
+  const item = { id, action, entity, entityId, payload, ...extra, createdAt: now, status: 'PENDING' }
   await db.sync_queue.put(item)
   return item
 }
@@ -14,7 +14,7 @@ export async function enqueue({ action, entity, entityId, payload }) {
 export async function getPending() {
   return db.sync_queue
     .where('status')
-    .equals('PENDING')
+    .anyOf(['PENDING', 'SYNCING'])
     .sortBy('createdAt')
 }
 
@@ -30,13 +30,18 @@ export async function getFailed() {
 export async function getPendingCount() {
   return db.sync_queue
     .where('status')
-    .equals('PENDING')
+    .anyOf(['PENDING', 'SYNCING'])
     .count()
 }
 
 // Marca una operación como "en proceso de sincronización"
 export async function markSyncing(id) {
   return db.sync_queue.update(id, { status: 'SYNCING' })
+}
+
+// Restablece una operación como "pendiente" (ej. tras un fallo transitorio de red)
+export async function markPending(id) {
+  return db.sync_queue.update(id, { status: 'PENDING' })
 }
 
 // Marca una operación como fallida y guarda el mensaje de error

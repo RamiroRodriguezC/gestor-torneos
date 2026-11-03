@@ -117,6 +117,14 @@ export async function syncUserEnvironment(userId) {
     console.log(`[userSync] El usuario no tiene equipos`)
   }
 
+  // Intentamos vaciar cualquier cambio local pendiente antes de descargar
+  try {
+    const { pushSync } = await import('../services/pushSync.js')
+    await pushSync()
+  } catch (err) {
+    console.warn('[userSync] Error intentando vaciar cola antes de sincronizar:', err)
+  }
+
   const allMatches = await fetchJSON(`/matches`)
   if (allMatches?.length && tournaments?.length) {
     const ids = new Set(tournaments.map((t) => t._id))
@@ -125,8 +133,18 @@ export async function syncUserEnvironment(userId) {
     )
     console.log(`[userSync] Partidos totales: ${allMatches.length}, relevantes: ${relevant.length}`)
     if (relevant.length > 0) {
-      await bulkPutMatches(relevant)
-      counts.matches = relevant.length
+      // Proteger partidos que tengan un cambio offline pendiente en sync_queue
+      const pendingMatchOps = await db.sync_queue
+        .where('entity')
+        .equals('matches')
+        .toArray()
+      const pendingMatchIds = new Set(pendingMatchOps.map((op) => op.entityId))
+
+      const toPut = relevant.filter((m) => !pendingMatchIds.has(m._id))
+      if (toPut.length > 0) {
+        await bulkPutMatches(toPut)
+        counts.matches = toPut.length
+      }
     }
   } else {
     console.log(`[userSync] Partidos saltados (sin torneos del usuario)`)

@@ -94,34 +94,53 @@ export async function updateMatchSheet(id, data) {
 
   const payload = buildMatchUpdatePayload(data)
 
-  // 2. Si estamos online, mandamos directo al backend
+  // 2. Si hay conexión aparente, intentamos enviar directo al backend
   if (navigator.onLine) {
-    const json = await apiFetch(`/matches/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(payload),
-    })
-    // Actualizamos Dexie con la respuesta del backend (tiene los campos completos)
-    await putMatch(json.data)
+    try {
+      const json = await apiFetch(`/matches/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      })
+      // Actualizamos Dexie con la respuesta del backend (tiene los campos completos)
+      await putMatch(json.data)
 
-    // Refrescar el torneo en Dexie para sincronizar estado de rondas, torneo y campeón
-    if (data.tournamentId) {
-      try {
-        const { fetchTournament } = await import('./tournaments.js')
-        await fetchTournament(data.tournamentId)
-      } catch (tErr) {
-        console.warn('No se pudo refrescar el torneo tras actualizar planilla:', tErr)
+      // Refrescar el torneo en Dexie para sincronizar estado de rondas, torneo y campeón
+      if (data.tournamentId) {
+        try {
+          const { fetchTournament } = await import('./tournaments.js')
+          await fetchTournament(data.tournamentId)
+        } catch (tErr) {
+          console.warn('No se pudo refrescar el torneo tras actualizar planilla:', tErr)
+        }
       }
-    }
 
-    return json.data
+      return json.data
+    } catch (err) {
+      // Si el error es de red o conectividad (Failed to fetch, servidor inalcanzable, timeout),
+      // no rompemos la carga del usuario: hacemos fallback al almacenamiento offline y encolamos.
+      const isNetworkError =
+        !navigator.onLine ||
+        err.name === 'TypeError' ||
+        err.message?.includes('Failed to fetch') ||
+        err.message?.includes('NetworkError') ||
+        err.message?.includes('net::ERR') ||
+        err.message?.toLowerCase?.()?.includes('network')
+
+      if (!isNetworkError) {
+        // Si es un error de validación del backend (400, 422, etc.), lanzamos el error
+        throw err
+      }
+      console.warn('No hay conexión con el servidor. Guardando planilla localmente y encolando para sincronización:', err)
+    }
   }
 
-  // 3. Si estamos offline, encolamos para sincronizar después
+  // 3. Si estamos offline o falló la conexión, encolamos para sincronizar después
   await enqueue({
     action: 'UPDATE_MATCH',
     entity: 'matches',
     entityId: id,
     payload,
+    tournamentId: data.tournamentId,
   })
   return data
 }
