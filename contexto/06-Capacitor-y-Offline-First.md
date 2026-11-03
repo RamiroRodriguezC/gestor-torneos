@@ -131,3 +131,51 @@ Las siguientes capacidades fueron implementadas y verificadas:
 5. **Protección en `userSync`:**
    * Antes de descargar los partidos del servidor, `userSync` intenta vaciar la cola local.
    * Si existen partidos locales con operaciones pendientes en `sync_queue`, no son pisados con los datos desactualizados del servidor hasta que su sincronización se complete.
+
+---
+
+## 5. Sincronización de Entorno y Gesto Nativo 'Pull-to-Refresh'
+
+### 5.1 El Problema de Sincronización entre Usuarios
+En la versión inicial de la aplicación, `syncUserEnvironment(userId)` únicamente se invocaba al momento de autenticarse (Login / Registro). En consecuencia, si el **Usuario 1** (por ejemplo, el árbitro o admin) cargaba una planilla desde su teléfono y la sincronizaba con éxito en Render, el **Usuario 2** (otro jugador o espectador con la app abierta) no recibía esos cambios hasta que cerraba sesión y volvía a ingresar, ya que su base local Dexie no volvía a consultar la API.
+
+### 5.2 Estrategia de Refresco Proactivo Multi-Nivel
+Para solucionar este escenario sin saturar el servidor ni incurrir en sobrecostos con WebSockets o sondeos intensivos innecesarios, se diseñaron tres niveles de actualización:
+
+1. **Refresco al Iniciar / Recargar la App (F5 / Montaje inicial):**
+   * En `OnlineContext.jsx`, al montar la app se detecta la conexión activa y se ejecuta `syncCurrentEnvironment()` en segundo plano. Los componentes leen inmediatamente de Dexie sin pantallas blancas, y se actualizan al vuelo apenas llega la respuesta del servidor.
+2. **Refresco al volver a primer plano (`visibilitychange` / `focus`):**
+   * En dispositivos móviles, los usuarios cambian de aplicación constantemente (p. ej., ir a WhatsApp y volver a CopaHub). Se implementó un detector que refresca el entorno al retomar el foco, con un *throttle* de 15 segundos para evitar peticiones duplicadas ante cambios rápidos de ventana.
+3. **Gesto Manual Nativo "Pull to Refresh" en Dispositivos Móviles:**
+   * En la app empaquetada de Capacitor no existen las barras de navegación tradicionales de Chrome con botón de recarga. Se implementó un componente envolvente nativo (`PullToRefresh.jsx`) que habilita el gesto de arrastre descendente desde la parte superior de la pantalla.
+
+### 5.3 ¿Cómo Funciona Mecánicamente el Gesto "Pull-to-Refresh"?
+
+El componente `PullToRefresh.jsx` opera de manera autónoma interceptando los eventos de pantalla táctil del navegador/WebView:
+
+```
+[Touch Start] (window.scrollY === 0) 
+      ↓
+[Touch Move]  (Arrastre hacia abajo: deltaY > 0)
+      ↓
+[Resistencia Elástica] -> pullDistance = Math.min(75, deltaY * 0.45)
+      ↓
+[Feedback Visual] -> Indicador circular desciende rotando su icono en el Safe Area superior
+      ↓
+[Touch End]
+   ├── ¿pullDistance >= 52px? ──> SÍ ──> Disparar isRefreshing = true
+   │                                     1. pushSync() (vacía pendientes locales)
+   │                                     2. syncCurrentEnvironment() (trae datos frescos)
+   │                                     3. Dexie actualiza IndexedDB
+   │                                     4. useLiveQuery actualiza los componentes en pantalla
+   │                                     5. Animación de spinner y retracción suave
+   │
+   └── NO ─────────────────────────────> Retracción elástica sin recargar
+```
+
+* **No interfiere con el scroll vertical de la página:** Solo se activa si `window.scrollY <= 0`. Si el usuario está leyendo una tabla o un fixture más abajo y desliza hacia abajo para subir, se comporta como scroll nativo estándar sin bloquear la navegación.
+* **Discriminación de gestos horizontales:** Si el desplazamiento horizontal (`deltaX`) es mayor que el vertical al iniciar el toque, el gesto se desactiva para no colisionar con tabs, sliders o swipe menus.
+* **Sensación física elástica:** El factor amortiguador `deltaY * 0.45` emula el comportamiento de una goma elástica, exactamente igual a Twitter, Gmail o Instagram.
+* **Integración con Safe Area:** El indicador visual se ubica dinámicamente debajo del recorte de cámara (*camera cutout* / notch) mediante variables CSS `env(safe-area-inset-top)` y `--safe-area-inset-top`.
+* **Actualización Reactiva sin parpadeos:** Al no hacer una recarga destructiva del navegador (`location.reload()`), la app mantiene intacto el estado de la vista, la navegación y las animaciones, dejando que `useLiveQuery` de Dexie actualice los componentes en milisegundos.
+

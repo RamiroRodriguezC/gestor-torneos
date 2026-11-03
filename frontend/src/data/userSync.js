@@ -186,3 +186,26 @@ export async function syncUserEnvironment(userId) {
   console.log(`[userSync] Sync completado. Resumen:`, counts)
   return counts
 }
+
+// Sincroniza el entorno actual (usuario logueado o catálogo público si es invitado)
+export async function syncCurrentEnvironment() {
+  if (!navigator.onLine) return null
+  const userId = localStorage.getItem('currentUserId')
+  if (userId) {
+    try {
+      return await syncUserEnvironment(userId)
+    } catch (err) {
+      console.warn('[userSync] Error en syncUserEnvironment:', err)
+      return null
+    }
+  } else {
+    try {
+      const { fetchPublicTournaments } = await import('./tournaments.js')
+      const list = await fetchPublicTournaments()
+      return { user: null, tournaments: list?.length || 0 }
+    } catch (err) {
+      console.warn('[userSync] Error en fetchPublicTournaments:', err)
+      return null
+    }
+  }
+}

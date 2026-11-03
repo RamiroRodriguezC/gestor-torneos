@@ -3,6 +3,7 @@ import { ThemeProvider, createTheme, CssBaseline, Container } from '@mui/materia
 import ErrorDisplay from './components/ErrorDisplay'
 import ProtectedRoute from './components/ProtectedRoute'
 import { OnlineProvider } from './contexts/OnlineContext'
+import PullToRefresh from './components/layout/PullToRefresh'
 import HomePage from './pages/HomePage'
 import Login from './pages/Login'
 import Register from './pages/Register'
@@ -45,31 +46,33 @@ function App() {
       <BrowserRouter>
         {/* OnlineProvider detecta online/offline y expone el estado global */}
         <OnlineProvider>
-        <Routes>
-          <Route index element={<HomePage />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          
-          {/* Rutas públicas */}
-          <Route path="/torneos" element={<ExploreTournaments />} />
-          <Route path="/tournament/:id" element={<TournamentPage />} />
-          <Route path="/user/:userId" element={<Profile />} />
+          <PullToRefresh>
+            <Routes>
+              <Route index element={<HomePage />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              
+              {/* Rutas públicas */}
+              <Route path="/torneos" element={<ExploreTournaments />} />
+              <Route path="/tournament/:id" element={<TournamentPage />} />
+              <Route path="/user/:userId" element={<Profile />} />
 
-          {/* Rutas protegidas que requieren autenticación */}
-          <Route path="/dashboard" element={<ProtectedRoute><Navigate to="/dashboard/tournaments" replace /></ProtectedRoute>} />
-          <Route path="/dashboard/tournaments" element={<ProtectedRoute><Tournaments /></ProtectedRoute>} />
-          <Route path="/dashboard/tournaments/create" element={<ProtectedRoute><CreateTournament /></ProtectedRoute>} />
-          <Route path="/dashboard/teams" element={<ProtectedRoute><Teams /></ProtectedRoute>} />
-          <Route path="/dashboard/teams/:id" element={<ProtectedRoute><Team /></ProtectedRoute>} />
-          <Route path="/dashboard/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-          <Route path="/dashboard/config" element={<ProtectedRoute><Config /></ProtectedRoute>} />
-          <Route path="/torneos/:id/inscripcion" element={<ProtectedRoute><InscriptionPage /></ProtectedRoute>} />
-          <Route path="/torneos/:id/solicitudes" element={<ProtectedRoute><TournamentApplicationsPage /></ProtectedRoute>} />
-          <Route path="/match/:id" element={<ProtectedRoute><MatchDetailPage /></ProtectedRoute>} />
-          <Route path="/team/:id" element={<ProtectedRoute><Team /></ProtectedRoute>} />
+              {/* Rutas protegidas que requieren autenticación */}
+              <Route path="/dashboard" element={<ProtectedRoute><Navigate to="/dashboard/tournaments" replace /></ProtectedRoute>} />
+              <Route path="/dashboard/tournaments" element={<ProtectedRoute><Tournaments /></ProtectedRoute>} />
+              <Route path="/dashboard/tournaments/create" element={<ProtectedRoute><CreateTournament /></ProtectedRoute>} />
+              <Route path="/dashboard/teams" element={<ProtectedRoute><Teams /></ProtectedRoute>} />
+              <Route path="/dashboard/teams/:id" element={<ProtectedRoute><Team /></ProtectedRoute>} />
+              <Route path="/dashboard/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+              <Route path="/dashboard/config" element={<ProtectedRoute><Config /></ProtectedRoute>} />
+              <Route path="/torneos/:id/inscripcion" element={<ProtectedRoute><InscriptionPage /></ProtectedRoute>} />
+              <Route path="/torneos/:id/solicitudes" element={<ProtectedRoute><TournamentApplicationsPage /></ProtectedRoute>} />
+              <Route path="/match/:id" element={<ProtectedRoute><MatchDetailPage /></ProtectedRoute>} />
+              <Route path="/team/:id" element={<ProtectedRoute><Team /></ProtectedRoute>} />
 
-          <Route path="*" element={<Container maxWidth="md"><ErrorDisplay type="PAGE_NOT_FOUND" size="lg" /></Container>} />
-        </Routes>
+              <Route path="*" element={<Container maxWidth="md"><ErrorDisplay type="PAGE_NOT_FOUND" size="lg" /></Container>} />
+            </Routes>
+          </PullToRefresh>
         </OnlineProvider>
       </BrowserRouter>
     </ThemeProvider>
