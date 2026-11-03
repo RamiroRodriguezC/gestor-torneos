@@ -219,9 +219,11 @@ function Navbar({
           bgcolor: '#0a0a0a',
           borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
           boxShadow: '0 2px 20px rgba(0, 230, 118, 0.1)',
+          width: '100%',
+          maxWidth: '100vw',
         }}
       >
-        <Toolbar>
+        <Toolbar sx={{ px: { xs: 1.5, sm: 3 }, minHeight: { xs: 56, sm: 64 } }}>
           {backTo ? (
             <>
               <IconButton onClick={() => navigate(backTo)} sx={{ color: 'grey.400', mr: 0.5 }}>
@@ -232,12 +234,26 @@ function Navbar({
               </Typography>
             </>
           ) : (
-            <Box sx={{ cursor: 'pointer' }} onClick={() => navigate(logoTo ?? (isLoggedIn ? '/dashboard/tournaments' : '/'))}>
+            <Box
+              sx={{
+                cursor: 'pointer',
+                display: { xs: 'none', sm: 'block' },
+              }}
+              onClick={() => navigate(logoTo ?? (isLoggedIn ? '/dashboard/tournaments' : '/'))}
+            >
               <AppLogo />
             </Box>
           )}
 
-          <Box sx={{ display: 'flex', gap: 1.5, ml: 'auto', alignItems: 'center' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: { xs: 1, sm: 1.5 },
+              ml: 'auto',
+              alignItems: 'center',
+              flexWrap: 'nowrap',
+            }}
+          >
             {navItems.map((item) => {
               const active = isActive(item)
               const isContained = item.variant === 'contained'
@@ -245,11 +261,13 @@ function Navbar({
 
               let buttonSx = {
                 textTransform: 'none',
-                fontSize: '0.9rem',
+                whiteSpace: 'nowrap',
+                fontSize: { xs: '0.82rem', sm: '0.9rem' },
                 fontWeight: active ? 700 : 500,
                 borderRadius: 2,
-                px: 1.8,
-                py: 0.7,
+                px: { xs: 1.2, sm: 1.8 },
+                py: { xs: 0.5, sm: 0.7 },
+                minWidth: 'auto',
                 color: active ? '#00e676' : 'grey.300',
                 '&:hover': {
                   color: '#00e676',
@@ -259,12 +277,12 @@ function Navbar({
 
               if (isContained) {
                 buttonSx = {
-                  textTransform: 'none',
-                  fontSize: '0.88rem',
+                  ...buttonSx,
+                  fontSize: { xs: '0.82rem', sm: '0.88rem' },
                   fontWeight: 700,
                   borderRadius: '20px',
-                  px: 2.5,
-                  py: 0.7,
+                  px: { xs: 1.8, sm: 2.5 },
+                  py: { xs: 0.5, sm: 0.7 },
                   bgcolor: 'primary.main',
                   color: '#000',
                   boxShadow: '0 0 14px rgba(0, 230, 118, 0.3)',
@@ -277,12 +295,12 @@ function Navbar({
                 }
               } else if (isOutlined) {
                 buttonSx = {
-                  textTransform: 'none',
-                  fontSize: '0.88rem',
+                  ...buttonSx,
+                  fontSize: { xs: '0.82rem', sm: '0.88rem' },
                   fontWeight: 600,
                   borderRadius: '20px',
-                  px: 2.2,
-                  py: 0.7,
+                  px: { xs: 1.5, sm: 2.2 },
+                  py: { xs: 0.5, sm: 0.7 },
                   borderColor: 'rgba(255, 255, 255, 0.2)',
                   color: '#fff',
                   bgcolor: 'rgba(255, 255, 255, 0.03)',
@@ -309,7 +327,7 @@ function Navbar({
                       <item.icon fontSize="small" />
                     </Box>
                   )}
-                  {item.label}
+                  {isMobile && item.mobileLabel ? item.mobileLabel : item.label}
                 </Button>
               )
             })}

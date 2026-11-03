@@ -2,15 +2,22 @@ import { createContext, useState, useEffect, useCallback, useRef } from 'react'
 import { Network } from '@capacitor/network'
 import { pushSync } from '../services/pushSync'
 import { getPendingCount } from '../data/syncQueue'
+import { syncCurrentEnvironment } from '../data/userSync'
 
-// Contexto global que expone el estado de conexión y la cola de sincronización
-export const OnlineContext = createContext({ isOnline: true, pendingCount: 0, triggerSync: () => {} })
+// Contexto global que expone el estado de conexión, la cola de sincronización y el refresco de entorno
+export const OnlineContext = createContext({
+  isOnline: true,
+  pendingCount: 0,
+  triggerSync: () => {},
+  refreshEnvironment: () => {},
+})
 
 export function OnlineProvider({ children }) {
   const [isOnline, setIsOnline] = useState(navigator.onLine)
   const [pendingCount, setPendingCount] = useState(0)
   const [justReconnected, setJustReconnected] = useState(false)
   const isSyncingRef = useRef(false)
+  const lastFocusSyncRef = useRef(0)
 
   // Actualiza el contador de pendientes desde IndexedDB
   const refreshPending = useCallback(async () => {
@@ -36,6 +43,19 @@ export function OnlineProvider({ children }) {
     }
   }, [refreshPending])
 
+  // Refresca completamente el entorno: primero vacía cambios pendientes y luego descarga del backend
+  const refreshEnvironment = useCallback(async () => {
+    if (!navigator.onLine) return null
+    try {
+      await triggerSync()
+      const res = await syncCurrentEnvironment()
+      return res
+    } catch (err) {
+      console.warn('Error en refreshEnvironment:', err)
+      return null
+    }
+  }, [triggerSync])
+
   useEffect(() => {
     let isMounted = true
 
@@ -48,6 +68,7 @@ export function OnlineProvider({ children }) {
       }, 4000)
 
       await triggerSync()
+      await syncCurrentEnvironment()
     }
 
     const handleDisconnected = () => {
@@ -73,24 +94,46 @@ export function OnlineProvider({ children }) {
     window.addEventListener('online', handleConnected)
     window.addEventListener('offline', handleDisconnected)
 
-    // 3. Chequeo inicial al montar la aplicación
+    // 3. Chequeo inicial al montar la aplicación (F5 / Apertura de App)
     Network.getStatus().then(async (status) => {
       if (!isMounted) return
       const online = status.connected ?? navigator.onLine
       setIsOnline(online)
       const count = await refreshPending()
-      if (online && count > 0) {
-        await triggerSync()
+      if (online) {
+        if (count > 0) {
+          await triggerSync()
+        }
+        // Descarga de fondo con datos frescos sin bloquear el render instantáneo de Dexie
+        await syncCurrentEnvironment()
       }
     }).catch(async () => {
       if (!isMounted) return
       const count = await refreshPending()
-      if (navigator.onLine && count > 0) {
-        await triggerSync()
+      if (navigator.onLine) {
+        if (count > 0) {
+          await triggerSync()
+        }
+        await syncCurrentEnvironment()
       }
     })
 
-    // 4. Intervalo periódico cada 10 segundos: si hay pendientes y hay conexión, sincronizar
+    // 4. Refresco al volver a primer plano (cambio de app en móvil o cambio de pestaña en navegador)
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === 'visible' && navigator.onLine) {
+        const now = Date.now()
+        // Limitar a máximo 1 consulta cada 15 segundos para evitar sobrecarga si el usuario alterna rápido
+        if (now - lastFocusSyncRef.current > 15000) {
+          lastFocusSyncRef.current = now
+          refreshEnvironment()
+        }
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityOrFocus)
+    window.addEventListener('focus', handleVisibilityOrFocus)
+
+    // 5. Intervalo periódico cada 10 segundos: si hay operaciones pendientes y hay conexión, sincronizar
     const interval = setInterval(async () => {
       const count = await refreshPending()
       if (count > 0 && navigator.onLine && !isSyncingRef.current) {
@@ -105,12 +148,14 @@ export function OnlineProvider({ children }) {
       }
       window.removeEventListener('online', handleConnected)
       window.removeEventListener('offline', handleDisconnected)
+      document.removeEventListener('visibilitychange', handleVisibilityOrFocus)
+      window.removeEventListener('focus', handleVisibilityOrFocus)
       clearInterval(interval)
     }
-  }, [triggerSync, refreshPending])
+  }, [triggerSync, refreshPending, refreshEnvironment])
 
   return (
-    <OnlineContext.Provider value={{ isOnline, pendingCount, justReconnected, triggerSync, refreshPending }}>
+    <OnlineContext.Provider value={{ isOnline, pendingCount, justReconnected, triggerSync, refreshPending, refreshEnvironment }}>
       {children}
     </OnlineContext.Provider>
   )
