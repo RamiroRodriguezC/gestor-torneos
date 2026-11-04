@@ -9,6 +9,7 @@ import LogoutIcon from '@mui/icons-material/Logout'
 import PersonIcon from '@mui/icons-material/Person'
 import SettingsIcon from '@mui/icons-material/Settings'
 import Navbar from '../components/layout/Navbar'
+import UserAvatar from '../components/shared/UserAvatar'
 import EditProfileCard from '../components/profile/EditProfileCard'
 import { useAuth } from '../hooks/useAuth'
 import { logout } from '../data/auth'
@@ -45,12 +46,7 @@ function Config() {
                 Mi Cuenta
               </Typography>
               <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" useFlexGap sx={{ gap: 2 }}>
-                <Avatar
-                  src={user.url_profile_photo || ''}
-                  sx={{ width: 56, height: 56, bgcolor: 'primary.main', color: '#000', fontWeight: 700 }}
-                >
-                  {user.name?.[0]}{user.lastName?.[0]}
-                </Avatar>
+                <UserAvatar user={user} size={56} />
                 <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                   <Typography variant="h6" fontWeight={700}>
                     {user.name} {user.lastName}

@@ -31,6 +31,7 @@ import KeyIcon from '@mui/icons-material/Key'
 import PersonRemoveIcon from '@mui/icons-material/PersonRemove'
 import ExitToAppIcon from '@mui/icons-material/ExitToApp'
 import Navbar from '../components/layout/Navbar'
+import UserAvatar from '../components/shared/UserAvatar'
 import TournamentCard from '../components/tournament/TournamentCard'
 import { SportsTag } from '../components/Tags'
 import { useTeam } from '../hooks/useTeams'
@@ -312,13 +313,12 @@ function Team() {
               >
                 <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
                   <Stack direction="row" spacing={2} alignItems="center">
-                    <Avatar
-                      src={member.url_profile_photo || undefined}
+                    <UserAvatar
+                      user={member}
+                      size={48}
                       onClick={() => navigate(`/user/${member._id}`)}
-                      sx={{ width: 48, height: 48, bgcolor: '#333', cursor: 'pointer' }}
-                    >
-                      {member.name?.charAt(0).toUpperCase()}
-                    </Avatar>
+                      sx={{ cursor: 'pointer' }}
+                    />
 
                     <Box
                       onClick={() => navigate(`/user/${member._id}`)}

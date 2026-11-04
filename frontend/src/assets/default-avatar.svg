@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <clipPath id="avatarCircleClip">
+      <circle cx="256" cy="256" r="256" />
+    </clipPath>
+  </defs>
+
+  <!-- Background Circle (TourneyFy Primary Green) -->
+  <circle cx="256" cy="256" r="256" fill="#00e676" />
+
+  <!-- Avatar Silhouette with clip path to ensure clean circle edges -->
+  <g clip-path="url(#avatarCircleClip)">
+    <!-- Head -->
+    <ellipse 
+      cx="256" 
+      cy="188" 
+      rx="96" 
+      ry="122" 
+      fill="#121212" 
+      stroke="#003d1e" 
+      stroke-width="7" 
+    />
+
+    <!-- Shoulders / Torso -->
+    <path 
+      d="M 64 470 C 90 350 165 315 218 312 C 234 320 278 320 294 312 C 347 315 422 350 448 470 Z" 
+      fill="#121212" 
+      stroke="#003d1e" 
+      stroke-width="7" 
+    />
+  </g>
+</svg>

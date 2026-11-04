@@ -282,22 +282,16 @@ export default function EditProfileCard({ user }) {
             alignItems={{ xs: 'flex-start', sm: 'center' }}
           >
             {/* Avatar preview grande */}
-            <Avatar
-              src={photoURL || undefined}
+            <UserAvatar
+              src={photoURL}
+              name={`${name} ${lastName}`}
+              size={80}
               sx={{
-                width: 80,
-                height: 80,
-                bgcolor: 'primary.main',
-                color: '#000',
-                fontSize: 28,
-                fontWeight: 700,
                 border: '2px solid',
                 borderColor: 'primary.main',
                 boxShadow: '0 4px 14px rgba(0,0,0,0.5)',
               }}
-            >
-              {name?.[0]}{lastName?.[0]}
-            </Avatar>
+            />
 
             {/* Acciones de foto */}
             <Stack spacing={1} sx={{ flexGrow: 1 }}>

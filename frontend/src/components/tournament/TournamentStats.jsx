@@ -12,6 +12,7 @@ import { useMatchesByTournament } from '../../hooks/useMatches'
 import { useSport } from '../../hooks/useSportsConfig'
 import { computeTournamentStats } from '../../utils/stats'
 import CompetitorPhoto from '../shared/CompetitorPhoto'
+import UserAvatar from '../shared/UserAvatar'
 
 const TOP_COLORS = ['#FFD700', '#C0C0C0', '#CD7F32']
 
@@ -205,9 +206,7 @@ function TournamentStats({ tournament }) {
                       </TableCell>
                       <TableCell>
                         <Stack direction="row" alignItems="center" spacing={1.5}>
-                          <Avatar src={row.photoURL} sx={{ width: 28, height: 28, fontSize: '0.8rem' }}>
-                            <PersonIcon fontSize="small" />
-                          </Avatar>
+                          <UserAvatar src={row.photoURL} name={row.displayName} size={28} />
                           <Typography variant="body2" sx={{ fontWeight: 600 }}>
                             {row.displayName}
                           </Typography>
@@ -331,9 +330,7 @@ function TournamentStats({ tournament }) {
                       </TableCell>
                       <TableCell>
                         <Stack direction="row" alignItems="center" spacing={1.5}>
-                          <Avatar src={row.photoURL} sx={{ width: 28, height: 28, fontSize: '0.8rem' }}>
-                            <PersonIcon fontSize="small" />
-                          </Avatar>
+                          <UserAvatar src={row.photoURL} name={row.displayName} size={28} />
                           <Typography variant="body2" sx={{ fontWeight: 600 }}>
                             {row.displayName}
                           </Typography>

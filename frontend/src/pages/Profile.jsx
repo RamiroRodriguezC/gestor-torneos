@@ -7,6 +7,7 @@ import EditIcon from '@mui/icons-material/Edit'
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
 import GroupsIcon from '@mui/icons-material/Groups'
 import Navbar from '../components/layout/Navbar'
+import UserAvatar from '../components/shared/UserAvatar'
 import { UsernameTag, SportsTag } from '../components/Tags'
 import { useAuth } from '../hooks/useAuth'
 import { useSports } from '../hooks/useSportsConfig'
@@ -147,22 +148,7 @@ function Profile() {
                 gap: 2,
               }}
             >
-              <Avatar
-                src={user.url_profile_photo || ''}
-                sx={{
-                  width: { xs: 90, sm: 120 },
-                  height: { xs: 90, sm: 120 },
-                  bgcolor: 'primary.main',
-                  color: '#000',
-                  fontSize: { xs: 34, sm: 46 },
-                  fontWeight: 800,
-                  border: '4px solid',
-                  borderColor: 'background.paper',
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.6)',
-                }}
-              >
-                {user.name?.[0]}{user.lastName?.[0]}
-              </Avatar>
+              <UserAvatar user={user} size={{ xs: 90, sm: 120 }} sx={{ border: '4px solid', borderColor: 'background.paper', boxShadow: '0 4px 16px rgba(0,0,0,0.6)' }} />
 
               {isOwnProfile && (
                 <Button

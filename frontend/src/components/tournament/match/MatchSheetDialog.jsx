@@ -11,6 +11,7 @@ import DeleteIcon from '@mui/icons-material/Delete'
 import SportsScoreIcon from '@mui/icons-material/SportsScore'
 import PersonIcon from '@mui/icons-material/Person'
 import CompetitorPhoto from '../../shared/CompetitorPhoto'
+import UserAvatar from '../../shared/UserAvatar'
 import { updateMatchSheet } from '../../../data/matches.js'
 import { db } from '../../../lib/db.js'
 import {
@@ -389,12 +390,7 @@ function MatchSheetDialog({ open, match, sportConfig, onClose }) {
                       {availablePlayers.map((player) => (
                         <MenuItem key={player.userId} value={player.userId}>
                           <Stack direction="row" alignItems="center" spacing={1}>
-                            <Avatar
-                              src={player.photoURL}
-                              sx={{ width: 20, height: 20, fontSize: '0.75rem' }}
-                            >
-                              <PersonIcon fontSize="small" />
-                            </Avatar>
+                            <UserAvatar src={player.photoURL} name={player.fullName} size={20} />
                             <Typography variant="body2">{player.fullName}</Typography>
                           </Stack>
                         </MenuItem>
