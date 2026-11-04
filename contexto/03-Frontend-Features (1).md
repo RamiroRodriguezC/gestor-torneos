@@ -107,7 +107,16 @@ Formulario largo (info básica, ubicación, fechas, contacto, extras). Al enviar
 Muestra datos + deportes de interés (resueltos contra `sportsConfig` local). Distingue `profileUser === null` (cargando) de `=== undefined` (no encontrado) para mostrar el estado correcto con `ErrorDisplay`.
 
 ### `Config` (`/dashboard/config`)
-Placeholder — solo título, sin contenido funcional.
+Pantalla de Ajustes y Configuración de Cuenta. Integra:
+- **`EditProfileCard.jsx` (Módulo de Edición de Perfil):**
+  - **Foto de perfil (`url_profile_photo`):** Preview con Avatar y selección híbrida. Soporta subida de archivo local procesado y comprimido en cliente con HTML `<canvas>` a máx $400 \times 400$ px en formato Data URL Base64 (ideal para Capacitor y offline-first sin necesidad de buckets S3), ingreso de URL pública directa (`https://...`), o remoción de foto.
+  - **Biografía (`bio`):** Campo de texto multilínea con contador visible (`0 / 300 caracteres`).
+  - **Deportes de Interés (`sportsInterests`):** Sincroniza el catálogo de disciplinas de CopaHub (`SportsConfig`) y ofrece selección múltiple interactiva con Chips dinámicos e iconos contextuales.
+  - **Datos Personales:** Edición de Nombre, Apellido y Teléfono de contacto.
+  - **Gestión reactiva de cambios:** Detecta modificaciones con `isDirty`, deshabilita acciones si no hay cambios, gestiona estados de carga y feedback con `Alert` de éxito o error.
+  - **Sincronización:** Persiste en MongoDB (`PUT /users/:id`) y en Dexie (`db.users.put`), propagando los cambios reactivamente a toda la UI a través de `useAuth()`.
+- **Card de Resumen de Cuenta:** Datos básicos del usuario logueado con acceso directo a "Ver Perfil" (`/dashboard/profile`).
+- **Card de Sesión:** Cierre de sesión con modal de confirmación (`Dialog`).
 
 ### `TournamentPage` (`/tournament/:id`)
 El corazón de la app. Implementa refresco reactivo en segundo plano (*stale-while-revalidate*): lee inmediatamente la copia local de Dexie para evitar pantallas de carga y consulta en paralelo al backend (`fetchTournament`) sincronizando cambios de estado y resultados.

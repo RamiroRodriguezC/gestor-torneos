@@ -298,3 +298,41 @@ Además, el endpoint primitivo `POST /teams` requería enviar `capitanId` manual
 
 **Estado.** ✅ Decidido e implementado (28/10/2026).
 
+
+
+---
+
+## ADR-017 — Módulo de Edición de Perfil en Configuración, Pipeline de Imágenes Base64 Client-Side y Sincronización Reactiva Offline-First
+
+**Contexto.**
+El botón "Editar perfil" en la vista de perfil propio (`/dashboard/profile`) redirigía a la pantalla de Ajustes/Configuración (`/dashboard/config`), la cual funcionaba únicamente como un placeholder básico con opciones de cerrar sesión y sin capacidad para actualizar la información del usuario.
+El modelo de datos de usuario (`UsersModel.js`) contaba con campos para foto de perfil (`url_profile_photo`), biografía (`bio`), deportes de interés (`sportsInterests`), nombre, apellido y teléfono, pero el usuario no disponía de ninguna interfaz para modificarlos.
+Adicionalmente, se debía definir una estrategia para el manejo de imágenes de avatar: integrar un servicio externo de almacenamiento de objetos (como AWS S3, Cloudinary o Firebase Storage) implicaba costos, credenciales adicionales, middlewares multipart/form-data pesados (`multer`) y dependencia estricta de red para la carga de imágenes, lo cual contradecía la arquitectura *Offline-First* con Capacitor y Dexie.
+
+**Decisión.**
+1. **Pipeline de Procesamiento de Imágenes Client-Side (Data URL / Base64):**
+   - Se descartó el almacenamiento externo en la nube para esta etapa del MVP en favor de una solución híbrida y autónoma basada en **Data URLs (Base64)** combinada con soporte opcional para enlaces web directos (`https://...`).
+   - Cuando el usuario selecciona una foto local desde su dispositivo (computadora o cámara móvil), la imagen no se transmite cruda en el payload. Pasa por una función de rasterización y compresión client-side en un `<canvas>` HTML:
+     1. Lectura del archivo como stream de datos en memoria mediante `FileReader`.
+     2. Redimensionamiento proporcional a dimensiones de avatar (máximo $400 \times 400$ píxeles).
+     3. Exportación forzada como JPEG comprimido al 85% de calidad (`canvas.toDataURL('image/jpeg', 0.85)`).
+   - **Resultado:** Archivos fotográficos originales de entre 3 MB y 10 MB se reducen drásticamente a un string base64 de entre **20 KB y 40 KB**.
+2. **Seguridad y Mitigación de Riesgos:**
+   - **Sanitización contra XSS:** La re-renderización pixel por pixel a través del `<canvas>` destruye cualquier payload ejecutable, script embebido o archivo malicioso camuflado en metadatos, garantizando que el output sea únicamente una matriz binaria JPEG limpia.
+   - **Contexto de renderizado seguro:** En el frontend, la foto se renderiza mediante el componente `<Avatar src={...} />` de Material UI (etiqueta `<img src="...">`), la cual por especificación web del W3C tiene prohibida la ejecución de scripts, incluso ante vectores de inyección tipo `javascript:...`.
+   - **Prevención de DoS / Saturación de Base de Datos:** Express limita el tamaño del body JSON a un tope por defecto de 100 KB (`express.json()`), rechazando con `HTTP 413 Payload Too Large` cualquier intento de saltarse el frontend con payloads gigantes. A su vez, 30 KB representa menos del 0.25% del límite de 16 MB por documento en MongoDB.
+3. **Módulo `EditProfileCard` y Experiencia de Usuario:**
+   - **Foto:** Avatar interactivo con preview en vivo, botón para disparar selector de archivo nativo, botón para ingresar URL web directa, y botón para remover la foto volviendo al fallback con iniciales.
+   - **Biografía:** Campo multilínea con contador visible de caracteres (tope de 300 caracteres).
+   - **Deportes de Interés:** Trae y sincroniza dinámicamente el catálogo de disciplinas de CopaHub (`SportsConfig`) y permite selección múltiple interactiva con Chips con estados visuales activos/inactivos e iconos contextuales por deporte.
+   - **Datos Personales:** Edición de Nombre, Apellido y Teléfono de contacto.
+   - **Control de Cambios:** Estado `isDirty` reactivo que habilita los botones "Guardar cambios" y "Descartar" exclusivamente cuando existen diferencias reales respecto al estado inicial.
+4. **Sincronización Reactiva e Integración Offline-First:**
+   - La función `updateUserProfile(userId, data)` envía el `PUT /users/:id` al backend y actualiza inmediatamente la colección `db.users` en Dexie (`putUser`).
+   - Al actualizar Dexie, el hook `useAuth()` (basado en `useLiveQuery`) propaga los cambios reactivamente a toda la aplicación sin requerir recargar la página.
+   - Se incorporan rutas de redirección automática en `App.jsx` para `/profile` -> `/dashboard/profile` y `/config` -> `/dashboard/config`.
+
+**Consecuencias.**
+El usuario cuenta con control total sobre su identidad en la plataforma. La gestión de avatares opera de forma instantánea y 100% compatible con entornos offline (Capacitor y PWA), sin costos de infraestructura externa ni configuraciones complejas de almacenamiento.
+
+**Estado.** ✅ Decidido e implementado (04/11/2026).

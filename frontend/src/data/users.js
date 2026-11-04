@@ -1,4 +1,5 @@
 import { db } from '../lib/db.js'
+import { apiFetch } from '../utils/apiFetch.js'
 
 export async function getUserById(id) {
   return db.users.get(id)
@@ -27,3 +28,16 @@ export async function getUsersByIds(ids) {
 export async function removeUser(id) {
   return db.users.delete(id)
 }
+
+export async function updateUserProfile(userId, updateData) {
+  const json = await apiFetch(`/users/${userId}`, {
+    method: 'PUT',
+    body: JSON.stringify(updateData),
+  })
+  const updated = json.data ?? json
+  if (updated) {
+    await putUser(updated)
+  }
+  return updated
+}
+
