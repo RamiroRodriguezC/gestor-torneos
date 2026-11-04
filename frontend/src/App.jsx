@@ -58,6 +58,8 @@ function App() {
               <Route path="/user/:userId" element={<Profile />} />
 
               {/* Rutas protegidas que requieren autenticación */}
+              <Route path="/profile" element={<ProtectedRoute><Navigate to="/dashboard/profile" replace /></ProtectedRoute>} />
+              <Route path="/config" element={<ProtectedRoute><Navigate to="/dashboard/config" replace /></ProtectedRoute>} />
               <Route path="/dashboard" element={<ProtectedRoute><Navigate to="/dashboard/tournaments" replace /></ProtectedRoute>} />
               <Route path="/dashboard/tournaments" element={<ProtectedRoute><Tournaments /></ProtectedRoute>} />
               <Route path="/dashboard/tournaments/create" element={<ProtectedRoute><CreateTournament /></ProtectedRoute>} />

@@ -9,6 +9,7 @@ import LogoutIcon from '@mui/icons-material/Logout'
 import PersonIcon from '@mui/icons-material/Person'
 import SettingsIcon from '@mui/icons-material/Settings'
 import Navbar from '../components/layout/Navbar'
+import EditProfileCard from '../components/profile/EditProfileCard'
 import { useAuth } from '../hooks/useAuth'
 import { logout } from '../data/auth'
 
@@ -34,7 +35,10 @@ function Config() {
         </Stack>
 
         <Stack spacing={3}>
-          {/* Card de Cuenta y Usuario */}
+          {/* Módulo de Edición de Perfil */}
+          {user && <EditProfileCard user={user} />}
+
+          {/* Card de Resumen de Cuenta */}
           {user && (
             <Paper elevation={0} sx={{ p: 3, bgcolor: '#1a1a1a', border: '1px solid', borderColor: 'divider', borderRadius: 3 }}>
               <Typography variant="subtitle2" color="grey.500" sx={{ mb: 2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>
@@ -43,7 +47,7 @@ function Config() {
               <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" useFlexGap sx={{ gap: 2 }}>
                 <Avatar
                   src={user.url_profile_photo || ''}
-                  sx={{ width: 56, height: 56, bgcolor: 'primary.main', fontWeight: 700 }}
+                  sx={{ width: 56, height: 56, bgcolor: 'primary.main', color: '#000', fontWeight: 700 }}
                 >
                   {user.name?.[0]}{user.lastName?.[0]}
                 </Avatar>
@@ -52,14 +56,15 @@ function Config() {
                     {user.name} {user.lastName}
                   </Typography>
                   <Typography variant="body2" color="grey.400">
-                    {user.email}
+                    {user.email} • @{user.username}
                   </Typography>
                 </Box>
                 <Button
                   variant="outlined"
                   size="small"
                   startIcon={<PersonIcon />}
-                  onClick={() => navigate('/profile')}
+                  onClick={() => navigate('/dashboard/profile')}
+                  sx={{ textTransform: 'none', fontWeight: 600 }}
                 >
                   Ver Perfil
                 </Button>
@@ -80,7 +85,7 @@ function Config() {
               color="error"
               startIcon={<LogoutIcon />}
               onClick={() => setConfirmOpen(true)}
-              sx={{ fontWeight: 600 }}
+              sx={{ fontWeight: 600, textTransform: 'none' }}
             >
               Cerrar sesión
             </Button>
