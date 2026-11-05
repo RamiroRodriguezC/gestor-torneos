@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import {
-  Paper, Box, Typography, Stack, Avatar, TextField, Button,
-  Chip, Alert, CircularProgress, IconButton, Tooltip, Divider,
+  Paper, Box, Typography, Stack, TextField, Button,
+  Chip, Alert, CircularProgress, Divider,
 } from '@mui/material'
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera'
 import LinkIcon from '@mui/icons-material/Link'
@@ -18,6 +18,7 @@ import FitnessCenterIcon from '@mui/icons-material/FitnessCenter'
 import { useSports } from '../../hooks/useSportsConfig'
 import { syncSports } from '../../data/sportsConfig'
 import { updateUserProfile } from '../../data/users'
+import UserAvatar from '../shared/UserAvatar'
 
 // Formateo amigable de nombres de deportes
 function formatSportName(name = '') {

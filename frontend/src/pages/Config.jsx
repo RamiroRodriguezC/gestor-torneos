@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Container, Typography, Box, Paper, Button, Stack,
-  Avatar, Dialog, DialogTitle, DialogContent,
+  Dialog, DialogTitle, DialogContent,
   DialogContentText, DialogActions,
 } from '@mui/material'
 import LogoutIcon from '@mui/icons-material/Logout'
