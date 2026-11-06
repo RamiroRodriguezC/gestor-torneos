@@ -34,7 +34,11 @@ export async function fetchTournamentFields(tournamentId) {
   const json = await apiFetch(`/tournaments/${tournamentId}/fields`)
   const fields = json.data || []
   if (fields.length > 0) {
-    await bulkPutFields(fields)
+    const toSave = fields.map((f) => ({
+      ...f,
+      tournamentId: f.tournamentId || tournamentId,
+    }))
+    await bulkPutFields(toSave)
   }
   return fields
 }
