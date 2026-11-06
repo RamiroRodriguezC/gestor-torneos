@@ -10,7 +10,12 @@ export async function apiFetch(path, options = {}) {
   const token = getToken()
   if (token) headers.Authorization = `Bearer ${token}`
 
-  const res = await fetch(`${API}${path}`, { ...options, headers })
+  let body = options.body
+  if (body && typeof body === 'object' && !(body instanceof FormData)) {
+    body = JSON.stringify(body)
+  }
+
+  const res = await fetch(`${API}${path}`, { ...options, headers, body })
 
   const json = await res.json().catch(() => ({}))
 

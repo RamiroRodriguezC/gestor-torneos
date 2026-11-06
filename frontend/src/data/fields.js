@@ -46,7 +46,7 @@ export async function createTournamentField(tournamentId, fieldData) {
   if (!tournamentId) throw new Error('tournamentId es requerido')
   const json = await apiFetch(`/tournaments/${tournamentId}/fields`, {
     method: 'POST',
-    body: fieldData,
+    body: JSON.stringify(fieldData),
   })
   const created = json.data
   if (created) {
@@ -62,7 +62,7 @@ export async function updateTournamentField(tournamentId, fieldId, fieldData) {
   if (!tournamentId || !fieldId) throw new Error('tournamentId y fieldId son requeridos')
   const json = await apiFetch(`/tournaments/${tournamentId}/fields/${fieldId}`, {
     method: 'PUT',
-    body: fieldData,
+    body: JSON.stringify(fieldData),
   })
   const updated = json.data
   if (updated) {
