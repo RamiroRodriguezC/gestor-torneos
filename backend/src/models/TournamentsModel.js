@@ -32,6 +32,15 @@ const ChampionSchema = new Schema({
   crownedAt: { type: Date, default: Date.now },
 }, { _id: false });
 
+const ScheduleConfigSchema = new Schema({
+  matchDays: { type: [Number], default: [6, 0] }, // 0: Dom, 1: Lun, ..., 6: Sab
+  startTime: { type: String, default: '14:00' },
+  endTime: { type: String, default: '21:00' },
+  slotDurationMinutes: { type: Number, default: 90 },
+  restDaysBetweenRounds: { type: Number, default: 6 },
+  fieldIds: [{ type: Schema.Types.ObjectId, ref: 'Field' }],
+}, { _id: false });
+
 const roundSchema = new Schema({
   roundName: { type: String, required: true },
   roundNumber: { type: Number, required: true },
@@ -68,6 +77,7 @@ const TournamentSchema = new Schema({
         }
     ],
     format: { type: String, enum: TOURNAMENT_FORMAT, default: 'SINGLE_ELIMINATION' },
+    rounds: { type: String, enum: ['single', 'double'], default: 'single' },
   }, 
 
   status: { type: String, enum: TOURNAMENT_STATUS, default: 'BORRADOR' },
@@ -96,6 +106,7 @@ const TournamentSchema = new Schema({
 
   participantes: [ParticipantSnapshotSchema],
   applications: [ApplicationSummarySchema],
+  scheduleConfig: { type: ScheduleConfigSchema, default: () => ({}) },
   rounds: [roundSchema],
   champion: { type: ChampionSchema, default: null },
 

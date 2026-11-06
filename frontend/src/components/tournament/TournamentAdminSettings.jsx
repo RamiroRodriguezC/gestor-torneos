@@ -34,6 +34,7 @@ import { fetchTournamentFields } from '../../data/fields'
 import { updateTournamentStatus, finishTournament, generateFixture } from '../../data/tournaments'
 import { computeStandings } from '../../utils/standings'
 import CompetitorPhoto from '../shared/CompetitorPhoto'
+import GenerateFixtureModal from './GenerateFixtureModal'
 
 function TournamentAdminSettings({ tournament, user: _user, onSectionChange, onTournamentUpdated }) {
   const navigate = useNavigate()
@@ -65,6 +66,7 @@ function TournamentAdminSettings({ tournament, user: _user, onSectionChange, onT
   const [successMessage, setSuccessMessage] = useState('')
   const [openUnpublishDialog, setOpenUnpublishDialog] = useState(false)
   const [openFinishDialog, setOpenFinishDialog] = useState(false)
+  const [openGenerateFixtureDialog, setOpenGenerateFixtureDialog] = useState(false)
 
   const pendingApplications = useMemo(() => {
     return (applications || []).filter((a) => a.status === 'PENDIENTE')
@@ -136,16 +138,18 @@ function TournamentAdminSettings({ tournament, user: _user, onSectionChange, onT
     }
   }
 
-  const handleGenerateFixture = async () => {
+  const handleGenerateFixture = async (options) => {
     setBusy(true)
     setErrorMessage('')
     setSuccessMessage('')
     try {
-      await generateFixture(tournament._id)
+      await generateFixture(tournament._id, options)
       await onTournamentUpdated?.(tournament._id)
+      setOpenGenerateFixtureDialog(false)
       setSuccessMessage('¡Fixture generado con éxito! Ya podés consultar los emparejamientos.')
     } catch (err) {
       setErrorMessage(err.message || 'Error al generar el fixture')
+      throw err
     } finally {
       setBusy(false)
     }
@@ -394,7 +398,7 @@ function TournamentAdminSettings({ tournament, user: _user, onSectionChange, onT
                   color="secondary"
                   startIcon={busy ? <CircularProgress size={16} color="inherit" /> : <AutoAwesomeIcon />}
                   disabled={busy || participantCount < 2}
-                  onClick={handleGenerateFixture}
+                  onClick={() => setOpenGenerateFixtureDialog(true)}
                   sx={{
                     fontWeight: 700,
                     textTransform: 'none',
@@ -782,6 +786,17 @@ function TournamentAdminSettings({ tournament, user: _user, onSectionChange, onT
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Modal de parametrización y generación de fixture */}
+      <GenerateFixtureModal
+        open={openGenerateFixtureDialog}
+        onClose={() => setOpenGenerateFixtureDialog(false)}
+        tournament={tournament}
+        fields={fields}
+        locationLabel={fieldLabel}
+        onGenerate={handleGenerateFixture}
+        busy={busy}
+      />
     </Box>
   )
 }

@@ -375,3 +375,36 @@ Adicionalmente, se identificó la necesidad de dar soporte a deportes y discipli
 El organizador dispone de autonomía completa para configurar los espacios de juego de su torneo. La generación del fixture queda parametrizada con las sedes reales de competencia, y la aplicación ofrece una experiencia personalizada y adaptada a la terminología propia de cada deporte.
 
 **Estado.** ✅ Decidido e implementado (06/11/2026).
+
+
+## ADR-019 — Parametrización del Fixture: Días de Disputa, Franja Horaria con Turnos sin Colisiones, Desborde Calendario y Descanso entre Fechas
+
+**Contexto.**
+Hasta la implementación de la gestión de canchas (ADR-018), la asignación de calendario en `fixture.service.js` utilizaba constantes fijas: partidos asignados siempre a las 15:00 hs con una separación de 7 días entre jornadas (`ROUND_GAP_DAYS = 7`, `DEFAULT_MATCH_HOUR = 15`). Esto provocaba dos problemas críticos en torneos reales:
+1. **Colisiones horarias:** Si una jornada tenía 4 partidos y 2 canchas disponibles, los partidos 1 y 3 quedaban agendados en la Cancha 1 a las 15:00 hs en simultáneo.
+2. **Inflexibilidad organizativa:** Los torneos reales tienen disponibilidad horaria acotada (ej. sábados y domingos de 14:00 a 20:00 hs), turnos con duración definida (ej. 60 o 90 min incluyendo márgenes de preparación) y días de descanso entre fechas que varían según el certamen.
+
+**Decisión.**
+1. **Extensión del Modelo de Torneo (`TournamentModel.js`):**
+   - Se incorporó el subdocumento `scheduleConfig` para persistir las preferencias de calendario del torneo:
+     - `matchDays`: Arreglo de números `[0..6]` (0: Domingo, 1: Lunes, ..., 6: Sábado). Default: `[6, 0]`.
+     - `startTime`: Hora de inicio en formato `'HH:mm'` (default: `'14:00'`).
+     - `endTime`: Hora límite de disputa en formato `'HH:mm'` (default: `'21:00'`).
+     - `slotDurationMinutes`: Duración en minutos por turno (partido + margen). Default: `90`.
+     - `restDaysBetweenRounds`: Mínimo de días de descanso requeridos tras finalizar una jornada antes de disputar la siguiente (default: `6`).
+     - `fieldIds`: Arreglo de referencias a `Field` seleccionadas para el certamen.
+   - En `rules.rounds`: Se añadió soporte formal en el esquema para `'single'` (solo ida) y `'double'` (ida y vuelta).
+2. **Algoritmo de Calendario sin Colisiones (`assignScheduleToFixture` en `fixture.service.js`):**
+   - **Cálculo de turnos diarios:** A partir de `startTime` a `endTime` en saltos de `slotDurationMinutes`.
+   - **Capacidad diaria:** $\text{turnos} \times \text{canchas activas}$. En cada turno, cada cancha alberga a lo sumo un partido en simultáneo.
+   - **Desborde de jornada:** Si una jornada requiere más partidos de los que caben en un único día calendario, el algoritmo desborda automáticamente al siguiente día permitido en `matchDays` de forma contigua hasta culminar la jornada.
+   - **Cierre y descanso entre jornadas:** Cada ronda computa su `startDate` (primer partido) y `endDate` (último partido). La siguiente fecha busca el primer día permitido que cumpla `fecha >= endDateAnterior + restDaysBetweenRounds`.
+3. **Modal de Parametrización en Frontend (`GenerateFixtureModal.jsx`):**
+   - Al pulsar "Generar Fixture" en `TournamentAdminSettings.jsx`, se despliega un modal interactivo que precarga los valores guardados del torneo.
+   - Permite al organizador seleccionar formato de ruedas, fecha inicial, días de la semana con chips interactivos, franja horaria, duración de turno, descanso entre fechas y marcar/desmarcar las canchas a utilizar.
+   - **Métricas en tiempo real:** Muestra capacidad diaria estimada, partidos por fecha, total de encuentros y anticipa si la jornada entrará en 1 día o si desbordará en múltiples días según la disponibilidad configurada.
+
+**Consecuencias.**
+El organizador puede generar fixtures viables operativamente que respetan la disponibilidad de canchas y horarios, evitando cruces de partidos y garantizando los descansos necesarios de los equipos.
+
+**Estado.** ✅ Decidido e implementado (06/11/2026).

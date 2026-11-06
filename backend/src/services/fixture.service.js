@@ -6,10 +6,31 @@ import { requireDB } from '../config/db.js';
 import { AppError } from '../utils/AppError.js';
 import { ErrorType } from '../constants/errorTypes.js';
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-const ROUND_GAP_DAYS = 7;
-const DEFAULT_MATCH_HOUR = 15;
-const DEFAULT_MATCH_MINUTE = 0;
+const parseTime = (timeStr) => {
+  if (typeof timeStr !== 'string') return null;
+  const match = timeStr.trim().match(/^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$/);
+  if (!match) return null;
+  const hours = parseInt(match[1], 10);
+  const minutes = parseInt(match[2], 10);
+  return { hours, minutes, totalMinutes: hours * 60 + minutes };
+};
+
+const addCalendarDays = (date, days) => {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+};
+
+const getNextMatchDay = (date, allowedDays) => {
+  const current = new Date(date);
+  for (let i = 0; i < 7; i++) {
+    if (allowedDays.includes(current.getDay())) {
+      return current;
+    }
+    current.setDate(current.getDate() + 1);
+  }
+  return current;
+};
 
 /**
  * Emparejamiento round robin (método del círculo / circle method).
@@ -73,33 +94,127 @@ export const RoundRobinPairing = (participants, { doubleRound = false } = {}) =>
 };
 
 /**
- * Asigna a cada partido del fixture una cancha (rotando entre las disponibles)
- * y un horario preseteado: una fecha por semana a las 15:00 desde startDate.
- * Modifica el fixture in-place y le agrega startDate/endDate a cada jornada.
+ * Asigna a cada partido del fixture una cancha y un horario respetando:
+ * - Días permitidos de la semana (matchDays: array de números 0=Dom, 1=Lun, ..., 6=Sáb)
+ * - Franja horaria diaria (startTime a endTime) y duración de turno (slotDurationMinutes)
+ * - Cantidad de canchas disponibles (partidos simultáneos por turno)
+ * - Días mínimos de descanso entre fechas (restDaysBetweenRounds)
+ * - Desborde: si una jornada excede la capacidad de un día, continúa en el siguiente día permitido
  *
  * @param {Array} fixture Salida de RoundRobinPairing
  * @param {Object} options
  * @param {Array} options.fields Canchas activas ({ _id, name })
- * @param {Date} [options.startDate] Fecha de la primera jornada (default: hoy)
+ * @param {Date|string} [options.startDate] Fecha de la primera jornada (default: hoy)
+ * @param {Array<number>} [options.matchDays] Días permitidos (0-6)
+ * @param {string} [options.startTime] Hora inicial 'HH:mm'
+ * @param {string} [options.endTime] Hora final 'HH:mm'
+ * @param {number} [options.slotDurationMinutes] Duración de cada turno en minutos
+ * @param {number} [options.restDaysBetweenRounds] Días de descanso entre el fin de una fecha y el inicio de la siguiente
  */
-export const assignScheduleToFixture = (fixture, { fields = [], startDate = new Date() } = {}) => {
+export const assignScheduleToFixture = (fixture, {
+  fields = [],
+  startDate = new Date(),
+  matchDays = [6, 0],
+  startTime = '14:00',
+  endTime = '21:00',
+  slotDurationMinutes = 90,
+  restDaysBetweenRounds = 6,
+} = {}) => {
   if (!fields.length) {
-    throw new AppError(ErrorType.VALIDATION_ERROR, 'No hay canchas configuradas para este torneo. Agregá al menos una cancha desde los ajustes del torneo antes de generar el fixture.');
+    throw new AppError(
+      ErrorType.VALIDATION_ERROR,
+      'No hay canchas configuradas o seleccionadas para este torneo. Agregá al menos una cancha desde los ajustes del torneo antes de generar el fixture.'
+    );
   }
 
-  const baseDate = new Date(startDate);
-  baseDate.setHours(DEFAULT_MATCH_HOUR, DEFAULT_MATCH_MINUTE, 0, 0);
+  const validMatchDays = Array.isArray(matchDays) && matchDays.length
+    ? [...new Set(matchDays.map(Number).filter((d) => Number.isInteger(d) && d >= 0 && d <= 6))]
+    : [6, 0];
 
-  fixture.forEach((round, roundIndex) => {
-    const roundStart = new Date(baseDate.getTime() + roundIndex * ROUND_GAP_DAYS * DAY_MS);
-    round.startDate = new Date(roundStart);
-    round.endDate = new Date(roundStart);
+  if (!validMatchDays.length) {
+    throw new AppError(ErrorType.VALIDATION_ERROR, 'Debe seleccionar al menos un día permitido de juego (ej. Sábado o Domingo).');
+  }
 
-    round.matches.forEach((match, matchIndex) => {
-      const field = fields[matchIndex % fields.length];
-      match.field = { fieldId: field._id, name: field.name };
-      match.startAt = new Date(roundStart);
+  const parsedStart = parseTime(startTime);
+  const parsedEnd = parseTime(endTime);
+
+  if (!parsedStart || !parsedEnd) {
+    throw new AppError(ErrorType.VALIDATION_ERROR, 'Las horas de inicio y fin deben tener formato válido (HH:mm).');
+  }
+
+  if (parsedStart.totalMinutes >= parsedEnd.totalMinutes) {
+    throw new AppError(ErrorType.VALIDATION_ERROR, 'La hora de fin de la franja horaria debe ser posterior a la de inicio.');
+  }
+
+  const duration = Number(slotDurationMinutes);
+  if (!Number.isFinite(duration) || duration <= 0) {
+    throw new AppError(ErrorType.VALIDATION_ERROR, 'La duración del turno debe ser un número mayor a 0 minutos.');
+  }
+
+  if (parsedEnd.totalMinutes - parsedStart.totalMinutes < duration) {
+    throw new AppError(ErrorType.VALIDATION_ERROR, 'La franja horaria no permite albergar ningún turno de la duración indicada.');
+  }
+
+  // Generar turnos horarios dentro del día
+  const slots = [];
+  for (let m = parsedStart.totalMinutes; m + duration <= parsedEnd.totalMinutes; m += duration) {
+    slots.push({
+      hours: Math.floor(m / 60),
+      minutes: m % 60,
     });
+  }
+
+  const startBase = startDate ? new Date(startDate) : new Date();
+  if (isNaN(startBase.getTime())) {
+    throw new AppError(ErrorType.VALIDATION_ERROR, 'La fecha de inicio indicada no es válida.');
+  }
+  startBase.setHours(0, 0, 0, 0);
+
+  let currentCalendarDay = getNextMatchDay(startBase, validMatchDays);
+  let previousRoundEndDate = null;
+  const restDays = Math.max(0, Number(restDaysBetweenRounds) || 0);
+
+  fixture.forEach((round) => {
+    if (previousRoundEndDate) {
+      const minNextDate = addCalendarDays(previousRoundEndDate, restDays);
+      currentCalendarDay = getNextMatchDay(minNextDate, validMatchDays);
+    }
+
+    const pendingMatches = [...round.matches];
+    let roundStartDate = null;
+    let roundEndDate = null;
+
+    while (pendingMatches.length > 0) {
+      for (const slot of slots) {
+        for (const field of fields) {
+          if (pendingMatches.length === 0) break;
+          const match = pendingMatches.shift();
+          const matchDate = new Date(currentCalendarDay);
+          matchDate.setHours(slot.hours, slot.minutes, 0, 0);
+
+          match.field = { fieldId: field._id, name: field.name };
+          match.startAt = matchDate;
+
+          if (!roundStartDate || matchDate < roundStartDate) {
+            roundStartDate = matchDate;
+          }
+          if (!roundEndDate || matchDate > roundEndDate) {
+            roundEndDate = matchDate;
+          }
+        }
+        if (pendingMatches.length === 0) break;
+      }
+
+      if (pendingMatches.length > 0) {
+        currentCalendarDay = getNextMatchDay(addCalendarDays(currentCalendarDay, 1), validMatchDays);
+      }
+    }
+
+    round.startDate = roundStartDate;
+    round.endDate = roundEndDate;
+
+    previousRoundEndDate = new Date(roundEndDate);
+    previousRoundEndDate.setHours(0, 0, 0, 0);
   });
 
   return fixture;
@@ -111,15 +226,18 @@ export const assignScheduleToFixture = (fixture, { fields = [], startDate = new 
  *
  * @param {string} tournamentId
  * @param {Object} [options]
- * @param {'single'|'double'} [options.rounds='single'] Cantidad de ruedas
+ * @param {'single'|'double'} [options.rounds] Cantidad de ruedas (default lee del torneo o 'single')
+ * @param {Array<number>} [options.matchDays] Días permitidos (0-6)
+ * @param {string} [options.startTime] Hora inicial 'HH:mm'
+ * @param {string} [options.endTime] Hora final 'HH:mm'
+ * @param {number} [options.slotDurationMinutes] Duración de cada turno en minutos
+ * @param {number} [options.restDaysBetweenRounds] Días de descanso entre el fin de una fecha y el inicio de la siguiente
+ * @param {Array<string>} [options.fieldIds] IDs de canchas a utilizar
+ * @param {Date|string} [options.startDate] Fecha de inicio
  * @returns {Promise<{rounds: Array, matches: Array}>}
  */
-export const generateFixture = async (tournamentId, { rounds = 'single' } = {}) => {
+export const generateFixture = async (tournamentId, options = {}) => {
   requireDB();
-
-  if (!['single', 'double'].includes(rounds)) {
-    throw new AppError(ErrorType.VALIDATION_ERROR, `rounds debe ser 'single' o 'double'`);
-  }
 
   const tournament = await Tournament.findOne({ _id: tournamentId, isDeleted: false });
   if (!tournament) throw new AppError(ErrorType.TOURNAMENT_NOT_FOUND);
@@ -139,22 +257,48 @@ export const generateFixture = async (tournamentId, { rounds = 'single' } = {}) 
     throw new AppError(ErrorType.VALIDATION_ERROR, 'Se necesitan al menos 2 participantes para generar el fixture.');
   }
 
+  // Opciones con fallback a las configuradas en el torneo
+  const rounds = options.rounds || tournament.rules?.rounds || 'single';
+  if (!['single', 'double'].includes(rounds)) {
+    throw new AppError(ErrorType.VALIDATION_ERROR, `rounds debe ser 'single' o 'double'`);
+  }
+
+  const scheduleConfig = {
+    matchDays: options.matchDays || tournament.scheduleConfig?.matchDays || [6, 0],
+    startTime: options.startTime || tournament.scheduleConfig?.startTime || '14:00',
+    endTime: options.endTime || tournament.scheduleConfig?.endTime || '21:00',
+    slotDurationMinutes: Number(options.slotDurationMinutes || tournament.scheduleConfig?.slotDurationMinutes || 90),
+    restDaysBetweenRounds: options.restDaysBetweenRounds !== undefined
+      ? Number(options.restDaysBetweenRounds)
+      : (tournament.scheduleConfig?.restDaysBetweenRounds ?? 6),
+    startDate: options.startDate || tournament.startDate || new Date(),
+  };
+
   // 1) Emparejamientos puros (sin persistir).
   const fixture = RoundRobinPairing(participants, { doubleRound: rounds === 'double' });
 
-  // 2) Canchas + horarios preseteado.
-  // 2) Canchas + horarios preseteado.
-  // Priorizar las canchas asignadas a este torneo:
-  let fields = await Field.find({ tournamentId, isDeleted: false }).select('_id name');
-  if (!fields.length) {
+  // 2) Canchas: filtrar por fieldIds si se pasaron, o todas las del torneo
+  let fieldsQuery = { tournamentId, isDeleted: false };
+  if (Array.isArray(options.fieldIds) && options.fieldIds.length > 0) {
+    fieldsQuery._id = { $in: options.fieldIds };
+  }
+
+  let fields = await Field.find(fieldsQuery).select('_id name');
+  if (!fields.length && (!options.fieldIds || !options.fieldIds.length)) {
+    // Fallback retrocompatible para torneos viejos con canchas globales
     fields = await Field.find({
       isDeleted: false,
       $or: [{ tournamentId: null }, { tournamentId: { $exists: false } }],
     }).select('_id name');
   }
+
+  if (!fields.length) {
+    throw new AppError(ErrorType.VALIDATION_ERROR, 'No hay canchas configuradas o seleccionadas para este torneo. Agregá al menos una cancha desde los ajustes del torneo antes de generar el fixture.');
+  }
+
   assignScheduleToFixture(fixture, {
     fields,
-    startDate: tournament.startDate || new Date(),
+    ...scheduleConfig,
   });
 
   // 3) IDs estables de ronda generados por adelantado (ADR-008):
@@ -209,6 +353,16 @@ export const generateFixture = async (tournamentId, { rounds = 'single' } = {}) 
   let createdMatches = [];
   let savedTournament = null;
 
+  const tournamentUpdates = {
+    'rules.rounds': rounds,
+    'scheduleConfig.matchDays': scheduleConfig.matchDays,
+    'scheduleConfig.startTime': scheduleConfig.startTime,
+    'scheduleConfig.endTime': scheduleConfig.endTime,
+    'scheduleConfig.slotDurationMinutes': scheduleConfig.slotDurationMinutes,
+    'scheduleConfig.restDaysBetweenRounds': scheduleConfig.restDaysBetweenRounds,
+    'scheduleConfig.fieldIds': fields.map((f) => f._id),
+  };
+
   try {
     await session.withTransaction(async () => {
       createdMatches = await Match.insertMany(matchDocs, { session });
@@ -232,7 +386,12 @@ export const generateFixture = async (tournamentId, { rounds = 'single' } = {}) 
 
       savedTournament = await Tournament.findByIdAndUpdate(
         tournamentId,
-        { $set: { rounds: roundDocs } },
+        {
+          $set: {
+            rounds: roundDocs,
+            ...tournamentUpdates,
+          },
+        },
         { new: true, runValidators: true, session }
       );
 
@@ -265,7 +424,12 @@ export const generateFixture = async (tournamentId, { rounds = 'single' } = {}) 
       try {
         savedTournament = await Tournament.findByIdAndUpdate(
           tournamentId,
-          { $set: { rounds: roundDocs } },
+          {
+            $set: {
+              rounds: roundDocs,
+              ...tournamentUpdates,
+            },
+          },
           { new: true, runValidators: true }
         );
       } catch (innerErr) {
