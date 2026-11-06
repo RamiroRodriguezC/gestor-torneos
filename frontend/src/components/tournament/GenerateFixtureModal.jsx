@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
+import Card from '@mui/material/Card'
 import Dialog from '@mui/material/Dialog'
 import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
