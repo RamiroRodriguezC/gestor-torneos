@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
@@ -25,8 +25,12 @@ import GroupsIcon from '@mui/icons-material/Groups'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
+import StadiumIcon from '@mui/icons-material/Stadium'
 import { useApplicationsByTournament } from '../../hooks/useApplications'
 import { useMatchesByTournament } from '../../hooks/useMatches'
+import { useFieldsByTournament } from '../../hooks/useFields'
+import { useSport } from '../../hooks/useSportsConfig'
+import { fetchTournamentFields } from '../../data/fields'
 import { updateTournamentStatus, finishTournament, generateFixture } from '../../data/tournaments'
 import { computeStandings } from '../../utils/standings'
 import CompetitorPhoto from '../shared/CompetitorPhoto'
@@ -35,6 +39,26 @@ function TournamentAdminSettings({ tournament, user: _user, onSectionChange, onT
   const navigate = useNavigate()
   const applications = useApplicationsByTournament(tournament?._id)
   const allMatches = useMatchesByTournament(tournament?._id)
+  const fields = useFieldsByTournament(tournament?._id)
+  const sport = useSport(tournament?.sportConfigId)
+
+  const fieldLabel = useMemo(() => {
+    const rawLabel = sport?.sportProps?.locationLabel
+    if (rawLabel) {
+      return rawLabel.endsWith('a') || rawLabel.endsWith('o') ? `${rawLabel}s` : `${rawLabel}es`
+    }
+    const sportName = (sport?.name || '').toLowerCase()
+    if (sportName.includes('mesa') || sportName.includes('ping') || sportName.includes('pool')) return 'Mesas'
+    if (sportName.includes('pista') || sportName.includes('atletismo')) return 'Pistas'
+    if (sportName.includes('ajedrez')) return 'Tableros'
+    return 'Canchas'
+  }, [sport])
+
+  useEffect(() => {
+    if (tournament?._id) {
+      fetchTournamentFields(tournament._id).catch(() => {})
+    }
+  }, [tournament?._id])
 
   const [busy, setBusy] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
@@ -253,6 +277,57 @@ function TournamentAdminSettings({ tournament, user: _user, onSectionChange, onT
                 }}
               >
                 Ver Solicitudes
+              </Button>
+            </Stack>
+          </CardContent>
+        </Card>
+
+        {/* Tarjeta: Canchas / Ubicaciones de Juego según deporte */}
+        <Card sx={{ bgcolor: '#141414', border: '1px solid', borderColor: 'grey.800', borderRadius: 2 }}>
+          <CardContent sx={{ p: 2.5 }}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ sm: 'center' }} spacing={2}>
+              <Box>
+                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5 }}>
+                  <StadiumIcon sx={{ color: '#00e676', fontSize: 22 }} />
+                  <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'white' }}>
+                    {fieldLabel} del Torneo
+                  </Typography>
+                  {fields && fields.length > 0 ? (
+                    <Chip
+                      label={`${fields.length} ${fieldLabel.toLowerCase()} registradas`}
+                      size="small"
+                      color="success"
+                      sx={{ fontWeight: 700, height: 22, fontSize: '0.75rem' }}
+                    />
+                  ) : (
+                    <Chip
+                      label={`Sin ${fieldLabel.toLowerCase()}`}
+                      size="small"
+                      color="default"
+                      sx={{ fontWeight: 600, height: 22, fontSize: '0.75rem', bgcolor: 'rgba(255,255,255,0.08)' }}
+                    />
+                  )}
+                </Stack>
+                <Typography variant="body2" sx={{ color: 'grey.400' }}>
+                  Gestioná las {fieldLabel.toLowerCase()} asignadas para la disputa de los partidos de este torneo.
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'grey.500', display: 'block', mt: 0.5 }}>
+                  {fields?.length || 0} registradas · Se asignarán automáticamente a los partidos del fixture
+                </Typography>
+              </Box>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => navigate(`/torneos/${tournament._id}/canchas`)}
+                sx={{
+                  color: '#0a0a0a',
+                  fontWeight: 700,
+                  textTransform: 'none',
+                  whiteSpace: 'nowrap',
+                  alignSelf: { xs: 'flex-start', sm: 'center' },
+                }}
+              >
+                Ver {fieldLabel}
               </Button>
             </Stack>
           </CardContent>

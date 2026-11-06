@@ -84,7 +84,7 @@ export const RoundRobinPairing = (participants, { doubleRound = false } = {}) =>
  */
 export const assignScheduleToFixture = (fixture, { fields = [], startDate = new Date() } = {}) => {
   if (!fields.length) {
-    throw new AppError(ErrorType.VALIDATION_ERROR, 'No hay canchas cargadas. Creá al menos una en POST /api/fields antes de generar el fixture.');
+    throw new AppError(ErrorType.VALIDATION_ERROR, 'No hay canchas configuradas para este torneo. Agregá al menos una cancha desde los ajustes del torneo antes de generar el fixture.');
   }
 
   const baseDate = new Date(startDate);
@@ -143,7 +143,15 @@ export const generateFixture = async (tournamentId, { rounds = 'single' } = {}) 
   const fixture = RoundRobinPairing(participants, { doubleRound: rounds === 'double' });
 
   // 2) Canchas + horarios preseteado.
-  const fields = await Field.find({ isDeleted: false }).select('_id name');
+  // 2) Canchas + horarios preseteado.
+  // Priorizar las canchas asignadas a este torneo:
+  let fields = await Field.find({ tournamentId, isDeleted: false }).select('_id name');
+  if (!fields.length) {
+    fields = await Field.find({
+      isDeleted: false,
+      $or: [{ tournamentId: null }, { tournamentId: { $exists: false } }],
+    }).select('_id name');
+  }
   assignScheduleToFixture(fixture, {
     fields,
     startDate: tournament.startDate || new Date(),

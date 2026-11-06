@@ -336,3 +336,42 @@ Adicionalmente, se debía definir una estrategia para el manejo de imágenes de 
 El usuario cuenta con control total sobre su identidad en la plataforma. La gestión de avatares opera de forma instantánea y 100% compatible con entornos offline (Capacitor y PWA), sin costos de infraestructura externa ni configuraciones complejas de almacenamiento.
 
 **Estado.** ✅ Decidido e implementado (04/11/2026).
+
+
+---
+
+## ADR-018 — Gestión de Espacios de Juego por Torneo (Canchas/Mesas/Pistas), Nomenclatura Dinámica por Deporte y Asignación en Fixture
+
+**Contexto.**
+Hasta este punto, el modelo `Field` era la colección más aislada de la plataforma: no contaba con interfaces de usuario para alta, modificación o borrado, ni estaba asociada a torneos específicos.
+Cuando el servicio de fixture (`fixture.service.js`) generaba los partidos de un certamen, consultaba indiscriminadamente todas las canchas globales de la base de datos para asignar los turnos.
+Adicionalmente, se identificó la necesidad de dar soporte a deportes y disciplinas cuyas disputas no se realizan en "canchas", sino en otros tipos de espacios físicos, tales como mesas (tenis de mesa, ping pong, pool, billar), pistas (atletismo, patinaje) o tableros (ajedrez).
+
+**Decisión.**
+1. **Asociación Directa de Canchas por Torneo:**
+   - Se añadió el campo `tournamentId: { type: Schema.Types.ObjectId, ref: 'Tournament', index: true }` en `FieldModel.js`.
+   - Cada torneo gestiona su propio inventario de espacios físicos habilitados para sus partidos.
+2. **Nomenclatura Semántica Impulsada por el Deporte:**
+   - Se descartó forzar al organizador a elegir un tipo individual (cancha, mesa, etc.) por cada espacio registrado, comprendiendo que el espacio físico es una entidad simple (nombre/número identificador, ubicación interna y dirección) y que la denominación del espacio es una propiedad intrínseca de la disciplina deportiva (`SportsConfig`).
+   - Se incorporó en `SportsConfigModel.js` (`sportProps`) el atributo `locationLabel` (default: `'Cancha'`) con fallback inteligente por nombre de disciplina (*Mesa* para ping pong/billar, *Pista* para atletismo, *Tablero* para ajedrez, *Cancha* para fútbol/básquet/vóley).
+   - Se eliminaron del formulario de alta los selectores redundantes y campos no prioritarios como `amenities`, manteniendo el alta ágil y directa.
+3. **Endpoints REST y Seguridad Granular:**
+   - **Rutas Anidadas en Torneo:**
+     - `GET /api/tournaments/:id/fields`: Consulta pública de canchas habilitadas en el certamen (sin requerir token para consulta de participantes y público general).
+     - `POST /api/tournaments/:id/fields`: Creación de cancha/espacio en el torneo. Protegido con `authenticateToken` y `isOrganizador` (solo el organizador del torneo o un `ADMIN` global pueden operar).
+     - `PUT /api/tournaments/:id/fields/:fieldId`: Modificación de datos del espacio. Protegido con `isOrganizador`.
+     - `DELETE /api/tournaments/:id/fields/:fieldId`: Borrado lógico (`isDeleted: true`). Protegido con `isOrganizador`.
+   - **Rutas Directas (`/api/fields`):**
+     - `GET /api/fields` soporta filtro por query param `?tournamentId=...`.
+     - `POST /api/fields`, `PUT /api/fields/:id` y `DELETE /api/fields/:id` aplican el middleware `canManageField`, que valida pertenencia de torneo y restringe la gestión de canchas globales exclusivamente a `ADMIN`.
+4. **Asignación en Generación de Fixture:**
+   - `fixture.service.js` prioriza y rota automáticamente entre las canchas asociadas al `tournamentId` del torneo. Si el torneo no tiene canchas asignadas, realiza fallback a canchas globales de sistema y arroja un error descriptivo si no hay ninguna disponible, instruyendo al usuario a crearlas desde los ajustes.
+5. **Módulo de Gestión Frontend y Offline-First:**
+   - **Tarjeta en Ajustes:** En `TournamentAdminSettings.jsx`, se agregó el módulo dinámico de espacios de juego con contador en vivo y botón directo ("Ver Canchas", "Ver Mesas", etc.), manteniendo congruencia visual con el módulo de Solicitudes de Inscripción.
+   - **Pantalla Dedicada:** Se implementó `TournamentFieldsPage.jsx` en la ruta `/torneos/:id/canchas` con protección de acceso para organizador/admin, listado de tarjetas, modal de creación y edición, y diálogo de confirmación para borrado.
+   - **Dexie Store:** Se actualizó Dexie a la versión 4 (`db.js`), indexando `fields: '_id, name, tournamentId, isDeleted'` y creando el hook reactivo `useFieldsByTournament(tournamentId)`.
+
+**Consecuencias.**
+El organizador dispone de autonomía completa para configurar los espacios de juego de su torneo. La generación del fixture queda parametrizada con las sedes reales de competencia, y la aplicación ofrece una experiencia personalizada y adaptada a la terminología propia de cada deporte.
+
+**Estado.** ✅ Decidido e implementado (06/11/2026).

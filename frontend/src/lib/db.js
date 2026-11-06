@@ -38,3 +38,15 @@ db.version(3).stores({
   fields: '_id, name',
   sync_queue: 'id, entity, action, status, createdAt',
 })
+
+// Versión 4: Canchas asociadas al torneo e indexadas por tournamentId
+db.version(4).stores({
+  users: '_id, email, globalRole',
+  teams: '_id, name, discipline, capitanId',
+  sportsConfig: '_id, name',
+  applications: '_id, tournamentId, applicantId, participantId, status',
+  tournaments: '_id, status, organizerId, sportConfigId, isDeleted, [status+isDeleted]',
+  matches: '_id, tournamentId, status, isDeleted, updatedAt, [tournamentId+round.roundId]',
+  fields: '_id, name, tournamentId, isDeleted',
+  sync_queue: 'id, entity, action, status, createdAt',
+})

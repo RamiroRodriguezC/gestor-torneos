@@ -1,14 +1,18 @@
 import { Router } from 'express';
-import { getAll, getById, create, update } from '../controllers/fields.controller.js';
-import { authenticateToken } from '../middlewares/authMiddleware.js';
+import { getAll, getById, create, update, remove } from '../controllers/fields.controller.js';
+import { authenticateToken, canManageField } from '../middlewares/authMiddleware.js';
 
 const router = Router();
 
-router.use(authenticateToken);
-
+// Consulta pública de canchas / ubicaciones de juego
 router.get('/', getAll);
 router.get('/:id', getById);
-router.post('/', create);
-router.put('/:id', update);
+
+// Rutas de administración protegidas
+router.use(authenticateToken);
+
+router.post('/', canManageField, create);
+router.put('/:id', canManageField, update);
+router.delete('/:id', canManageField, remove);
 
 export default router;

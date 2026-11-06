@@ -1,6 +1,8 @@
 import Tournament from '../models/TournamentsModel.js';
 import Application from '../models/ApplicationsModel.js';
 import Match from '../models/MatchesModel.js';
+import Field from '../models/FieldModel.js';
+import * as fieldsService from './fields.service.js';
 import { requireDB } from '../config/db.js';
 import { AppError } from '../utils/AppError.js';
 import { ErrorType } from '../constants/errorTypes.js';
@@ -360,4 +362,38 @@ export const updateStatus = async (id, status, { actorId, champion } = {}) => {
 export const findApplications = async (tournamentId) => {
   requireDB();
   return Application.find({ tournamentId, isDeleted: false });
+};
+
+
+export const findFields = async (tournamentId) => {
+  requireDB();
+  return Field.find({ tournamentId, isDeleted: false });
+};
+
+export const addField = async (tournamentId, fieldData) => {
+  requireDB();
+  const tournament = await Tournament.findOne({ _id: tournamentId, isDeleted: false });
+  if (!tournament) throw new AppError(ErrorType.TOURNAMENT_NOT_FOUND);
+
+  return fieldsService.create({
+    ...fieldData,
+    tournamentId,
+    sportConfigId: fieldData.sportConfigId || tournament.sportConfigId,
+  });
+};
+
+export const updateTournamentField = async (tournamentId, fieldId, fieldData) => {
+  requireDB();
+  const field = await Field.findOne({ _id: fieldId, tournamentId, isDeleted: false });
+  if (!field) throw new AppError(ErrorType.FIELD_NOT_FOUND);
+
+  return fieldsService.update(fieldId, fieldData);
+};
+
+export const removeTournamentField = async (tournamentId, fieldId) => {
+  requireDB();
+  const field = await Field.findOne({ _id: fieldId, tournamentId, isDeleted: false });
+  if (!field) throw new AppError(ErrorType.FIELD_NOT_FOUND);
+
+  return fieldsService.remove(fieldId);
 };

@@ -131,7 +131,7 @@ El corazón de la app. Implementa refresco reactivo en segundo plano (*stale-whi
 | Fixture | `TournamentFixture` | ✅ funcional — tabs por ronda con estado dinámico (`(Culminada)`, `(En disputa)`) + destacado de "próximos partidos de mi equipo" |
 | Participantes | `TournamentParticipants` | ✅ lista/búsqueda de participantes ya aprobados con snapshots de nombre y logo |
 | Estadísticas | `TournamentStats` | ✅ funcional — doble vista de Anotaciones y Disciplina (Por Jugadores y Por Equipos) + KPIs de torneo |
-| Ajustes | `TournamentAdminSettings` | ✅ exclusivo organizador — gestión de solicitudes, generación de fixture, inicio de torneo (`EN_CURSO`), progreso de fechas y finalización oficial de certamen |
+| Ajustes | `TournamentAdminSettings` | ✅ exclusivo organizador — gestión de solicitudes de inscripción, administración de canchas/ubicaciones de juego (`/torneos/:id/canchas`), generación de fixture, inicio de torneo (`EN_CURSO`), progreso de fechas y finalización oficial de certamen |
 | Anuncios | — | 🔴 placeholder explícito (`UnderConstruction feature="Anuncios"`) — postergado formalmente fuera del MVP (ADR-016) |
 
 `TournamentStandings` decide el componente a renderizar en base a `tournament.rules?.format`, y **cae a `StandingsTable` por default** si el formato no matchea ninguno de los casos (comportamiento razonable pero no documentado como tal en ningún lado).
@@ -149,4 +149,4 @@ El corazón de la app. Implementa refresco reactivo en segundo plano (*stale-whi
 - **`services/AuthService.js` + `api/api.js`** (axios + interceptor Bearer): sin uso real hoy. Decisión tomada (ADR-011): integrar el interceptor a `data/auth.js` y deprecar `AuthService.js`.
 - **`data/seedDexie.js`**: función `seedDexie()` completa (siembra Dexie completo desde la API, con flag `localStorage['dexie-seeded']`), pero no se encontró ningún `import` de este archivo en `main.jsx`/`App.jsx`. Parece haber sido reemplazada por `syncUserEnvironment()` (que es más selectiva: solo trae lo del usuario logueado) y haber quedado sin borrar.
 - **`hooks/useApplications.js`**: 4 hooks completos y funcionales sobre la store `applications` de Dexie, pero **ningún componente los importa** — consistente con que el flujo de inscripción no tiene UI (ver informe de pendientes).
-- **`hooks/useFields.js`**: ídem, sin consumidores en pantallas.
+- **`hooks/useFields.js`**: ✅ Conectado. Dispone de `useFields()`, `useField(id)` y `useFieldsByTournament(tournamentId)` (Dexie v4), consumidos por `TournamentAdminSettings` y `TournamentFieldsPage` (`/torneos/:id/canchas`) para la gestión y asignación de espacios de juego.

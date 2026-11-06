@@ -14,6 +14,7 @@ const sportPropsSchema = new Schema({
     scoreOrder: { type: String, enum: SCORE_ORDER, required: true },
     finishCondition: { type: String, enum: FINISH_CONDITION, required: true },
     hasDraw: { type: Boolean, default: false },
+    locationLabel: { type: String, default: 'Cancha' },
 }, { _id: false });
 
 const validEventsSchema = new Schema({

@@ -7,7 +7,6 @@ import PullToRefresh from './components/layout/PullToRefresh'
 import HomePage from './pages/HomePage'
 import Login from './pages/Login'
 import Register from './pages/Register'
-import Dashboard from './pages/Dashboard'
 import Tournaments from './pages/Tournaments'
 import CreateTournament from './pages/CreateTournament'
 import Teams from './pages/Teams'
@@ -19,6 +18,7 @@ import MatchDetailPage from './pages/MatchDetailPage'
 import ExploreTournaments from './pages/ExploreTournaments'
 import InscriptionPage from './pages/InscriptionPage'
 import TournamentApplicationsPage from './pages/TournamentApplicationsPage'
+import TournamentFieldsPage from './pages/TournamentFieldsPage'
 
 const theme = createTheme({
   palette: {
@@ -69,6 +69,7 @@ function App() {
               <Route path="/dashboard/config" element={<ProtectedRoute><Config /></ProtectedRoute>} />
               <Route path="/torneos/:id/inscripcion" element={<ProtectedRoute><InscriptionPage /></ProtectedRoute>} />
               <Route path="/torneos/:id/solicitudes" element={<ProtectedRoute><TournamentApplicationsPage /></ProtectedRoute>} />
+              <Route path="/torneos/:id/canchas" element={<ProtectedRoute><TournamentFieldsPage /></ProtectedRoute>} />
               <Route path="/match/:id" element={<ProtectedRoute><MatchDetailPage /></ProtectedRoute>} />
               <Route path="/team/:id" element={<ProtectedRoute><Team /></ProtectedRoute>} />
 

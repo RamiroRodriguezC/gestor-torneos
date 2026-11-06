@@ -115,7 +115,7 @@ erDiagram
 ### `SportsConfig` — el manifiesto multideporte
 Es la pieza central del diseño polimórfico (ver ADR-005). No se crea desde la UI (sin endpoints de alta/edición expuestos ni pantalla); vive por seed.
 
-- `sportProps`: `participantType` (INDIVIDUAL/TEAM), `minParticipants`, `maxParticipants`, `matchExecution` (VERSUS/LEADERBOARD), `scoringUnit`, `scoreOrder` (ASC/DESC), `finishCondition`, `hasDraw`.
+- `sportProps`: `participantType` (INDIVIDUAL/TEAM), `minParticipants`, `maxParticipants`, `matchExecution` (VERSUS/LEADERBOARD), `scoringUnit`, `scoreOrder` (ASC/DESC), `finishCondition`, `hasDraw`, `locationLabel` (ADR-018: define cómo se denomina el espacio de juego según la disciplina, ej. "Cancha", "Mesa", "Pista", "Tablero").
 - `validEvents[]`: catálogo de eventos posibles del deporte (`code`, `label`, `targetField`, `incrementScore`) — de acá salen los botones de carga de planilla (a futuro, hoy `TournamentStats` está sin implementar).
 - `rulesConfig`: qué reglas de torneo soporta este deporte (`scoringSystem`, `finishingCriteria`, `subsLimit.max`, `tieBreakerRules`, `specialRules`, `format.allowed[]`). Diseñado para condicionar formularios (ej. `CreateTournament`), pero **hoy el formulario no lo consulta** (ver informe de pendientes).
 
@@ -126,7 +126,7 @@ Es la pieza central del diseño polimórfico (ver ADR-005). No se crea desde la 
 `discipline` es un `String` libre, no un `ObjectId` a `SportsConfig` — se usa como texto para filtrar (`getTeamsByDiscipline`) y para mostrar (`SportsTag`). Funciona porque coincide con `sportConfigId` en la práctica, pero no hay integridad referencial real ahí.
 
 ### `Field` (canchas)
-La colección más aislada del sistema: nada más la referencia salvo `Match.field.fieldId` (snapshot de `name`). Sin UI de gestión.
+Espacios físicos de disputa de los partidos (canchas, mesas, pistas, tableros). Posee asociación directa al certamen mediante `tournamentId` (`ObjectId` ref `Tournament`, indexado), nombre o identificador (`name`), sector o predio interno (`location`), dirección física (`address`), `sportConfigId` opcional y `isDeleted` para soft-delete. Cuenta con módulo de gestión completo desde `TournamentAdminSettings` y `TournamentFieldsPage` (`/torneos/:id/canchas`). Al generar el fixture, el algoritmo de emparejamiento rota y asigna automáticamente entre las canchas asociadas al torneo.
 
 ### `Tournament`
 El documento más grande y con más responsabilidad. `rules` es un sub-objeto rico (sistema de puntos, criterio de desempate, formato, reglas especiales libres). `participantes[]` es el snapshot de quién juega; `rounds[]` es la estructura temporal/competitiva con identidad propia (`_id`) y ciclo de vida (`SCHEDULED`, `IN_PROCESS`, `COMPLETED` según el avance de sus partidos). Incorpora el subdocumento `champion` (ADR-016) para persistir al ganador oficial con snapshot (`participantId`, `displayNameSnapshot`, `logoURL`, `participantType`, `crownedAt`) una vez finalizado el certamen.
@@ -142,7 +142,7 @@ Diseñada, con backend completo, sin consumo de frontend (ver informe de pendien
 ## Modelo de datos local (Dexie / IndexedDB)
 
 ```js
-// frontend/src/lib/db.js — versión 2
+// frontend/src/lib/db.js — versión 4 (ADR-018)
 {
   users:        '_id, email, globalRole',
   teams:        '_id, name, discipline, capitanId',
@@ -150,7 +150,7 @@ Diseñada, con backend completo, sin consumo de frontend (ver informe de pendien
   applications: '_id, tournamentId, applicantId, participantId, status',
   tournaments:  '_id, status, organizerId, sportConfigId, isDeleted, [status+isDeleted]',
   matches:      '_id, tournamentId, status, isDeleted, updatedAt, [tournamentId+round.roundId]',
-  fields:       '_id, name',
+  fields:       '_id, name, tournamentId, isDeleted',      // indexada por torneo y borrado lógico en v4
   sync_queue:   'id, entity, action, status, createdAt',   // agregada en v2
 }
 ```

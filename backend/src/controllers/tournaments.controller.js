@@ -63,3 +63,24 @@ export const generateFixture = handle(async (req) => {
   const data = await fixtureService.generateFixture(req.params.id, req.body);
   return { data };
 });
+
+
+export const getTournamentFields = handle(async (req) => {
+  const data = await tournamentsService.findFields(req.params.id);
+  return { data, count: data.length };
+});
+
+export const postTournamentField = handle(async (req) => {
+  const data = await tournamentsService.addField(req.params.id, req.body);
+  return { data };
+});
+
+export const putTournamentField = handle(async (req) => {
+  const data = await tournamentsService.updateTournamentField(req.params.id, req.params.fieldId, req.body);
+  return { data };
+});
+
+export const deleteTournamentField = handle(async (req) => {
+  const data = await tournamentsService.removeTournamentField(req.params.id, req.params.fieldId);
+  return { data, message: 'Cancha eliminada correctamente' };
+});

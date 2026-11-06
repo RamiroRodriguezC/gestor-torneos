@@ -45,3 +45,8 @@ export const USER_TOURNAMENT_ROLE = ['ORGANIZADOR', 'COORDINADOR', 'JUGADOR'];
 export const TEAM_ROLE = ['CAPITAN', 'MIEMBRO'];
 /** Rol global del usuario en la plataforma */
 export const GLOBAL_ROLE = ['ADMIN', 'USER'];
+
+// |----------------------- CANCHA / UBICACIÓN (Field) -----------------------|
+/** Tipo genérico de ubicación de juego del torneo */
+export const FIELD_TYPE = ['CANCHA', 'MESA', 'PISTA', 'TABLERO', 'OTRO'];
+

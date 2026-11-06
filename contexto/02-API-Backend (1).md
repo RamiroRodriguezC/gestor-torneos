@@ -154,6 +154,10 @@ Las sub-rutas anidadas están declaradas **antes** que las genéricas `/:id` par
 | GET | `/:id/rounds` | Lista `rounds[]` del torneo |
 | POST | `/:id/rounds` | Agrega una ronda |
 | GET | `/:id/applications` | Lista solicitudes (`Application`) de ese torneo |
+| GET | `/:id/fields` | Lista canchas/ubicaciones (`Field`) asociadas a ese torneo (acceso público) |
+| POST | `/:id/fields` | Agrega una cancha/ubicación al torneo (Organizador / ADMIN) |
+| PUT | `/:id/fields/:fieldId` | Modifica una cancha/ubicación del torneo (Organizador / ADMIN) |
+| DELETE | `/:id/fields/:fieldId` | Borrado lógico de cancha/ubicación del torneo (Organizador / ADMIN) |
 | POST | `/:id/fixture` | Genera y persiste fixture Round Robin (jornadas y partidos) |
 | PATCH | `/:id/status` | Cambia estado (`BORRADOR`, `PUBLICADO`, `EN_CURSO`, `FINALIZADO`) y persiste campeón |
 | GET | `/` | Lista torneos no borrados (?status=PUBLICADO para catálogo) |
@@ -198,10 +202,15 @@ Las sub-rutas anidadas están declaradas **antes** que las genéricas `/:id` par
 | GET | `/:id` | Detalle |
 | POST | `/` | Alta |
 | PUT | `/:id` | Edición |
+| DELETE | `/:id` | Borrado lógico (soft-delete vía `isDeleted: true`) |
 
-`POST /fields` — validaciones: `name`, `address` requeridos. `geoLocalization {lat, lng}` y `amenities[]` opcionales. Sin endpoint de borrado (soft-delete no implementado desde la API, aunque el modelo tiene `isDeleted`).
+`GET /fields` — admite query param opcional `?tournamentId=...` para listar las canchas de un certamen específico.
 
-⚠️ No hay ninguna pantalla de frontend para gestionar canchas — ni alta, ni listado, ni asignación visual a un partido (el campo `Match.field` se completa a mano en el body al crear/editar un partido).
+`POST /fields`, `PUT /fields/:id` y `DELETE /fields/:id` — protegidos mediante el middleware `canManageField`: si la cancha pertenece a un torneo, requiere ser el organizador del certamen o usuario `ADMIN`; si es una cancha global de sistema, requiere rol `ADMIN`. Validaciones: `name` requerido (no vacío). `location` (sector/predio) y `address` opcionales.
+
+✅ Cuenta con gestión visual completa en el frontend desde Ajustes del Torneo (`TournamentAdminSettings`) y la pantalla `/torneos/:id/canchas` (`TournamentFieldsPage`). Las canchas asignadas al torneo se utilizan automáticamente al generar el fixture.
+
+
 
 ---
 
