@@ -361,6 +361,10 @@ function TournamentAdminSettings({ tournament, user: _user, onSectionChange, onT
                 <Typography variant="body2" sx={{ color: 'grey.400' }}>
                   {hasRounds
                     ? `El fixture está activo con ${rounds.length} jornadas/fechas bajo formato Round Robin.`
+                    : (fields || []).length === 0
+                    ? `Antes de generar el fixture tenés que agregar al menos una ${fieldLabel.toLowerCase().slice(0, -1) || 'cancha'} para disputar los encuentros.`
+                    : participantCount < 2
+                    ? 'Se necesitan al menos 2 participantes inscriptos para generar el fixture.'
                     : 'Generá automáticamente el calendario de partidos y fechas bajo formato Liga (Round Robin).'}
                 </Typography>
                 <Stack direction="row" spacing={2} sx={{ mt: 0.8, alignItems: 'center' }}>
@@ -391,6 +395,23 @@ function TournamentAdminSettings({ tournament, user: _user, onSectionChange, onT
                   }}
                 >
                   Ver Fixture
+                </Button>
+              ) : (fields || []).length === 0 ? (
+                <Button
+                  variant="contained"
+                  startIcon={<StadiumIcon />}
+                  onClick={() => navigate(`/torneos/${tournament._id}/canchas`)}
+                  sx={{
+                    fontWeight: 700,
+                    textTransform: 'none',
+                    whiteSpace: 'nowrap',
+                    alignSelf: { xs: 'flex-start', sm: 'center' },
+                    bgcolor: '#00e676',
+                    color: '#000',
+                    '&:hover': { bgcolor: '#00c853' },
+                  }}
+                >
+                  Agregar {fieldLabel}
                 </Button>
               ) : (
                 <Button

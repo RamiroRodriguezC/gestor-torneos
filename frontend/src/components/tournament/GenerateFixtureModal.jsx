@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Card from '@mui/material/Card'
 import Dialog from '@mui/material/Dialog'
 import DialogTitle from '@mui/material/DialogTitle'
@@ -42,6 +43,7 @@ export default function GenerateFixtureModal({
   onGenerate,
   busy = false,
 }) {
+  const navigate = useNavigate()
   const [rounds, setRounds] = useState('single')
   const [startDate, setStartDate] = useState('')
   const [matchDays, setMatchDays] = useState([6, 0])
@@ -409,8 +411,26 @@ export default function GenerateFixtureModal({
             </Stack>
 
             {fields.length === 0 ? (
-              <Alert severity="warning" icon={<WarningAmberIcon sx={{ color: '#ff9800' }} />} sx={{ bgcolor: 'rgba(255,152,0,0.08)' }}>
-                No hay {locationLabel.toLowerCase()} registradas para este torneo. Creá al menos una desde la gestión de canchas.
+              <Alert
+                severity="warning"
+                icon={<WarningAmberIcon sx={{ color: '#ff9800' }} />}
+                sx={{ bgcolor: 'rgba(255,152,0,0.08)' }}
+                action={
+                  <Button
+                    color="inherit"
+                    size="small"
+                    startIcon={<StadiumIcon />}
+                    onClick={() => {
+                      onClose()
+                      navigate(`/torneos/${tournament?._id}/canchas`)
+                    }}
+                    sx={{ textTransform: 'none', fontWeight: 700, color: '#00e676' }}
+                  >
+                    Agregar {locationLabel}
+                  </Button>
+                }
+              >
+                No hay {locationLabel.toLowerCase()} registradas para este torneo. Agregá al menos una para poder generar el fixture.
               </Alert>
             ) : (
               <Grid container spacing={1.5} sx={{ mt: 0.5 }}>

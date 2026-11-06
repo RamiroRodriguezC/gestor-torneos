@@ -283,17 +283,13 @@ export const generateFixture = async (tournamentId, options = {}) => {
     fieldsQuery._id = { $in: options.fieldIds };
   }
 
-  let fields = await Field.find(fieldsQuery).select('_id name');
-  if (!fields.length && (!options.fieldIds || !options.fieldIds.length)) {
-    // Fallback retrocompatible para torneos viejos con canchas globales
-    fields = await Field.find({
-      isDeleted: false,
-      $or: [{ tournamentId: null }, { tournamentId: { $exists: false } }],
-    }).select('_id name');
-  }
+  const fields = await Field.find(fieldsQuery).select('_id name');
 
   if (!fields.length) {
-    throw new AppError(ErrorType.VALIDATION_ERROR, 'No hay canchas configuradas o seleccionadas para este torneo. Agregá al menos una cancha desde los ajustes del torneo antes de generar el fixture.');
+    throw new AppError(
+      ErrorType.VALIDATION_ERROR,
+      'No hay canchas configuradas o seleccionadas para este torneo. Agregá al menos una cancha desde los ajustes del torneo antes de generar el fixture.'
+    );
   }
 
   assignScheduleToFixture(fixture, {

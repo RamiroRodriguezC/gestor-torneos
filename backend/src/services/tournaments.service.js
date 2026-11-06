@@ -367,25 +367,7 @@ export const findApplications = async (tournamentId) => {
 
 export const findFields = async (tournamentId) => {
   requireDB();
-  const matchFieldIds = await Match.find({ tournamentId, isDeleted: false }).distinct('field.fieldId');
-  const validMatchFieldIds = matchFieldIds.filter(Boolean);
-
-  const query = {
-    isDeleted: false,
-    $or: [
-      { tournamentId },
-      ...(validMatchFieldIds.length > 0 ? [{ _id: { $in: validMatchFieldIds } }] : []),
-    ],
-  };
-
-  const fields = await Field.find(query);
-  return fields.map((f) => {
-    const doc = f.toObject ? f.toObject() : { ...f };
-    if (!doc.tournamentId) {
-      doc.tournamentId = tournamentId;
-    }
-    return doc;
-  });
+  return Field.find({ tournamentId, isDeleted: false });
 };
 
 export const addField = async (tournamentId, fieldData) => {
@@ -402,15 +384,7 @@ export const addField = async (tournamentId, fieldData) => {
 
 export const updateTournamentField = async (tournamentId, fieldId, fieldData) => {
   requireDB();
-  const isMatchField = await Match.exists({ tournamentId, 'field.fieldId': fieldId, isDeleted: false });
-  const field = await Field.findOne({
-    _id: fieldId,
-    isDeleted: false,
-    $or: [
-      { tournamentId },
-      ...(isMatchField ? [{ _id: fieldId }] : []),
-    ],
-  });
+  const field = await Field.findOne({ _id: fieldId, tournamentId, isDeleted: false });
   if (!field) throw new AppError(ErrorType.FIELD_NOT_FOUND);
 
   return fieldsService.update(fieldId, fieldData);
@@ -418,15 +392,7 @@ export const updateTournamentField = async (tournamentId, fieldId, fieldData) =>
 
 export const removeTournamentField = async (tournamentId, fieldId) => {
   requireDB();
-  const isMatchField = await Match.exists({ tournamentId, 'field.fieldId': fieldId, isDeleted: false });
-  const field = await Field.findOne({
-    _id: fieldId,
-    isDeleted: false,
-    $or: [
-      { tournamentId },
-      ...(isMatchField ? [{ _id: fieldId }] : []),
-    ],
-  });
+  const field = await Field.findOne({ _id: fieldId, tournamentId, isDeleted: false });
   if (!field) throw new AppError(ErrorType.FIELD_NOT_FOUND);
 
   return fieldsService.remove(fieldId);
