@@ -89,8 +89,9 @@ export default function TournamentFieldsPage() {
 
   if (!user || !tournament) return null
 
-  const isOrganizadorOrAdmin =
-    String(tournament.organizerId) === String(user._id) || user.globalRole === 'ADMIN'
+  const isOrganizer = String(tournament.organizerId) === String(user._id)
+  const isModerator = (tournament.moderators || []).some((m) => String(m.userId?._id || m.userId) === String(user._id))
+  const isOrganizadorOrAdmin = isOrganizer || isModerator || user.globalRole === 'ADMIN'
 
   if (!isOrganizadorOrAdmin) {
     return (

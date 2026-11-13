@@ -110,6 +110,12 @@ function TournamentFixture({ tournament, user, onGoToAdmin }) {
   const myTeamId = useMemo(() => findMyParticipation(tournament, user), [user, tournament])
   const myTeam = useTeam(myTeamId)
 
+  const isOrganizer = tournament && user && String(tournament.organizerId) === String(user._id)
+  const isModerator = tournament && user && (tournament.moderators || []).some(
+    (m) => String(m.userId?._id || m.userId) === String(user._id)
+  )
+  const canManage = isOrganizer || isModerator
+
   const initialRoundIndex = useMemo(() => {
     if (!rounds.length) return 0
     const inProcessIdx = rounds.findIndex((r) => r.status === 'IN_PROCESS')
@@ -186,11 +192,11 @@ function TournamentFixture({ tournament, user, onGoToAdmin }) {
             Este torneo no tiene un fixture generado todavía.
           </Typography>
           <Typography variant="body2" sx={{ color: 'grey.500', mt: 1, maxWidth: 480, mx: 'auto' }}>
-            {tournament && user && String(tournament.organizerId) === String(user._id)
-              ? 'Como organizador, podés configurar y generar el fixture desde el panel de Ajustes.'
+            {canManage
+              ? 'Como organizador o moderador, podés configurar y generar el fixture desde el panel de Ajustes.'
               : 'El organizador aún no ha publicado el fixture del torneo. Regresá pronto para consultar las fechas.'}
           </Typography>
-          {tournament && user && String(tournament.organizerId) === String(user._id) && onGoToAdmin && (
+          {canManage && onGoToAdmin && (
             <Button
               variant="contained"
               color="secondary"

@@ -109,9 +109,15 @@ export const findUserTournaments = async (userId) => {
   requireDB();
   const user = await User.findById(userId).select('tournaments');
   if (!user) throw new AppError(ErrorType.USER_NOT_FOUND);
-  const ids = user.tournaments.map(t => t.tournamentId);
-  if (ids.length === 0) return [];
-  return Tournament.find({ _id: { $in: ids }, isDeleted: false });
+  const ids = (user.tournaments || []).map(t => t.tournamentId);
+  return Tournament.find({
+    $or: [
+      { _id: { $in: ids } },
+      { organizerId: userId },
+      { 'moderators.userId': userId },
+    ],
+    isDeleted: false,
+  });
 };
 
 export const findUserTeams = async (userId) => {

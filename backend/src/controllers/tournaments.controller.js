@@ -64,7 +64,6 @@ export const generateFixture = handle(async (req) => {
   return { data };
 });
 
-
 export const getTournamentFields = handle(async (req) => {
   const data = await tournamentsService.findFields(req.params.id);
   return { data, count: data.length };
@@ -83,4 +82,19 @@ export const putTournamentField = handle(async (req) => {
 export const deleteTournamentField = handle(async (req) => {
   const data = await tournamentsService.removeTournamentField(req.params.id, req.params.fieldId);
   return { data, message: 'Cancha eliminada correctamente' };
+});
+
+export const getModerators = handle(async (req) => {
+  const data = await tournamentsService.findModerators(req.params.id);
+  return { data, count: data.length };
+});
+
+export const postModerator = handle(async (req) => {
+  const data = await tournamentsService.addModerator(req.params.id, req.body, { actorId: req.user.id });
+  return { data, message: 'Moderador agregado correctamente' };
+});
+
+export const deleteModerator = handle(async (req) => {
+  const data = await tournamentsService.removeModerator(req.params.id, req.params.userId, { actorId: req.user.id });
+  return { data, message: 'Moderador revocado correctamente' };
 });

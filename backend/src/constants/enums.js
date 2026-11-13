@@ -40,7 +40,7 @@ export const MATCH_STATUS = ['PROGRAMADO', 'EN_CURSO', 'FINALIZADO'];
 
 // |------------------------------ USUARIO (User) ------------------------------|
 /** Rol que cumple un usuario dentro de un torneo específico */
-export const USER_TOURNAMENT_ROLE = ['ORGANIZADOR', 'COORDINADOR', 'JUGADOR'];
+export const USER_TOURNAMENT_ROLE = ['ORGANIZADOR', 'COORDINADOR', 'MODERADOR', 'JUGADOR'];
 /** Rol que cumple un usuario dentro de un equipo */
 export const TEAM_ROLE = ['CAPITAN', 'MIEMBRO'];
 /** Rol global del usuario en la plataforma */
@@ -49,4 +49,3 @@ export const GLOBAL_ROLE = ['ADMIN', 'USER'];
 // |----------------------- CANCHA / UBICACIÓN (Field) -----------------------|
 /** Tipo genérico de ubicación de juego del torneo */
 export const FIELD_TYPE = ['CANCHA', 'MESA', 'PISTA', 'TABLERO', 'OTRO'];
-

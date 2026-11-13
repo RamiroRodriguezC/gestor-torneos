@@ -43,7 +43,7 @@ export async function finishTournament(id, champion = null) {
   return updateTournamentStatus(id, 'FINALIZADO', champion ? { champion } : {})
 }
 
-// Genera el fixture del torneo (Round Robin). Acción de organizador.
+// Genera el fixture del torneo (Round Robin). Acción de organizador o moderador.
 export async function generateFixture(id, options = { rounds: 'single' }) {
   if (!navigator.onLine) {
     throw new Error('Necesitás conexión para generar el fixture.')
@@ -58,6 +58,31 @@ export async function generateFixture(id, options = { rounds: 'single' }) {
     }
     await fetchTournament(id)
   }
+  return json.data
+}
+
+// Agrega un moderador al torneo (acción exclusiva del Owner).
+export async function addTournamentModerator(id, emailOrUsername) {
+  if (!navigator.onLine) {
+    throw new Error('Necesitás conexión para agregar moderadores.')
+  }
+  const json = await apiFetch(`/tournaments/${id}/moderators`, {
+    method: 'POST',
+    body: JSON.stringify({ emailOrUsername }),
+  })
+  await fetchTournament(id)
+  return json.data
+}
+
+// Revoca el rol de moderador de un usuario (acción exclusiva del Owner).
+export async function removeTournamentModerator(id, userId) {
+  if (!navigator.onLine) {
+    throw new Error('Necesitás conexión para revocar moderadores.')
+  }
+  const json = await apiFetch(`/tournaments/${id}/moderators/${userId}`, {
+    method: 'DELETE',
+  })
+  await fetchTournament(id)
   return json.data
 }
 

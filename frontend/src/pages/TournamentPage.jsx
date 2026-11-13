@@ -53,6 +53,10 @@ function TournamentPage() {
   }, [id, tournament])
 
   const isOrganizer = tournament && user && String(tournament.organizerId) === String(user._id)
+  const isModerator = tournament && user && (tournament.moderators || []).some(
+    (m) => String(m.userId?._id || m.userId) === String(user._id)
+  )
+  const canManage = isOrganizer || isModerator
 
   // Estado de inscripción del usuario actual respecto de este torneo.
   const inscription = useMemo(() => {
@@ -93,7 +97,7 @@ function TournamentPage() {
       <TournamentNavbar
         activeSection={activeSection}
         onSectionChange={setActiveSection}
-        isOrganizer={isOrganizer}
+        isOrganizer={canManage}
       />
       <Container sx={{ pb: 8 }}>
         <Stack direction="row" spacing={1} sx={{ mt: 2, flexWrap: 'wrap', alignItems: 'center', gap: 0.5 }}>
@@ -124,15 +128,15 @@ function TournamentPage() {
           />
 
           {/* Jugador no inscripto: CTA a la página de inscripción */}
-          {!isOrganizer && inscription.state === 'none' && registrationOpen && (
+          {!canManage && inscription.state === 'none' && registrationOpen && (
             <Button size="small" variant="contained" color="primary" startIcon={<AssignmentTurnedInIcon />} onClick={() => navigate(`/torneos/${tournament._id}/inscripcion`)}>
               Inscribirme
             </Button>
           )}
-          {!isOrganizer && inscription.state === 'pendiente' && (
+          {!canManage && inscription.state === 'pendiente' && (
             <Chip icon={<PendingActionsIcon />} label="Solicitud pendiente de aprobación" color="warning" size="small" variant="outlined" />
           )}
-          {!isOrganizer && inscription.state === 'inscripto' && (
+          {!canManage && inscription.state === 'inscripto' && (
             <Chip icon={<CheckCircleIcon />} label="Ya inscripto" color="primary" size="small" variant="outlined" />
           )}
         </Stack>
@@ -224,7 +228,7 @@ function TournamentPage() {
         {activeSection === 'announcements' && (
           <UnderConstruction feature="Anuncios" status="development" size="lg" />
         )}
-        {activeSection === 'admin' && isOrganizer && (
+        {activeSection === 'admin' && canManage && (
           <TournamentAdminSettings
             tournament={tournament}
             user={user}

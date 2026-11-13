@@ -16,7 +16,7 @@ import MatchSheetDialog from './MatchSheetDialog'
 const getCompetitorId = (c) => c?.participantId ?? c?.teamId
 
 // Muestra el detalle de un partido (equipos, marcador, estado, fecha, cancha, eventos)
-// y, si el usuario es el organizador del torneo, el botón para abrir la planilla.
+// y, si el usuario es el organizador o moderador del torneo, el botón para abrir la planilla.
 function MatchDetail({ match, tournament, user }) {
   const navigate = useNavigate()
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -28,6 +28,10 @@ function MatchDetail({ match, tournament, user }) {
   const isOrganizer =
     tournament?.organizerId && user?._id &&
     String(tournament.organizerId) === String(user._id)
+  const isModerator = (tournament?.moderators || []).some(
+    (m) => String(m.userId?._id || m.userId) === String(user?._id)
+  )
+  const canEditSheet = isOrganizer || isModerator
 
   const home = match.competitors?.[0]
   const away = match.competitors?.[1]
@@ -255,7 +259,7 @@ function MatchDetail({ match, tournament, user }) {
         </CardContent>
       </Card>
 
-      {isOrganizer && (
+      {canEditSheet && (
         <Stack direction="row" justifyContent="center" sx={{ mb: 4 }}>
           <Button
             variant="contained"

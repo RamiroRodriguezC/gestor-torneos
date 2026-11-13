@@ -26,12 +26,17 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
 import StadiumIcon from '@mui/icons-material/Stadium'
+import TextField from '@mui/material/TextField'
+import Avatar from '@mui/material/Avatar'
+import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount'
+import PersonAddIcon from '@mui/icons-material/PersonAdd'
+import DeleteIcon from '@mui/icons-material/Delete'
 import { useApplicationsByTournament } from '../../hooks/useApplications'
 import { useMatchesByTournament } from '../../hooks/useMatches'
 import { useFieldsByTournament } from '../../hooks/useFields'
 import { useSport } from '../../hooks/useSportsConfig'
 import { fetchTournamentFields } from '../../data/fields'
-import { updateTournamentStatus, finishTournament, generateFixture } from '../../data/tournaments'
+import { updateTournamentStatus, finishTournament, generateFixture, addTournamentModerator, removeTournamentModerator } from '../../data/tournaments'
 import { computeStandings } from '../../utils/standings'
 import CompetitorPhoto from '../shared/CompetitorPhoto'
 import GenerateFixtureModal from './GenerateFixtureModal'
@@ -67,6 +72,42 @@ function TournamentAdminSettings({ tournament, user: _user, onSectionChange, onT
   const [openUnpublishDialog, setOpenUnpublishDialog] = useState(false)
   const [openFinishDialog, setOpenFinishDialog] = useState(false)
   const [openGenerateFixtureDialog, setOpenGenerateFixtureDialog] = useState(false)
+  const isOwner = tournament && _user && String(tournament.organizerId) === String(_user._id)
+  const [modInput, setModInput] = useState('')
+  const [modLoading, setModLoading] = useState(false)
+
+  const handleAddModerator = async (e) => {
+    e?.preventDefault()
+    if (!modInput.trim()) return
+    setModLoading(true)
+    setErrorMessage('')
+    setSuccessMessage('')
+    try {
+      await addTournamentModerator(tournament._id, modInput.trim())
+      await onTournamentUpdated?.(tournament._id)
+      setSuccessMessage('¡Moderador agregado con éxito al torneo!')
+      setModInput('')
+    } catch (err) {
+      setErrorMessage(err.message || 'Error al agregar moderador')
+    } finally {
+      setModLoading(false)
+    }
+  }
+
+  const handleRemoveModerator = async (userId) => {
+    setModLoading(true)
+    setErrorMessage('')
+    setSuccessMessage('')
+    try {
+      await removeTournamentModerator(tournament._id, userId)
+      await onTournamentUpdated?.(tournament._id)
+      setSuccessMessage('Moderador revocado con éxito.')
+    } catch (err) {
+      setErrorMessage(err.message || 'Error al revocar moderador')
+    } finally {
+      setModLoading(false)
+    }
+  }
 
   const pendingApplications = useMemo(() => {
     return (applications || []).filter((a) => a.status === 'PENDIENTE')
@@ -193,7 +234,7 @@ function TournamentAdminSettings({ tournament, user: _user, onSectionChange, onT
         />
       </Stack>
       <Typography variant="body2" sx={{ color: 'grey.400', mb: 3 }}>
-        Panel de control y acciones de administración exclusivas para el organizador de este torneo.
+        Panel de control y acciones de administración para organizadores y moderadores de este torneo.
       </Typography>
 
       {/* Alertas de resultado */}
@@ -336,6 +377,140 @@ function TournamentAdminSettings({ tournament, user: _user, onSectionChange, onT
             </Stack>
           </CardContent>
         </Card>
+
+        {/* Tarjeta: Moderadores del Torneo (Visible y editable solo para el Owner) */}
+        {isOwner && (
+          <Card sx={{ bgcolor: '#141414', border: '1px solid', borderColor: 'grey.800', borderRadius: 2 }}>
+            <CardContent sx={{ p: 2.5 }}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ sm: 'center' }} spacing={1} sx={{ mb: 1 }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <SupervisorAccountIcon sx={{ color: '#00e676', fontSize: 24 }} />
+                  <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'white' }}>
+                    Moderadores del Torneo
+                  </Typography>
+                  <Chip
+                    label={`${tournament.moderators?.length || 0} asignados`}
+                    size="small"
+                    color="success"
+                    variant="outlined"
+                    sx={{ fontWeight: 700, height: 22, fontSize: '0.75rem' }}
+                  />
+                </Stack>
+              </Stack>
+              <Typography variant="body2" sx={{ color: 'grey.400', mb: 2 }}>
+                Asigná usuarios de confianza para que colaboren en la gestión de solicitudes, canchas, fixture y carga de planillas de partido.
+              </Typography>
+
+              {/* Formulario para agregar moderador por email o username */}
+              <Box
+                component="form"
+                onSubmit={handleAddModerator}
+                sx={{
+                  display: 'flex',
+                  gap: 1.5,
+                  mb: 2.5,
+                  flexDirection: { xs: 'column', sm: 'row' },
+                }}
+              >
+                <TextField
+                  size="small"
+                  placeholder="Email o nombre de usuario del moderador..."
+                  value={modInput}
+                  onChange={(e) => setModInput(e.target.value)}
+                  disabled={modLoading || busy}
+                  fullWidth
+                  sx={{
+                    bgcolor: 'rgba(255, 255, 255, 0.05)',
+                    borderRadius: 1,
+                    '& .MuiOutlinedInput-root': {
+                      color: 'white',
+                      '& fieldset': { borderColor: 'grey.700' },
+                      '&:hover fieldset': { borderColor: '#00e676' },
+                      '&.Mui-focused fieldset': { borderColor: '#00e676' },
+                    },
+                  }}
+                />
+                <Button
+                  type="submit"
+                  variant="contained"
+                  disabled={modLoading || busy || !modInput.trim()}
+                  startIcon={modLoading ? <CircularProgress size={16} color="inherit" /> : <PersonAddIcon />}
+                  sx={{
+                    bgcolor: '#00e676',
+                    color: '#000',
+                    fontWeight: 700,
+                    textTransform: 'none',
+                    whiteSpace: 'nowrap',
+                    px: 3,
+                    '&:hover': { bgcolor: '#00c853' },
+                  }}
+                >
+                  Agregar Moderador
+                </Button>
+              </Box>
+
+              {/* Lista de moderadores actuales */}
+              {tournament.moderators && tournament.moderators.length > 0 ? (
+                <Stack spacing={1.2}>
+                  {tournament.moderators.map((mod) => (
+                    <Box
+                      key={mod.userId}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        p: 1.5,
+                        bgcolor: 'rgba(255, 255, 255, 0.03)',
+                        border: '1px solid',
+                        borderColor: 'grey.850',
+                        borderRadius: 1.5,
+                        flexWrap: 'wrap',
+                        gap: 1,
+                      }}
+                    >
+                      <Stack direction="row" spacing={1.5} alignItems="center">
+                        <Avatar sx={{ width: 36, height: 36, bgcolor: 'rgba(0, 230, 118, 0.15)', color: '#00e676', fontSize: '0.9rem', fontWeight: 700 }}>
+                          {(mod.usernameSnapshot || mod.emailSnapshot || 'M')[0].toUpperCase()}
+                        </Avatar>
+                        <Box>
+                          <Typography variant="body2" sx={{ fontWeight: 600, color: 'white' }}>
+                            {mod.usernameSnapshot ? `@${mod.usernameSnapshot}` : 'Usuario'}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: 'grey.400', display: 'block' }}>
+                            {mod.emailSnapshot}
+                          </Typography>
+                        </Box>
+                      </Stack>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="error"
+                        startIcon={<DeleteIcon />}
+                        disabled={modLoading || busy}
+                        onClick={() => handleRemoveModerator(mod.userId)}
+                        sx={{
+                          textTransform: 'none',
+                          fontSize: '0.8rem',
+                          fontWeight: 600,
+                          borderColor: 'rgba(244, 67, 54, 0.5)',
+                          '&:hover': { borderColor: '#f44336', bgcolor: 'rgba(244, 67, 54, 0.08)' },
+                        }}
+                      >
+                        Quitar
+                      </Button>
+                    </Box>
+                  ))}
+                </Stack>
+              ) : (
+                <Box sx={{ p: 2, textAlign: 'center', bgcolor: 'rgba(255,255,255,0.02)', borderRadius: 1.5, border: '1px dashed', borderColor: 'grey.800' }}>
+                  <Typography variant="body2" sx={{ color: 'grey.500' }}>
+                    No hay moderadores asignados en este torneo.
+                  </Typography>
+                </Box>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Tarjeta 2: Fixture y Estado de Jornadas */}
         <Card sx={{ bgcolor: '#141414', border: '1px solid', borderColor: 'grey.800', borderRadius: 2 }}>
@@ -615,7 +790,9 @@ function TournamentAdminSettings({ tournament, user: _user, onSectionChange, onT
           </Card>
         )}
 
-        {/* Tarjeta 6: DANGER ZONE (Estilo GitHub) */}
+        {/* Tarjeta 6: DANGER ZONE (Visible y editable solo para el Owner) */}
+        {isOwner && (
+
         <Box
           sx={{
             border: '1px solid #f85149',
@@ -676,6 +853,7 @@ function TournamentAdminSettings({ tournament, user: _user, onSectionChange, onT
             </Stack>
           </Box>
         </Box>
+        )}
       </Stack>
 
       {/* Diálogo de confirmación para Finalizar Torneo */}

@@ -32,6 +32,13 @@ const ChampionSchema = new Schema({
   crownedAt: { type: Date, default: Date.now },
 }, { _id: false });
 
+const ModeratorSchema = new Schema({
+  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  usernameSnapshot: { type: String, default: '' },
+  emailSnapshot: { type: String, default: '' },
+  assignedAt: { type: Date, default: Date.now },
+}, { _id: false });
+
 const ScheduleConfigSchema = new Schema({
   matchDays: { type: [Number], default: [6, 0] }, // 0: Dom, 1: Lun, ..., 6: Sab
   startTime: { type: String, default: '14:00' },
@@ -105,6 +112,7 @@ const TournamentSchema = new Schema({
   },
 
   participantes: [ParticipantSnapshotSchema],
+  moderators: { type: [ModeratorSchema], default: [] },
   applications: [ApplicationSummarySchema],
   scheduleConfig: { type: ScheduleConfigSchema, default: () => ({}) },
   rounds: [roundSchema],

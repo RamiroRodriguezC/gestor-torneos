@@ -2,6 +2,7 @@ import Tournament from '../models/TournamentsModel.js';
 import Application from '../models/ApplicationsModel.js';
 import Match from '../models/MatchesModel.js';
 import Field from '../models/FieldModel.js';
+import User from '../models/UsersModel.js';
 import * as fieldsService from './fields.service.js';
 import { requireDB } from '../config/db.js';
 import { AppError } from '../utils/AppError.js';
@@ -77,17 +78,22 @@ export const addParticipant = async (id, data, { actorId } = {}) => {
   const tournament = await Tournament.findOne({ _id: id, isDeleted: false });
   if (!tournament) throw new AppError(ErrorType.TOURNAMENT_NOT_FOUND);
 
-  // Alta directa sin pasar por el flujo de solicitudes: solo el organizador,
+  // Alta directa sin pasar por el flujo de solicitudes: solo el organizador o moderador,
   // o una inscripción con Application APROBADA previa (cierra el bypass documentado).
   const isOrganizer = actorId && String(tournament.organizerId) === String(actorId);
+  const isModerator = actorId && (tournament.moderators || []).some(
+    (m) => String(m.userId) === String(actorId)
+  );
+  const isStaff = isOrganizer || isModerator;
+
   const approvedApp = await Application.findOne({
     tournamentId: id,
     participantId,
     status: 'APROBADA',
     isDeleted: false,
   });
-  if (!isOrganizer && !approvedApp) {
-    throw new AppError(ErrorType.FORBIDDEN, 'Solo el organizador puede agregar participantes directamente, o debe existir una solicitud aprobada.');
+  if (!isStaff && !approvedApp) {
+    throw new AppError(ErrorType.FORBIDDEN, 'Solo el organizador o moderadores pueden agregar participantes directamente, o debe existir una solicitud aprobada.');
   }
 
   // Duplicados y cupo.
@@ -364,7 +370,6 @@ export const findApplications = async (tournamentId) => {
   return Application.find({ tournamentId, isDeleted: false });
 };
 
-
 export const findFields = async (tournamentId) => {
   requireDB();
   return Field.find({ tournamentId, isDeleted: false });
@@ -396,4 +401,90 @@ export const removeTournamentField = async (tournamentId, fieldId) => {
   if (!field) throw new AppError(ErrorType.FIELD_NOT_FOUND);
 
   return fieldsService.remove(fieldId);
+};
+
+export const findModerators = async (tournamentId) => {
+  requireDB();
+  const tournament = await Tournament.findOne({ _id: tournamentId, isDeleted: false }).select('moderators');
+  if (!tournament) throw new AppError(ErrorType.TOURNAMENT_NOT_FOUND);
+  return tournament.moderators || [];
+};
+
+export const addModerator = async (tournamentId, data, { actorId } = {}) => {
+  requireDB();
+
+  const query = (data.emailOrUsername || data.username || data.email || data.query || '').trim();
+  if (!query) {
+    throw new AppError(ErrorType.VALIDATION_ERROR, 'Debes ingresar un email o nombre de usuario.');
+  }
+
+  const tournament = await Tournament.findOne({ _id: tournamentId, isDeleted: false });
+  if (!tournament) throw new AppError(ErrorType.TOURNAMENT_NOT_FOUND);
+
+  // Exclusivo del organizerId (Owner)
+  if (!actorId || String(tournament.organizerId) !== String(actorId)) {
+    throw new AppError(ErrorType.FORBIDDEN, 'Solo el organizador del torneo puede agregar moderadores.');
+  }
+
+  // Buscar usuario por email o username (case-insensitive)
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const user = await User.findOne({
+    $or: [
+      { email: query.toLowerCase() },
+      { username: new RegExp(`^${escaped}$`, 'i') },
+    ],
+    isDeleted: false,
+  });
+
+  if (!user) {
+    throw new AppError(ErrorType.USER_NOT_FOUND, 'No se encontró ningún usuario con ese email o nombre de usuario.');
+  }
+
+  if (String(tournament.organizerId) === String(user._id)) {
+    throw new AppError(ErrorType.CONFLICT, 'El usuario ya es el organizador (Owner) del torneo.');
+  }
+
+  const alreadyModerator = (tournament.moderators || []).some(
+    (m) => String(m.userId) === String(user._id)
+  );
+  if (alreadyModerator) {
+    throw new AppError(ErrorType.CONFLICT, 'El usuario ya es moderador de este torneo.');
+  }
+
+  const newModerator = {
+    userId: user._id,
+    usernameSnapshot: user.username,
+    emailSnapshot: user.email,
+    assignedAt: new Date(),
+  };
+
+  tournament.moderators.push(newModerator);
+  await tournament.save();
+
+  return tournament.moderators;
+};
+
+export const removeModerator = async (tournamentId, userId, { actorId } = {}) => {
+  requireDB();
+
+  const tournament = await Tournament.findOne({ _id: tournamentId, isDeleted: false });
+  if (!tournament) throw new AppError(ErrorType.TOURNAMENT_NOT_FOUND);
+
+  // Exclusivo del organizerId (Owner)
+  if (!actorId || String(tournament.organizerId) !== String(actorId)) {
+    throw new AppError(ErrorType.FORBIDDEN, 'Solo el organizador del torneo puede revocar moderadores.');
+  }
+
+  const index = (tournament.moderators || []).findIndex(
+    (m) => String(m.userId) === String(userId)
+  );
+
+  if (index === -1) {
+    throw new AppError(ErrorType.VALIDATION_ERROR, 'El usuario no es moderador de este torneo.');
+  }
+
+  tournament.moderators.splice(index, 1);
+  await tournament.save();
+
+  return tournament.moderators;
 };

@@ -70,7 +70,10 @@ export const findAll = async ({ actorId } = {}) => {
   requireDB();
   if (!actorId) return Application.find({ isDeleted: false });
 
-  const myTournaments = await Tournament.find({ organizerId: actorId, isDeleted: false }).select('_id');
+  const myTournaments = await Tournament.find({
+    $or: [{ organizerId: actorId }, { 'moderators.userId': actorId }],
+    isDeleted: false,
+  }).select('_id');
   const myTournamentIds = myTournaments.map((t) => t._id);
 
   return Application.find({
@@ -98,47 +101,54 @@ export const create = async (data, { actorId } = {}) => {
 
   // 1) Torneo abierto + cupo. En individuales el organizador no puede auto-inscribirse.
   const tournament = await Tournament.findOne({ _id: tournamentId, isDeleted: false });
-  if (!tournament) throw new AppError(ErrorType.TOURNAMENT_NOT_FOUND);
   const participantType = await assertOpenForRegistration(tournament);
+
   if (participantType === 'INDIVIDUAL' && String(tournament.organizerId) === String(applicantId)) {
-    throw new AppError(ErrorType.VALIDATION_ERROR, 'El organizador no puede inscribirse como participante de su propio torneo.');
+    throw new AppError(ErrorType.FORBIDDEN, 'El organizador no puede auto-inscribirse como participante individual.');
   }
 
-  // 2) En deportes TEAM, el solicitante debe ser el capitán del equipo que inscribe.
-  let team = null;
+  // 2) Si es TEAM, validar que el solicitante sea capitán del equipo.
   if (participantType === 'TEAM') {
-    team = await Team.findOne({ _id: participantId, isDeleted: false }).select('capitanId name');
+    const team = await Team.findOne({ _id: participantId, isDeleted: false });
     if (!team) throw new AppError(ErrorType.TEAM_NOT_FOUND);
     if (String(team.capitanId) !== String(applicantId)) {
-      throw new AppError(ErrorType.FORBIDDEN, 'Solo el capitán del equipo puede inscribirlo en un torneo.');
+      throw new AppError(ErrorType.FORBIDDEN, 'Solo el capitán del equipo puede solicitar inscripción.');
     }
-  } else if (String(participantId) !== String(applicantId)) {
-    throw new AppError(ErrorType.FORBIDDEN, 'En torneos individuales solo podés inscribirte a vos mismo.');
+  } else {
+    // Si es INDIVIDUAL, el participantId debe ser el applicantId.
+    if (String(participantId) !== String(applicantId)) {
+      throw new AppError(ErrorType.FORBIDDEN, 'Solo podés inscribirte a vos mismo.');
+    }
   }
 
-  // 3) Sin duplicados: misma solicitud PENDIENTE/APROBADA, o ya es participante del torneo.
-  const existing = await Application.findOne({
-    tournamentId, participantId, isDeleted: false,
-    status: { $in: ['PENDIENTE', 'APROBADA'] },
-  });
-  if (existing) throw new AppError(ErrorType.CONFLICT, 'Ya existe una solicitud de inscripción para este participante en el torneo.');
-
-  const alreadyIn = (tournament.participantes || []).some(
+  // 3) No duplicar solicitud pendiente ni participante ya dentro.
+  const alreadyInTournament = (tournament.participantes || []).some(
     (p) => String(p.participantId ?? p.teamId) === String(participantId)
   );
-  if (alreadyIn) throw new AppError(ErrorType.CONFLICT, 'Este participante ya forma parte del torneo.');
+  if (alreadyInTournament) {
+    throw new AppError(ErrorType.CONFLICT, 'El participante ya forma parte del torneo.');
+  }
 
-  // 4) Crear la solicitud.
-  const application = await Application.create({
+  const existingPending = await Application.findOne({
     tournamentId,
-    applicantId,
     participantId,
     status: 'PENDIENTE',
+    isDeleted: false,
+  });
+  if (existingPending) {
+    throw new AppError(ErrorType.CONFLICT, 'Ya existe una solicitud pendiente para este participante.');
+  }
+
+  // 4) Crear Application y reflejar el summary embebido en Tournament + User.
+  const application = await Application.create({
+    tournamentId,
+    participantId,
+    applicantId,
     notesCapitan: notesCapitan || '',
     comprobantURL: comprobantURL || '',
+    status: 'PENDIENTE',
   });
 
-  // 5) Reflejar el resumen en Tournament.applications[] y la referencia en User.applications[].
   await Tournament.findByIdAndUpdate(tournamentId, {
     $push: {
       applications: {
@@ -167,27 +177,28 @@ export const update = async (id, data, { actorId } = {}) => {
   if (!tournament) throw new AppError(ErrorType.TOURNAMENT_NOT_FOUND);
 
   const isOrganizer = String(tournament.organizerId) === String(actorId);
+  const isModerator = (tournament.moderators || []).some((m) => String(m.userId) === String(actorId));
+  const isStaff = isOrganizer || isModerator;
   const isApplicant = String(application.applicantId) === String(actorId);
 
   const statusChanging = data.status !== undefined && data.status !== application.status;
 
-  // Permisos: el organizador cambia el estado; el solicitante solo edita notas/comprobante mientras esté PENDIENTE.
-  if (!isOrganizer && !isApplicant) {
+  // Permisos: el organizador o moderador cambia el estado; el solicitante solo edita notas/comprobante mientras esté PENDIENTE.
+  if (!isStaff && !isApplicant) {
     throw new AppError(ErrorType.FORBIDDEN, 'No tenés permisos para editar esta solicitud.');
   }
-  if (!isOrganizer && statusChanging) {
-    throw new AppError(ErrorType.FORBIDDEN, 'Solo el organizador del torneo puede aprobar o rechazar una solicitud.');
+  if (!isStaff && statusChanging) {
+    throw new AppError(ErrorType.FORBIDDEN, 'Solo el organizador o moderador del torneo puede aprobar o rechazar una solicitud.');
   }
-  if (isApplicant && !isOrganizer && application.status !== 'PENDIENTE') {
+  if (isApplicant && !isStaff && application.status !== 'PENDIENTE') {
     throw new AppError(ErrorType.VALIDATION_ERROR, 'La solicitud ya fue resuelta; no se puede editar.');
   }
-  // El solicitante no puede auto-aprobarse: si manda status sin ser organizador, ya cayó en FORBIDDEN arriba.
 
   const updateData = {};
   if (data.notesOrganizador !== undefined) updateData.notesOrganizador = data.notesOrganizador;
   if (data.notesCapitan !== undefined) updateData.notesCapitan = data.notesCapitan;
   if (data.comprobantURL !== undefined) updateData.comprobantURL = data.comprobantURL;
-  if (isOrganizer && data.status !== undefined) updateData.status = data.status;
+  if (isStaff && data.status !== undefined) updateData.status = data.status;
 
   // Side-effects al pasar a APROBADA.
   if (data.status === 'APROBADA' && application.status !== 'APROBADA') {

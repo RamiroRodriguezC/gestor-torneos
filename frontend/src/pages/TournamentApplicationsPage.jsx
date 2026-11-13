@@ -24,8 +24,7 @@ const STATUS_META = {
   RECHAZADA: { label: 'Rechazada', color: '#ef5350', icon: CancelIcon },
 }
 
-// Pantalla del organizador: gestiona las solicitudes de inscripción del torneo.
-// Solo el organizador (tournament.organizerId === user._id) puede entrar.
+// Pantalla del organizador/moderador: gestiona las solicitudes de inscripción del torneo.
 function TournamentApplicationsPage() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -77,7 +76,13 @@ function TournamentApplicationsPage() {
   }, [apps, liveApps, tab])
 
   if (!user || !tournament) return null
-  if (String(tournament.organizerId) !== String(user._id)) {
+
+  const isOrganizer = String(tournament.organizerId) === String(user._id)
+  const isModerator = (tournament.moderators || []).some(
+    (m) => String(m.userId?._id || m.userId) === String(user._id)
+  )
+
+  if (!isOrganizer && !isModerator) {
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         <Navbar />
