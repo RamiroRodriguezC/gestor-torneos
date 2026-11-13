@@ -1,15 +1,22 @@
+import { useEffect } from 'react'
 import { Container, Typography, Stack, Button, Box } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
 import AddIcon from '@mui/icons-material/Add'
 import Navbar from '../components/layout/Navbar'
 import TournamentCard from '../components/tournament/TournamentCard'
 import { useAuth } from '../hooks/useAuth'
+import { useOnlineStatus } from '../hooks/useOnlineStatus'
 import { useTournamentsByUser } from '../hooks/useTournaments'
 
 function Tournaments() {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { refreshEnvironment } = useOnlineStatus()
   const tournaments = useTournamentsByUser(user?._id)
+
+  useEffect(() => {
+    refreshEnvironment?.()
+  }, [refreshEnvironment])
 
   if (!user) return null
 

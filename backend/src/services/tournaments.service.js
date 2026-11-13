@@ -461,6 +461,22 @@ export const addModerator = async (tournamentId, data, { actorId } = {}) => {
   tournament.moderators.push(newModerator);
   await tournament.save();
 
+  // Registrar el torneo en user.tournaments con rol MODERADOR
+  const alreadyInUserTournaments = (user.tournaments || []).some(
+    (t) => String(t.tournamentId) === String(tournament._id)
+  );
+  if (!alreadyInUserTournaments) {
+    await User.findByIdAndUpdate(user._id, {
+      $push: {
+        tournaments: {
+          tournamentId: tournament._id,
+          role: 'MODERADOR',
+          status: tournament.status,
+        },
+      },
+    });
+  }
+
   return tournament.moderators;
 };
 
@@ -485,6 +501,16 @@ export const removeModerator = async (tournamentId, userId, { actorId } = {}) =>
 
   tournament.moderators.splice(index, 1);
   await tournament.save();
+
+  // Remover también de user.tournaments si su rol era MODERADOR
+  await User.findByIdAndUpdate(userId, {
+    $pull: {
+      tournaments: {
+        tournamentId: tournament._id,
+        role: 'MODERADOR',
+      },
+    },
+  });
 
   return tournament.moderators;
 };

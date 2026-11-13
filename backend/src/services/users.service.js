@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import User from '../models/UsersModel.js';
@@ -110,12 +111,21 @@ export const findUserTournaments = async (userId) => {
   const user = await User.findById(userId).select('tournaments');
   if (!user) throw new AppError(ErrorType.USER_NOT_FOUND);
   const ids = (user.tournaments || []).map(t => t.tournamentId);
+
+  const orConditions = [
+    { _id: { $in: ids } },
+    { organizerId: userId },
+    { 'moderators.userId': userId },
+  ];
+
+  if (mongoose.Types.ObjectId.isValid(userId)) {
+    const userObjId = new mongoose.Types.ObjectId(userId);
+    orConditions.push({ organizerId: userObjId });
+    orConditions.push({ 'moderators.userId': userObjId });
+  }
+
   return Tournament.find({
-    $or: [
-      { _id: { $in: ids } },
-      { organizerId: userId },
-      { 'moderators.userId': userId },
-    ],
+    $or: orConditions,
     isDeleted: false,
   });
 };

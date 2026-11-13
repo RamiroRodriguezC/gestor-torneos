@@ -29,9 +29,16 @@ export function useTournamentsByUser(userId) {
   return useLiveQuery(async () => {
     if (!userId) return []
     const user = await db.users.get(userId)
-    if (!user?.tournaments?.length) return []
-    const tournamentIds = user.tournaments.map(t => t.tournamentId).filter(Boolean)
-    if (!tournamentIds.length) return []
-    return db.tournaments.where('_id').anyOf(tournamentIds).filter(t => !t.isDeleted).toArray()
+    const userTournamentIds = (user?.tournaments || []).map((t) => String(t.tournamentId)).filter(Boolean)
+
+    return db.tournaments
+      .filter((t) => {
+        if (t.isDeleted) return false
+        if (userTournamentIds.includes(String(t._id))) return true
+        if (String(t.organizerId) === String(userId)) return true
+        if ((t.moderators || []).some((m) => String(m.userId?._id || m.userId) === String(userId))) return true
+        return false
+      })
+      .toArray()
   }, [userId], [])
 }

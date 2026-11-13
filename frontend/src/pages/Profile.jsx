@@ -21,12 +21,14 @@ const TEAM_ROLE_LABEL = { CAPITAN: 'Capitán', MIEMBRO: 'Miembro' }
 const TOURNAMENT_ROLE_LABEL = {
   ORGANIZADOR: 'Organizador',
   COORDINADOR: 'Coordinador',
+  MODERADOR: 'Moderador',
   JUGADOR: 'Jugador',
 }
 const ROLE_BG = {
   CAPITAN: '#00e676',
   ORGANIZADOR: '#ff6d00',
   COORDINADOR: '#ffb300',
+  MODERADOR: '#00b0ff',
   JUGADOR: '#424242',
   MIEMBRO: '#424242',
 }
@@ -285,7 +287,13 @@ function Profile() {
             {tournaments.length > 0 ? (
               <Stack spacing={1.5}>
                 {tournaments.map((t) => {
-                  const role = tournamentRoleMap[String(t._id)]
+                  const role =
+                    tournamentRoleMap[String(t._id)] ||
+                    (String(t.organizerId) === String(user._id)
+                      ? 'ORGANIZADOR'
+                      : (t.moderators || []).some((m) => String(m.userId?._id || m.userId) === String(user._id))
+                        ? 'MODERADOR'
+                        : undefined)
                   return (
                     <Box
                       key={t._id}
