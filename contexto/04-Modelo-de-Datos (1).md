@@ -64,6 +64,7 @@ erDiagram
         object[] applications "embed resumen: applicationId,applicantId,participantId,status"
         object[] rounds "embed con _id propio (ADR-008): roundName,roundNumber,type,status,matches[]"
         object champion "embed SNAPSHOT (ADR-016): participantId,displayNameSnapshot,logoURL,participantType,crownedAt"
+        object[] moderators "embed SNAPSHOT: userId,usernameSnapshot,emailSnapshot,assignedAt"
         bool isDeleted
     }
 
@@ -129,7 +130,7 @@ Es la pieza central del diseño polimórfico (ver ADR-005). No se crea desde la 
 Espacios físicos de disputa de los partidos (canchas, mesas, pistas, tableros). Posee asociación directa al certamen mediante `tournamentId` (`ObjectId` ref `Tournament`, indexado), nombre o identificador (`name`), sector o predio interno (`location`), dirección física (`address`), `sportConfigId` opcional y `isDeleted` para soft-delete. Cuenta con módulo de gestión completo desde `TournamentAdminSettings` y `TournamentFieldsPage` (`/torneos/:id/canchas`). Al generar el fixture, el algoritmo de emparejamiento rota y asigna automáticamente entre las canchas asociadas al torneo.
 
 ### `Tournament`
-El documento más grande y con más responsabilidad. `rules` es un sub-objeto rico (sistema de puntos, criterio de desempate, formato, ruedas `'single'`/`'double'`, reglas especiales libres). `participantes[]` es el snapshot de quién juega; `rounds[]` es la estructura temporal/competitiva con identidad propia (`_id`) y ciclo de vida (`SCHEDULED`, `IN_PROCESS`, `COMPLETED` según el avance de sus partidos). Incorpora el subdocumento `champion` (ADR-016) para persistir al ganador oficial con snapshot (`participantId`, `displayNameSnapshot`, `logoURL`, `participantType`, `crownedAt`) una vez finalizado el certamen, y `scheduleConfig` (ADR-019) con los parámetros de cronograma (`matchDays`, `startTime`, `endTime`, `slotDurationMinutes`, `restDaysBetweenRounds`, `fieldIds`).
+El documento más grande y con más responsabilidad. `rules` es un sub-objeto rico (sistema de puntos, criterio de desempate, formato, ruedas `'single'`/`'double'`, reglas especiales libres). `participantes[]` es el snapshot de quién juega; `rounds[]` es la estructura temporal/competitiva con identidad propia (`_id`) y ciclo de vida (`SCHEDULED`, `IN_PROCESS`, `COMPLETED` según el avance de sus partidos). Incorpora el subdocumento `champion` (ADR-016) para persistir al ganador oficial con snapshot (`participantId`, `displayNameSnapshot`, `logoURL`, `participantType`, `crownedAt`) una vez finalizado el certamen, el array embebido `moderators[]` (RF-02) con los usuarios designados para la gestión operativa y planillaje del torneo (`userId`, `usernameSnapshot`, `emailSnapshot`, `assignedAt`), y `scheduleConfig` (ADR-019) con los parámetros de cronograma (`matchDays`, `startTime`, `endTime`, `slotDurationMinutes`, `restDaysBetweenRounds`, `fieldIds`).
 
 ### `Match`
 `round.number` (no `roundId`) es lo que efectivamente se usa para filtrar en la práctica (`getMatchesByTournamentAndRound`, índice compuesto `[tournamentId+round.roundId]` en Dexie — que en rigor debería llamarse `[tournamentId+round.number]` si `roundId` no es confiable; ver informe de errores). `competitors[]` soporta exactamente 2 elementos hoy (diseñado para `VERSUS`; `LEADERBOARD` no tiene aún una forma definida de listar N competidores con ranking).

@@ -159,6 +159,8 @@ Las sub-rutas anidadas están declaradas **antes** que las genéricas `/:id` par
 | PUT | `/:id/fields/:fieldId` | Modifica una cancha/ubicación del torneo (Organizador / ADMIN) |
 | DELETE | `/:id/fields/:fieldId` | Borrado lógico de cancha/ubicación del torneo (Organizador / ADMIN) |
 | POST | `/:id/fixture` | Genera y persiste fixture Round Robin con parametrización de días, franjas, turnos, descansos y canchas (ADR-019) |
+| POST | `/:id/moderators` | Asigna un moderador al torneo por email o username (Solo Organizador / ADMIN) |
+| DELETE | `/:id/moderators/:userId` | Revoca permisos de moderador en el torneo (Solo Organizador / ADMIN) |
 | PATCH | `/:id/status` | Cambia estado (`BORRADOR`, `PUBLICADO`, `EN_CURSO`, `FINALIZADO`) y persiste campeón |
 | GET | `/` | Lista torneos no borrados (?status=PUBLICADO para catálogo) |
 | GET | `/:id` | Detalle de torneo (reconcilia ciclo de vida de rondas y campeón) |
